@@ -42,10 +42,10 @@ neoForge {
     // Specify the version of NeoForge to use.
     version = project.neo_version
 
-    parchment {
-        mappingsVersion = project.parchment_mappings_version
-        minecraftVersion = project.parchment_minecraft_version
-    }
+    // parchment {
+    //    mappingsVersion = project.parchment_mappings_version
+    //    minecraftVersion = project.parchment_minecraft_version
+    // }
 
     // This line is optional. Access Transformers are automatically detected
     // accessTransformers = project.files('src/main/resources/META-INF/accesstransformer.cfg')
@@ -186,5 +186,21 @@ idea {
     module {
         downloadSources = true
         downloadJavadoc = true
+    }
+}
+
+tasks.register("printRenderTypeMethods") {
+    doLast {
+        ClassLoader cl = Thread.currentThread().getContextClassLoader()
+        try {
+            def clazz = Class.forName("net.minecraft.client.renderer.RenderType", false, cl)
+            clazz.getDeclaredMethods().each { m ->
+                if(java.lang.reflect.Modifier.isStatic(m.getModifiers()) && m.getReturnType() == clazz) {
+                    println "METHOD: " + m.getName() + " " + m.getParameterTypes().collect{it.getSimpleName()}.join(", ")
+                }
+            }
+        } catch (Exception e) {
+            println "Exception: " + e
+        }
     }
 }
