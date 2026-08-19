@@ -1,6 +1,6 @@
-package com.trycraft.trycraftmod.client.model;
+package com.golemcraft.golemcraftmod.client.model;
 
-import com.trycraft.trycraftmod.client.renderer.FlowerGolemRenderState;
+import com.golemcraft.golemcraftmod.client.renderer.BaseGolemRenderState;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
@@ -11,7 +11,7 @@ import net.minecraft.client.model.geom.builders.PartDefinition;
 import net.minecraft.util.Mth;
 import net.minecraft.client.model.ArmedModel;
 
-public class FlowerGolemModel extends EntityModel<FlowerGolemRenderState> implements ArmedModel {
+public class BaseGolemModel extends EntityModel<BaseGolemRenderState> implements ArmedModel {
     private final ModelPart root;
     private final ModelPart head;
     private final ModelPart body;
@@ -20,7 +20,7 @@ public class FlowerGolemModel extends EntityModel<FlowerGolemRenderState> implem
     private final ModelPart rightLeg;
     private final ModelPart leftLeg;
 
-    public FlowerGolemModel(ModelPart root) {
+    public BaseGolemModel(ModelPart root) {
         super(root);
         this.root = root;
         this.head = root.getChild("head");
@@ -67,33 +67,26 @@ public class FlowerGolemModel extends EntityModel<FlowerGolemRenderState> implem
 
 
     @Override
-    public void setupAnim(FlowerGolemRenderState state) {
+    public void setupAnim(BaseGolemRenderState state) {
         super.setupAnim(state);
         this.head.yRot = state.yRot * ((float)Math.PI / 180F);
         this.head.xRot = state.xRot * ((float)Math.PI / 180F);
-        this.head.zRot = 0.0F; // Reset zRot to avoid glitches
-        
-        float time = state.ageInTicks;
-        // Animazione testa stile Copper Golem: la testa fa un giro completo di 360 gradi ogni tanto
-        if (time % 160 < 20) {
-            float spinProgress = (time % 160) / 20.0F; // 0.0 to 1.0
-            this.head.yRot += spinProgress * ((float)Math.PI * 2F);
-        } else {
-            this.head.zRot = Mth.sin(time * 0.1F) * 0.05F;
-        }
 
-        // Camminata esagerata e goffa
-        this.rightLeg.xRot = Mth.cos(state.walkAnimationPos * 0.6662F) * 1.4F * state.walkAnimationSpeed;
-        this.leftLeg.xRot = Mth.cos(state.walkAnimationPos * 0.6662F + (float)Math.PI) * 1.4F * state.walkAnimationSpeed;
-        
-        // Braccia che si muovono molto (stile burattino)
-        this.rightArm.xRot = Mth.cos(state.walkAnimationPos * 0.6662F + (float)Math.PI) * 2.0F * state.walkAnimationSpeed;
-        this.leftArm.xRot = Mth.cos(state.walkAnimationPos * 0.6662F) * 2.0F * state.walkAnimationSpeed;
+        float ageInTicks = state.ageInTicks;
+        float limbSwing = state.walkAnimationPos;
+        float limbSwingAmount = state.walkAnimationSpeed;
+
+        this.rightLeg.xRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount;
+        this.leftLeg.xRot = Mth.cos(limbSwing * 0.6662F + (float)Math.PI) * 1.4F * limbSwingAmount;
+        this.rightArm.xRot = Mth.cos(limbSwing * 0.6662F + (float)Math.PI) * 1.4F * limbSwingAmount;
+        this.leftArm.xRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount;
         
         // Movimento idle per le braccia
-        this.rightArm.zRot = (Mth.cos(time * 0.09F) * 0.05F + 0.05F);
-        this.leftArm.zRot = -(Mth.cos(time * 0.09F) * 0.05F + 0.05F);
-        
+        this.rightArm.zRot = (Mth.cos(ageInTicks * 0.09F) * 0.05F + 0.05F);
+        this.leftArm.zRot = -(Mth.cos(ageInTicks * 0.09F) * 0.05F + 0.05F);
+        this.rightArm.xRot += Mth.sin(ageInTicks * 0.06F) * 0.05F;
+        this.leftArm.xRot -= Mth.sin(ageInTicks * 0.06F) * 0.05F;
+
         if (state.isRummaging) {
             this.body.xRot = 0.2F; // Si piega leggermente in avanti
             this.head.xRot += 0.4F; // Guarda giù verso la cassa
@@ -104,8 +97,8 @@ public class FlowerGolemModel extends EntityModel<FlowerGolemRenderState> implem
             this.rightArm.zRot = 0.0F;
         } else {
             this.body.xRot = 0.0F;
-            this.rightArm.xRot += Mth.sin(time * 0.06F) * 0.05F;
-            this.leftArm.xRot -= Mth.sin(time * 0.06F) * 0.05F;
+            this.rightArm.xRot += Mth.sin(ageInTicks * 0.06F) * 0.05F;
+            this.leftArm.xRot -= Mth.sin(ageInTicks * 0.06F) * 0.05F;
         }
     }
 

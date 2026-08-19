@@ -1,7 +1,7 @@
-package com.trycraft.trycraftmod;
+package com.golemcraft.golemcraftmod;
 
 
-import com.trycraft.trycraftmod.registry.ModBlocks;
+import com.golemcraft.golemcraftmod.registry.ModBlocks;
 import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
@@ -33,10 +33,10 @@ import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 // The value here should match an entry in the META-INF/neoforge.mods.toml file
-@Mod(TryCraft.MODID)
-public class TryCraft {
+@Mod(GolemCraft.MODID)
+public class GolemCraft {
     // Define mod id in a common place for everything to reference
-    public static final String MODID = "trycraft";
+    public static final String MODID = "golemcraft";
     // Directly reference a slf4j logger
     public static final Logger LOGGER = LogUtils.getLogger();
     // Create a Deferred Register to hold Blocks which will all be registered under the "examplemod" namespace
@@ -48,7 +48,7 @@ public class TryCraft {
 
     // The constructor for the mod class is the first code that is run when your mod is loaded.
     // FML will recognize some parameter types like IEventBus or ModContainer and pass them in automatically.
-    public TryCraft(IEventBus modEventBus, ModContainer modContainer) {
+    public GolemCraft(IEventBus modEventBus, ModContainer modContainer) {
         // Register the commonSetup method for modloading
         modEventBus.addListener(this::commonSetup);
 
@@ -67,7 +67,7 @@ public class TryCraft {
         // Register our mod's ModConfigSpec so that FML can create and load the config file for us
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
         ModBlocks.register(modEventBus);
-        com.trycraft.trycraftmod.registry.ModEntities.register(modEventBus);
+        com.golemcraft.golemcraftmod.registry.ModEntities.register(modEventBus);
     }
 
     private void commonSetup(FMLCommonSetupEvent event) {

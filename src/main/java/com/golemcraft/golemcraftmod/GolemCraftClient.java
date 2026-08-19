@@ -1,4 +1,4 @@
-package com.trycraft.trycraftmod;
+package com.golemcraft.golemcraftmod;
 
 import net.minecraft.client.Minecraft;
 import net.neoforged.api.distmarker.Dist;
@@ -11,11 +11,11 @@ import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 
 // This class will not load on dedicated servers. Accessing client side code from here is safe.
-@Mod(value = TryCraft.MODID, dist = Dist.CLIENT)
+@Mod(value = GolemCraft.MODID, dist = Dist.CLIENT)
 // You can use EventBusSubscriber to automatically register all static methods in the class annotated with @SubscribeEvent
-@EventBusSubscriber(modid = TryCraft.MODID, value = Dist.CLIENT)
-public class TryCraftClient {
-    public TryCraftClient(ModContainer container) {
+@EventBusSubscriber(modid = GolemCraft.MODID, value = Dist.CLIENT)
+public class GolemCraftClient {
+    public GolemCraftClient(ModContainer container) {
         // Allows NeoForge to create a config screen for this mod's configs.
         // The config screen is accessed by going to the Mods screen > clicking on your mod > clicking on config.
         // Do not forget to add translations for your config options to the en_us.json file.
@@ -25,7 +25,7 @@ public class TryCraftClient {
     @SubscribeEvent
     static void onClientSetup(FMLClientSetupEvent event) {
         // Some client setup code
-        TryCraft.LOGGER.info("HELLO FROM CLIENT SETUP");
-        TryCraft.LOGGER.info("MINECRAFT NAME >> {}", Minecraft.getInstance().getUser().getName());
+        GolemCraft.LOGGER.info("HELLO FROM CLIENT SETUP");
+        GolemCraft.LOGGER.info("MINECRAFT NAME >> {}", Minecraft.getInstance().getUser().getName());
     }
 }

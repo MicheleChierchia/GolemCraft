@@ -1,29 +1,30 @@
-package com.trycraft.trycraftmod.client.renderer;
+package com.golemcraft.golemcraftmod.client.renderer;
 
-import com.trycraft.trycraftmod.TryCraft;
-import com.trycraft.trycraftmod.client.model.FlowerGolemModel;
-import com.trycraft.trycraftmod.entity.FlowerGolemEntity;
+import com.golemcraft.golemcraftmod.GolemCraft;
+import com.golemcraft.golemcraftmod.client.model.BaseGolemModel;
+import com.golemcraft.golemcraftmod.entity.BaseGolemEntity;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.resources.Identifier;
 
-public class FlowerGolemRenderer extends MobRenderer<FlowerGolemEntity, FlowerGolemRenderState, FlowerGolemModel> {
-    private static final Identifier GOLEM_LOCATION = Identifier.fromNamespaceAndPath(TryCraft.MODID, "textures/entity/flower_golem.png");
+public class BaseGolemRenderer extends MobRenderer<BaseGolemEntity, BaseGolemRenderState, BaseGolemModel> {
+    private static final Identifier GOLEM_LOCATION = Identifier.fromNamespaceAndPath(GolemCraft.MODID, "textures/entity/base_golem.png");
     private final net.minecraft.client.renderer.item.ItemModelResolver itemModelResolver;
 
-    public FlowerGolemRenderer(EntityRendererProvider.Context context) {
-        super(context, new FlowerGolemModel(context.bakeLayer(com.trycraft.trycraftmod.events.ClientEvents.FLOWER_GOLEM_LAYER)), 0.5F);
+    public BaseGolemRenderer(EntityRendererProvider.Context context) {
+        super(context, new BaseGolemModel(context.bakeLayer(com.golemcraft.golemcraftmod.events.ClientEvents.FLOWER_GOLEM_LAYER)), 0.5F);
         this.itemModelResolver = context.getItemModelResolver();
         this.addLayer(new net.minecraft.client.renderer.entity.layers.ItemInHandLayer<>(this));
+        this.addLayer(new BaseGolemEyesLayer(this));
     }
 
     @Override
-    public FlowerGolemRenderState createRenderState() {
-        return new FlowerGolemRenderState();
+    public BaseGolemRenderState createRenderState() {
+        return new BaseGolemRenderState();
     }
 
     @Override
-    public void extractRenderState(FlowerGolemEntity entity, FlowerGolemRenderState state, float partialTick) {
+    public void extractRenderState(BaseGolemEntity entity, BaseGolemRenderState state, float partialTick) {
         super.extractRenderState(entity, state, partialTick);
         
         state.isRummaging = entity.isRummaging();
@@ -45,7 +46,7 @@ public class FlowerGolemRenderer extends MobRenderer<FlowerGolemEntity, FlowerGo
     }
 
     @Override
-    public Identifier getTextureLocation(FlowerGolemRenderState state) {
+    public Identifier getTextureLocation(BaseGolemRenderState state) {
         return GOLEM_LOCATION;
     }
 }

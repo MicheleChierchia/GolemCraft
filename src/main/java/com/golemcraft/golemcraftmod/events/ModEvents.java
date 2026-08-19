@@ -1,8 +1,8 @@
-package com.trycraft.trycraftmod.events;
+package com.golemcraft.golemcraftmod.events;
 
-import com.trycraft.trycraftmod.TryCraft;
-import com.trycraft.trycraftmod.entity.FlowerGolemEntity;
-import com.trycraft.trycraftmod.registry.ModEntities;
+import com.golemcraft.golemcraftmod.GolemCraft;
+import com.golemcraft.golemcraftmod.entity.FlowerGolemEntity;
+import com.golemcraft.golemcraftmod.registry.ModEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntitySpawnReason;
@@ -15,7 +15,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
 
-@EventBusSubscriber(modid = TryCraft.MODID)
+@EventBusSubscriber(modid = GolemCraft.MODID)
 public class ModEvents {
 
     @SubscribeEvent
@@ -30,13 +30,13 @@ public class ModEvents {
             BlockPos belowPos = pos.below();
             BlockState belowState = level.getBlockState(belowPos);
 
-            if (belowState.is(Blocks.PINK_WOOL)) {
+            if (belowState.is(Blocks.IRON_BLOCK)) {
                 // Destroy blocks
                 level.destroyBlock(pos, false);
                 level.destroyBlock(belowPos, false);
 
-                // Spawn Golem
-                FlowerGolemEntity golem = ModEntities.FLOWER_GOLEM.get().create(level, EntitySpawnReason.EVENT);
+                // Spawn Base Golem
+                com.golemcraft.golemcraftmod.entity.BaseGolemEntity golem = ModEntities.BASE_GOLEM.get().create(level, EntitySpawnReason.EVENT);
                 if (golem != null) {
                     golem.setPos(pos.getX() + 0.5D, belowPos.getY(), pos.getZ() + 0.5D);
                     level.addFreshEntity(golem);

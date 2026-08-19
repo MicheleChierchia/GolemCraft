@@ -1,4 +1,4 @@
-package com.trycraft.trycraftmod;
+package com.golemcraft.golemcraftmod;
 
 import java.util.List;
 

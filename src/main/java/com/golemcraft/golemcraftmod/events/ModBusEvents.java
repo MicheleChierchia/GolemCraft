@@ -1,16 +1,17 @@
-package com.trycraft.trycraftmod.events;
+package com.golemcraft.golemcraftmod.events;
 
-import com.trycraft.trycraftmod.TryCraft;
-import com.trycraft.trycraftmod.entity.FlowerGolemEntity;
-import com.trycraft.trycraftmod.registry.ModEntities;
+import com.golemcraft.golemcraftmod.GolemCraft;
+import com.golemcraft.golemcraftmod.entity.FlowerGolemEntity;
+import com.golemcraft.golemcraftmod.registry.ModEntities;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 
-@EventBusSubscriber(modid = TryCraft.MODID)
+@EventBusSubscriber(modid = GolemCraft.MODID)
 public class ModBusEvents {
     @SubscribeEvent
     public static void entityAttributeEvent(EntityAttributeCreationEvent event) {
         event.put(ModEntities.FLOWER_GOLEM.get(), FlowerGolemEntity.createAttributes().build());
+        event.put(ModEntities.BASE_GOLEM.get(), com.golemcraft.golemcraftmod.entity.BaseGolemEntity.createAttributes().build());
     }
 }

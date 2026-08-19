@@ -1,6 +1,6 @@
-package com.trycraft.trycraftmod.entity.ai;
+package com.golemcraft.golemcraftmod.entity.ai;
 
-import com.trycraft.trycraftmod.entity.FlowerGolemEntity;
+import com.golemcraft.golemcraftmod.entity.FlowerGolemEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.ai.goal.Goal;
