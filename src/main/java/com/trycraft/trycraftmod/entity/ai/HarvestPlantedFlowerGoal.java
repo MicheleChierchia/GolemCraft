@@ -25,7 +25,7 @@ public class HarvestPlantedFlowerGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        if (!this.golem.getInventory().isEmpty()) {
+        if (!this.golem.getMainHandItem().isEmpty()) {
             return false;
         }
 
@@ -70,9 +70,9 @@ public class HarvestPlantedFlowerGoal extends Goal {
                 BlockState state = level.getBlockState(this.targetFlowerPos);
                 
                 if (isFlowerBlock(state.getBlock())) {
-                    // Harvest it directly into inventory
+                    // Harvest it directly into hand
                     ItemStack drop = new ItemStack(state.getBlock().asItem());
-                    this.golem.getInventory().setItem(0, drop);
+                    this.golem.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, drop);
                     level.destroyBlock(this.targetFlowerPos, false);
                 }
                 
@@ -83,7 +83,7 @@ public class HarvestPlantedFlowerGoal extends Goal {
 
     @Override
     public boolean canContinueToUse() {
-        return this.targetFlowerPos != null && this.golem.getInventory().isEmpty();
+        return this.targetFlowerPos != null && this.golem.getMainHandItem().isEmpty();
     }
 
     @Override

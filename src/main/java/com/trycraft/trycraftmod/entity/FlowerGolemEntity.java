@@ -17,14 +17,32 @@ import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.ContainerUser;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.phys.AABB;
 
-public class FlowerGolemEntity extends PathfinderMob {
+import net.minecraft.world.entity.LivingEntity;
 
+public class FlowerGolemEntity extends PathfinderMob implements ContainerUser {
+    private static final EntityDataAccessor<Boolean> RUMMAGING = SynchedEntityData.defineId(FlowerGolemEntity.class, EntityDataSerializers.BOOLEAN);
+    
+    @Override
+    public double getContainerInteractionRange() {
+        return 8.0D;
+    }
+
+    @Override
+    public boolean hasContainerOpen(net.minecraft.world.level.block.entity.ContainerOpenersCounter openersCounter, net.minecraft.core.BlockPos pos) {
+        return this.isRummaging(); // Mantieni aperta se sta rovistando
+    }
+
+    @Override
+    public LivingEntity getLivingEntity() {
+        return this;
+    }
     private final SimpleContainer inventory = new SimpleContainer(1);
     
     public FlowerGolemEntity(EntityType<? extends PathfinderMob> entityType, Level level) {
@@ -35,6 +53,20 @@ public class FlowerGolemEntity extends PathfinderMob {
         return Mob.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 15.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.25D);
+    }
+
+    @Override
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(RUMMAGING, false);
+    }
+
+    public void setRummaging(boolean rummaging) {
+        this.entityData.set(RUMMAGING, rummaging);
+    }
+
+    public boolean isRummaging() {
+        return this.entityData.get(RUMMAGING);
     }
 
     @Override
@@ -50,5 +82,25 @@ public class FlowerGolemEntity extends PathfinderMob {
 
     public SimpleContainer getInventory() {
         return inventory;
+    }
+
+    @Override
+    protected net.minecraft.sounds.SoundEvent getAmbientSound() {
+        return net.minecraft.world.level.block.SoundType.COPPER.getStepSound(); 
+    }
+
+    @Override
+    protected net.minecraft.sounds.SoundEvent getHurtSound(net.minecraft.world.damagesource.DamageSource damageSource) {
+        return net.minecraft.world.level.block.SoundType.COPPER.getHitSound();
+    }
+
+    @Override
+    protected net.minecraft.sounds.SoundEvent getDeathSound() {
+        return net.minecraft.world.level.block.SoundType.COPPER.getBreakSound();
+    }
+
+    @Override
+    protected void playStepSound(net.minecraft.core.BlockPos pos, net.minecraft.world.level.block.state.BlockState blockState) {
+        this.playSound(net.minecraft.world.level.block.SoundType.COPPER.getStepSound(), 0.15F, 1.0F);
     }
 }

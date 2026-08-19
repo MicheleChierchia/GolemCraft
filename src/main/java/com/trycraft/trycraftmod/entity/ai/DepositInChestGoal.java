@@ -14,6 +14,7 @@ import java.util.Optional;
 public class DepositInChestGoal extends Goal {
     private final FlowerGolemEntity golem;
     private BlockPos targetChestPos;
+    private int depositTicks;
 
     public DepositInChestGoal(FlowerGolemEntity golem) {
         this.golem = golem;
@@ -22,7 +23,7 @@ public class DepositInChestGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        if (this.golem.getInventory().isEmpty()) {
+        if (this.golem.getMainHandItem().isEmpty()) {
             return false; // No flowers to deposit
         }
 
@@ -44,6 +45,7 @@ public class DepositInChestGoal extends Goal {
 
     @Override
     public void start() {
+        this.depositTicks = 0;
         this.golem.getNavigation().moveTo(this.targetChestPos.getX() + 0.5, this.targetChestPos.getY(), this.targetChestPos.getZ() + 0.5, 1.2D);
     }
 
@@ -51,23 +53,41 @@ public class DepositInChestGoal extends Goal {
     public void tick() {
         if (this.targetChestPos != null) {
             if (this.golem.distanceToSqr(this.targetChestPos.getX() + 0.5, this.targetChestPos.getY(), this.targetChestPos.getZ() + 0.5) < 6.0D) {
-                // Deposit item
-                BlockEntity blockEntity = this.golem.level().getBlockEntity(this.targetChestPos);
-                if (blockEntity instanceof Container container) {
-                    ItemStack flower = this.golem.getInventory().getItem(0);
-                    if (!flower.isEmpty()) {
-                        for (int i = 0; i < container.getContainerSize(); i++) {
-                            if (container.getItem(i).isEmpty() || (ItemStack.isSameItemSameComponents(container.getItem(i), flower) && container.getItem(i).getCount() < container.getItem(i).getMaxStackSize())) {
-                                // For simplicity, we just add it in or increase count.
-                                // A robust implementation would use ItemHandlerHelper, but this works for simple chests.
-                                ItemStack remainder = insertItem(container, flower.copy());
-                                this.golem.getInventory().setItem(0, remainder);
-                                break;
+                this.golem.getNavigation().stop();
+                this.golem.getLookControl().setLookAt(this.targetChestPos.getX() + 0.5D, this.targetChestPos.getY() + 0.5D, this.targetChestPos.getZ() + 0.5D);
+
+                if (this.depositTicks == 0) {
+                    this.golem.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+                    BlockEntity blockEntity = this.golem.level().getBlockEntity(this.targetChestPos);
+                    if (blockEntity instanceof Container container) {
+                        container.startOpen(this.golem);
+                    }
+                    this.golem.setRummaging(true);
+                }
+
+                this.depositTicks++;
+
+                if (this.depositTicks >= 15) {
+                    // Deposit item
+                    BlockEntity blockEntity = this.golem.level().getBlockEntity(this.targetChestPos);
+                    if (blockEntity instanceof Container container) {
+                        ItemStack flower = this.golem.getMainHandItem();
+                        if (!flower.isEmpty()) {
+                            for (int i = 0; i < container.getContainerSize(); i++) {
+                                if (container.getItem(i).isEmpty() || (ItemStack.isSameItemSameComponents(container.getItem(i), flower) && container.getItem(i).getCount() < container.getItem(i).getMaxStackSize())) {
+                                    ItemStack remainder = insertItem(container, flower.copy());
+                                    this.golem.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, remainder);
+                                    break;
+                                }
                             }
                         }
                     }
+                    if (blockEntity instanceof Container container) {
+                        container.stopOpen(this.golem);
+                    }
+                    this.golem.setRummaging(false);
+                    this.targetChestPos = null; // Done
                 }
-                this.targetChestPos = null; // Done
             } else {
                 // Keep moving
                 this.golem.getNavigation().moveTo(this.targetChestPos.getX() + 0.5, this.targetChestPos.getY(), this.targetChestPos.getZ() + 0.5, 1.2D);
@@ -97,12 +117,21 @@ public class DepositInChestGoal extends Goal {
 
     @Override
     public boolean canContinueToUse() {
-        return this.targetChestPos != null && !this.golem.getInventory().isEmpty();
+        return this.targetChestPos != null && !this.golem.getMainHandItem().isEmpty();
     }
 
     @Override
     public void stop() {
+        if (this.targetChestPos != null && this.depositTicks > 0 && this.depositTicks < 15) {
+            // Se interrotto mentre la cesta era aperta, la chiudiamo
+            BlockEntity blockEntity = this.golem.level().getBlockEntity(this.targetChestPos);
+            if (blockEntity instanceof Container container) {
+                container.stopOpen(this.golem);
+            }
+            this.golem.setRummaging(false);
+        }
         this.targetChestPos = null;
+        this.depositTicks = 0;
         this.golem.getNavigation().stop();
     }
 }

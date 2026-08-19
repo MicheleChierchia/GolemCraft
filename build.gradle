@@ -204,3 +204,4 @@ tasks.register("printRenderTypeMethods") {
         }
     }
 }
+apply from: 'runtest.gradle'

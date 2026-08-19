@@ -2,13 +2,14 @@ package com.trycraft.trycraftmod.client.renderer;
 
 import com.trycraft.trycraftmod.TryCraft;
 import com.trycraft.trycraftmod.client.model.FlowerGolemModel;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.EyesLayer;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.resources.Identifier;
 
 public class FlowerGolemEyesLayer extends EyesLayer<FlowerGolemRenderState, FlowerGolemModel> {
-    private static final RenderType FLOWER_GOLEM_EYES = RenderType.eyes(ResourceLocation.fromNamespaceAndPath(TryCraft.MODID, "textures/entity/flower_golem_eyes.png"));
+    private static final RenderType EYES = RenderTypes.eyes(Identifier.fromNamespaceAndPath(TryCraft.MODID, "textures/entity/flower_golem_eyes.png"));
 
     public FlowerGolemEyesLayer(RenderLayerParent<FlowerGolemRenderState, FlowerGolemModel> renderer) {
         super(renderer);
@@ -16,6 +17,6 @@ public class FlowerGolemEyesLayer extends EyesLayer<FlowerGolemRenderState, Flow
 
     @Override
     public RenderType renderType() {
-        return FLOWER_GOLEM_EYES;
+        return EYES;
     }
 }
