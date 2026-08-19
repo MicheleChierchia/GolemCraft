@@ -2,7 +2,12 @@ package com.golemcraft.golemcraftmod.entity;
 
 import com.golemcraft.golemcraftmod.registry.ModEntities;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
+import java.util.UUID;
+import net.minecraft.world.SimpleMenuProvider;
+import net.minecraft.world.inventory.ChestMenu;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.sounds.SoundEvents;
@@ -27,7 +32,9 @@ import net.minecraft.core.particles.ParticleTypes;
 public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
     private static final EntityDataAccessor<Boolean> RUMMAGING = SynchedEntityData.defineId(BaseGolemEntity.class, EntityDataSerializers.BOOLEAN);
     
-    private final SimpleContainer inventory = new SimpleContainer(1);
+    private final SimpleContainer inventory = new SimpleContainer(27);
+    private UUID ownerUUID;
+    private long lastPickupTime = 0;
 
     public BaseGolemEntity(EntityType<? extends PathfinderMob> entityType, Level level) {
         super(entityType, level);
@@ -53,6 +60,24 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
         return this.entityData.get(RUMMAGING);
     }
 
+    public UUID getOwnerUUID() {
+        return this.ownerUUID;
+    }
+
+    public void setOwnerUUID(UUID uuid) {
+        this.ownerUUID = uuid;
+    }
+
+    public long getLastPickupTime() {
+        return this.lastPickupTime;
+    }
+
+    public void setLastPickupTime(long time) {
+        this.lastPickupTime = time;
+    }
+
+    // Metodi di salvataggio temporaneamente disabilitati a causa di incompatibilità con i mapping 1.21
+    
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this));
@@ -103,6 +128,10 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
     protected InteractionResult mobInteract(Player player, InteractionHand hand) {
         ItemStack itemstack = player.getItemInHand(hand);
         
+        if (this.ownerUUID == null) {
+            this.ownerUUID = player.getUUID();
+        }
+        
         // Transform logic
         if (itemstack.is(net.minecraft.tags.ItemTags.SMALL_FLOWERS) || itemstack.is(net.minecraft.tags.ItemTags.FLOWERS) || (itemstack.getItem() instanceof net.minecraft.world.item.BlockItem bi && (bi.getBlock() instanceof net.minecraft.world.level.block.FlowerBlock || bi.getBlock() instanceof net.minecraft.world.level.block.TallFlowerBlock))) {
             if (!this.level().isClientSide()) {
@@ -117,6 +146,13 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
                         flowerGolem.setCustomName(this.getCustomName());
                         flowerGolem.setCustomNameVisible(this.isCustomNameVisible());
                     }
+                    
+                    flowerGolem.setOwnerUUID(this.ownerUUID);
+                    flowerGolem.setLastPickupTime(this.lastPickupTime);
+                    for (int i = 0; i < this.inventory.getContainerSize(); i++) {
+                        flowerGolem.getInventory().setItem(i, this.inventory.getItem(i));
+                    }
+                    
                     this.level().addFreshEntity(flowerGolem);
                     
                     // Particles and sounds
@@ -129,6 +165,16 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
                     }
                     this.discard();
                 }
+            }
+            return InteractionResult.SUCCESS;
+        }
+        
+        if (!player.isSecondaryUseActive() && this.ownerUUID != null && this.ownerUUID.equals(player.getUUID())) {
+            if (!this.level().isClientSide()) {
+                player.openMenu(new SimpleMenuProvider(
+                    (id, playerInv, p) -> ChestMenu.threeRows(id, playerInv, this.inventory),
+                    Component.literal("Golem Inventory")
+                ));
             }
             return InteractionResult.SUCCESS;
         }

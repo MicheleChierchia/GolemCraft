@@ -23,9 +23,15 @@ public class DepositInChestGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        if (this.golem.getMainHandItem().isEmpty()) {
-            return false; // No flowers to deposit
+        if (!hasItemsToDeposit()) {
+            return false;
         }
+
+        boolean timeElapsed = this.golem.level().getGameTime() - this.golem.getLastPickupTime() >= 1200;
+        if (!isInventoryFull() && !timeElapsed) {
+            return false;
+        }
+
 
         // Search for nearest chest within 10 blocks
         BlockPos currentPos = this.golem.blockPosition();
@@ -71,14 +77,11 @@ public class DepositInChestGoal extends Goal {
                     // Deposit item
                     BlockEntity blockEntity = this.golem.level().getBlockEntity(this.targetChestPos);
                     if (blockEntity instanceof Container container) {
-                        ItemStack flower = this.golem.getMainHandItem();
-                        if (!flower.isEmpty()) {
-                            for (int i = 0; i < container.getContainerSize(); i++) {
-                                if (container.getItem(i).isEmpty() || (ItemStack.isSameItemSameComponents(container.getItem(i), flower) && container.getItem(i).getCount() < container.getItem(i).getMaxStackSize())) {
-                                    ItemStack remainder = insertItem(container, flower.copy());
-                                    this.golem.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, remainder);
-                                    break;
-                                }
+                        for (int i = 0; i < this.golem.getInventory().getContainerSize(); i++) {
+                            ItemStack stack = this.golem.getInventory().getItem(i);
+                            if (!stack.isEmpty()) {
+                                ItemStack remainder = insertItem(container, stack.copy());
+                                this.golem.getInventory().setItem(i, remainder);
                             }
                         }
                     }
@@ -87,6 +90,7 @@ public class DepositInChestGoal extends Goal {
                     }
                     this.golem.setRummaging(false);
                     this.targetChestPos = null; // Done
+                    this.golem.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, this.golem.getInventory().getItem(0).copy()); // Update visual item
                 }
             } else {
                 // Keep moving
@@ -115,9 +119,27 @@ public class DepositInChestGoal extends Goal {
         return stack; // Return remainder if no space
     }
 
+    private boolean hasItemsToDeposit() {
+        for (int i = 0; i < this.golem.getInventory().getContainerSize(); i++) {
+            if (!this.golem.getInventory().getItem(i).isEmpty()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isInventoryFull() {
+        for (int i = 0; i < this.golem.getInventory().getContainerSize(); i++) {
+            if (this.golem.getInventory().getItem(i).isEmpty()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     @Override
     public boolean canContinueToUse() {
-        return this.targetChestPos != null && !this.golem.getMainHandItem().isEmpty();
+        return this.targetChestPos != null && hasItemsToDeposit();
     }
 
     @Override

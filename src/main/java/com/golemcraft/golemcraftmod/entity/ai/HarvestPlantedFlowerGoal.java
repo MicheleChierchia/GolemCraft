@@ -25,9 +25,6 @@ public class HarvestPlantedFlowerGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        if (!this.golem.getMainHandItem().isEmpty()) {
-            return false;
-        }
 
         Level level = this.golem.level();
         BlockPos currentPos = this.golem.blockPosition();
@@ -35,7 +32,21 @@ public class HarvestPlantedFlowerGoal extends Goal {
         for (BlockPos pos : BlockPos.betweenClosed(currentPos.offset(-8, -2, -8), currentPos.offset(8, 2, 8))) {
             BlockState state = level.getBlockState(pos);
             if (isFlowerBlock(state.getBlock())) {
-                this.targetFlowerPos = pos.immutable();
+                if (hasSpaceFor(new ItemStack(state.getBlock().asItem()))) {
+                    this.targetFlowerPos = pos.immutable();
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean hasSpaceFor(ItemStack stack) {
+        net.minecraft.world.SimpleContainer inv = this.golem.getInventory();
+        for (int i = 0; i < inv.getContainerSize(); i++) {
+            ItemStack slotStack = inv.getItem(i);
+            if (slotStack.isEmpty()) return true;
+            if (ItemStack.isSameItemSameComponents(slotStack, stack) && slotStack.getCount() + stack.getCount() <= slotStack.getMaxStackSize()) {
                 return true;
             }
         }
@@ -70,9 +81,15 @@ public class HarvestPlantedFlowerGoal extends Goal {
                 BlockState state = level.getBlockState(this.targetFlowerPos);
                 
                 if (isFlowerBlock(state.getBlock())) {
-                    // Harvest it directly into hand
+                    // Harvest it directly into inventory
                     ItemStack drop = new ItemStack(state.getBlock().asItem());
-                    this.golem.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, drop);
+                    ItemStack remainder = this.golem.getInventory().addItem(drop);
+                    if (!remainder.isEmpty()) {
+                        net.minecraft.world.entity.item.ItemEntity itemEntity = new net.minecraft.world.entity.item.ItemEntity(level, this.targetFlowerPos.getX() + 0.5, this.targetFlowerPos.getY() + 0.5, this.targetFlowerPos.getZ() + 0.5, remainder);
+                        level.addFreshEntity(itemEntity);
+                    }
+                    this.golem.setLastPickupTime(this.golem.level().getGameTime());
+                    this.golem.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, this.golem.getInventory().getItem(0).copy());
                     level.destroyBlock(this.targetFlowerPos, false);
                 }
                 
@@ -83,7 +100,9 @@ public class HarvestPlantedFlowerGoal extends Goal {
 
     @Override
     public boolean canContinueToUse() {
-        return this.targetFlowerPos != null && this.golem.getMainHandItem().isEmpty();
+        if (this.targetFlowerPos == null) return false;
+        BlockState state = this.golem.level().getBlockState(this.targetFlowerPos);
+        return isFlowerBlock(state.getBlock()) && hasSpaceFor(new ItemStack(state.getBlock().asItem()));
     }
 
     @Override

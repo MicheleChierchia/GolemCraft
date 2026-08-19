@@ -20,14 +20,26 @@ public class PickupFlowerGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        if (!this.golem.getMainHandItem().isEmpty()) {
-            return false; // Hands full
-        }
+        // Need space
+        // Check dynamically inside loop
+
 
         List<ItemEntity> items = this.golem.level().getEntitiesOfClass(ItemEntity.class, this.golem.getBoundingBox().inflate(16.0D, 8.0D, 16.0D));
         for (ItemEntity item : items) {
-            if (isFlower(item.getItem())) {
+            if (isFlower(item.getItem()) && hasSpaceFor(item.getItem())) {
                 this.targetItem = item;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean hasSpaceFor(ItemStack stack) {
+        net.minecraft.world.SimpleContainer inv = this.golem.getInventory();
+        for (int i = 0; i < inv.getContainerSize(); i++) {
+            ItemStack slotStack = inv.getItem(i);
+            if (slotStack.isEmpty()) return true;
+            if (ItemStack.isSameItemSameComponents(slotStack, stack) && slotStack.getCount() + stack.getCount() <= slotStack.getMaxStackSize()) {
                 return true;
             }
         }
@@ -54,8 +66,17 @@ public class PickupFlowerGoal extends Goal {
             if (this.golem.getBoundingBox().inflate(1.0D).intersects(this.targetItem.getBoundingBox())) {
                 // Pick up the item
                 ItemStack stack = this.targetItem.getItem().copy();
-                this.golem.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, stack);
-                this.targetItem.discard();
+                ItemStack remainder = this.golem.getInventory().addItem(stack);
+                
+                if (remainder.isEmpty()) {
+                    this.targetItem.discard();
+                } else {
+                    this.targetItem.setItem(remainder);
+                }
+                
+                this.golem.setLastPickupTime(this.golem.level().getGameTime());
+                this.golem.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, this.golem.getInventory().getItem(0).copy());
+                
                 this.golem.level().playSound(null, this.golem.blockPosition(), net.minecraft.sounds.SoundEvents.ITEM_PICKUP, net.minecraft.sounds.SoundSource.NEUTRAL, 1.0f, 1.0f);
                 this.targetItem = null;
             }
@@ -64,7 +85,7 @@ public class PickupFlowerGoal extends Goal {
 
     @Override
     public boolean canContinueToUse() {
-        return this.targetItem != null && this.targetItem.isAlive() && this.golem.getMainHandItem().isEmpty();
+        return this.targetItem != null && this.targetItem.isAlive() && hasSpaceFor(this.targetItem.getItem());
     }
 
     @Override
