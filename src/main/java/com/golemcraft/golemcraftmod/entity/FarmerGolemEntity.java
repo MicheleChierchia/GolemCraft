@@ -27,7 +27,7 @@ public class FarmerGolemEntity extends BaseGolemEntity {
         this.goalSelector.addGoal(5, new com.golemcraft.golemcraftmod.entity.ai.EquipHoeGoal(this));
         this.goalSelector.addGoal(6, new WaterAvoidingRandomStrollGoal(this, 1.0D));
     }
-
+    
     @Override
     protected InteractionResult mobInteract(Player player, InteractionHand hand) {
         if (this.getOwnerUUID() == null) {

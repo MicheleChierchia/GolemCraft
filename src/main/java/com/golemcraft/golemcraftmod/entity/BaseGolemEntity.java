@@ -35,6 +35,7 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
     private final SimpleContainer inventory = new SimpleContainer(27);
     private UUID ownerUUID;
     private long lastPickupTime = 0;
+    public int actionCooldown = 0;
 
     public BaseGolemEntity(EntityType<? extends PathfinderMob> entityType, Level level) {
         super(entityType, level);
@@ -144,6 +145,10 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
     @Override
     public void tick() {
         super.tick();
+        if (this.actionCooldown > 0) {
+            this.actionCooldown--;
+        }
+        
         if (!this.level().isClientSide() && !(this instanceof com.golemcraft.golemcraftmod.entity.FarmerGolemEntity)) {
             ItemStack slot0 = this.inventory.getItem(0);
             ItemStack hand = this.getItemInHand(InteractionHand.MAIN_HAND);

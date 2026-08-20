@@ -27,6 +27,7 @@ public class FarmerHarvestGoal extends Goal {
 
     @Override
     public boolean canUse() {
+        if (this.golem.actionCooldown > 0) return false;
         if (this.scanCooldown > 0) {
             this.scanCooldown--;
             return false;
@@ -78,7 +79,7 @@ public class FarmerHarvestGoal extends Goal {
             this.golem.getLookControl().setLookAt(this.targetPos.getX() + 0.5D, this.targetPos.getY(), this.targetPos.getZ() + 0.5D);
             this.breakTicks++;
             
-            if (this.breakTicks >= 5) { // 0.25 seconds to break
+            if (this.breakTicks >= 15) { // 0.75 seconds to break
                 Level level = this.golem.level();
                 BlockState state = level.getBlockState(this.targetPos);
                 
@@ -142,6 +143,7 @@ public class FarmerHarvestGoal extends Goal {
     public void stop() {
         this.targetPos = null;
         this.breakTicks = 0;
+        this.golem.actionCooldown = 15;
         this.golem.getNavigation().stop();
     }
 }

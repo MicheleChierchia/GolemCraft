@@ -29,6 +29,7 @@ public class FarmerTillGoal extends Goal {
 
     @Override
     public boolean canUse() {
+        if (this.golem.actionCooldown > 0) return false;
         if (this.scanCooldown > 0) {
             this.scanCooldown--;
             return false;
@@ -83,6 +84,9 @@ public class FarmerTillGoal extends Goal {
         } else {
             this.golem.getNavigation().stop();
             this.golem.getLookControl().setLookAt(this.targetPos.getX() + 0.5D, this.targetPos.getY(), this.targetPos.getZ() + 0.5D);
+            if (this.tillTicks == 0) {
+                this.golem.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+            }
             this.tillTicks++;
             
             if (this.tillTicks >= 15) { // 0.75 seconds to till
@@ -126,6 +130,7 @@ public class FarmerTillGoal extends Goal {
     public void stop() {
         this.targetPos = null;
         this.tillTicks = 0;
+        this.golem.actionCooldown = 15;
         this.golem.getNavigation().stop();
     }
 }

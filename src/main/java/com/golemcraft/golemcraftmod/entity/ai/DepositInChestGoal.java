@@ -23,6 +23,8 @@ public class DepositInChestGoal extends Goal {
 
     @Override
     public boolean canUse() {
+        if (this.golem.actionCooldown > 0) return false;
+
         if (!hasItemsToDeposit()) {
             return false;
         }
@@ -75,7 +77,7 @@ public class DepositInChestGoal extends Goal {
 
                 this.depositTicks++;
 
-                if (this.depositTicks >= 15) {
+                if (this.depositTicks >= 30) {
                     // Deposit item
                     BlockEntity blockEntity = this.golem.level().getBlockEntity(this.targetChestPos);
                     if (blockEntity instanceof Container container) {
@@ -95,6 +97,7 @@ public class DepositInChestGoal extends Goal {
                     }
                     this.golem.setRummaging(false);
                     this.targetChestPos = null; // Done
+                    this.golem.actionCooldown = 15;
                     if (!(this.golem instanceof com.golemcraft.golemcraftmod.entity.FarmerGolemEntity)) {
                         this.golem.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, this.golem.getInventory().getItem(0).copy()); // Update visual item
                     }
@@ -171,16 +174,10 @@ public class DepositInChestGoal extends Goal {
 
     @Override
     public void stop() {
-        if (this.targetChestPos != null && this.depositTicks > 0 && this.depositTicks < 15) {
-            // Se interrotto mentre la cesta era aperta, la chiudiamo
-            BlockEntity blockEntity = this.golem.level().getBlockEntity(this.targetChestPos);
-            if (blockEntity instanceof Container container) {
-                container.stopOpen(this.golem);
-            }
-            this.golem.setRummaging(false);
-        }
         this.targetChestPos = null;
         this.depositTicks = 0;
+        this.golem.setRummaging(false);
+        this.golem.actionCooldown = 15;
         this.golem.getNavigation().stop();
     }
 }

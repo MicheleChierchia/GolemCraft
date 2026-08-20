@@ -28,6 +28,7 @@ public class FarmerPlantGoal extends Goal {
 
     @Override
     public boolean canUse() {
+        if (this.golem.actionCooldown > 0) return false;
         if (this.scanCooldown > 0) {
             this.scanCooldown--;
             return false;
@@ -42,7 +43,9 @@ public class FarmerPlantGoal extends Goal {
         for (BlockPos pos : BlockPos.betweenClosed(currentPos.offset(-8, -2, -8), currentPos.offset(8, 2, 8))) {
             BlockState state = level.getBlockState(pos);
             if (state.is(Blocks.FARMLAND) && level.getBlockState(pos.above()).isAir()) {
-                validBlocks.add(pos.immutable());
+                if (!isReservedForFruit(level, pos)) {
+                    validBlocks.add(pos.immutable());
+                }
             }
         }
         
@@ -96,6 +99,9 @@ public class FarmerPlantGoal extends Goal {
         } else {
             this.golem.getNavigation().stop();
             this.golem.getLookControl().setLookAt(this.targetPos.getX() + 0.5D, this.targetPos.getY() + 1, this.targetPos.getZ() + 0.5D);
+            if (this.plantTicks == 0) {
+                this.golem.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+            }
             this.plantTicks++;
             
             if (this.plantTicks >= 15) { // 0.75 seconds to plant
@@ -137,6 +143,35 @@ public class FarmerPlantGoal extends Goal {
     public void stop() {
         this.targetPos = null;
         this.plantTicks = 0;
+        this.golem.actionCooldown = 15;
         this.golem.getNavigation().stop();
+    }
+    
+    private boolean isReservedForFruit(Level level, BlockPos farmlandPos) {
+        BlockPos[] neighbors = new BlockPos[]{
+            farmlandPos.north().above(), farmlandPos.south().above(),
+            farmlandPos.east().above(), farmlandPos.west().above()
+        };
+        
+        for (BlockPos n : neighbors) {
+            BlockState state = level.getBlockState(n);
+            if (state.getBlock() instanceof net.minecraft.world.level.block.StemBlock) {
+                boolean hasFruit = false;
+                BlockPos[] stemNeighbors = new BlockPos[]{
+                    n.north(), n.south(), n.east(), n.west()
+                };
+                for (BlockPos sn : stemNeighbors) {
+                    Block snBlock = level.getBlockState(sn).getBlock();
+                    if (snBlock == Blocks.MELON || snBlock == Blocks.PUMPKIN) {
+                        hasFruit = true;
+                        break;
+                    }
+                }
+                if (!hasFruit) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }
