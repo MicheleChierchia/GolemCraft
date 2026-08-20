@@ -28,6 +28,12 @@ public class ModEntities {
                             .sized(0.5f, 1.0f)
                             .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(GolemCraft.MODID, "base_golem"))));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<com.golemcraft.golemcraftmod.entity.FarmerGolemEntity>> FARMER_GOLEM =
+            ENTITY_TYPES.register("farmer_golem", () ->
+                    EntityType.Builder.of(com.golemcraft.golemcraftmod.entity.FarmerGolemEntity::new, MobCategory.MISC)
+                            .sized(0.5f, 1.0f)
+                            .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(GolemCraft.MODID, "farmer_golem"))));
+
     public static void register(IEventBus eventBus) {
         ENTITY_TYPES.register(eventBus);
     }

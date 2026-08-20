@@ -11,11 +11,15 @@ public class BaseGolemRenderer extends MobRenderer<BaseGolemEntity, BaseGolemRen
     private static final Identifier GOLEM_LOCATION = Identifier.fromNamespaceAndPath(GolemCraft.MODID, "textures/entity/base_golem.png");
     private final net.minecraft.client.renderer.item.ItemModelResolver itemModelResolver;
 
-    public BaseGolemRenderer(EntityRendererProvider.Context context) {
-        super(context, new BaseGolemModel(context.bakeLayer(com.golemcraft.golemcraftmod.events.ClientEvents.FLOWER_GOLEM_LAYER)), 0.5F);
+    public BaseGolemRenderer(EntityRendererProvider.Context context, net.minecraft.client.model.geom.ModelLayerLocation layer) {
+        super(context, new BaseGolemModel(context.bakeLayer(layer)), 0.5F);
         this.itemModelResolver = context.getItemModelResolver();
         this.addLayer(new net.minecraft.client.renderer.entity.layers.ItemInHandLayer<>(this));
         this.addLayer(new BaseGolemEyesLayer(this));
+    }
+
+    public BaseGolemRenderer(EntityRendererProvider.Context context) {
+        this(context, com.golemcraft.golemcraftmod.events.ClientEvents.FLOWER_GOLEM_LAYER);
     }
 
     @Override

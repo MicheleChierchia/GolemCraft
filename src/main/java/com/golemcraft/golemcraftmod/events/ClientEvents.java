@@ -15,16 +15,19 @@ import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 public class ClientEvents {
     
     public static final ModelLayerLocation FLOWER_GOLEM_LAYER = new ModelLayerLocation(Identifier.fromNamespaceAndPath(GolemCraft.MODID, "flower_golem"), "main");
+    public static final ModelLayerLocation FARMER_GOLEM_LAYER = new ModelLayerLocation(Identifier.fromNamespaceAndPath(GolemCraft.MODID, "farmer_golem"), "main");
 
     @SubscribeEvent
     public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(ModEntities.FLOWER_GOLEM.get(), FlowerGolemRenderer::new);
         event.registerEntityRenderer(ModEntities.BASE_GOLEM.get(), com.golemcraft.golemcraftmod.client.renderer.BaseGolemRenderer::new);
+        event.registerEntityRenderer(ModEntities.FARMER_GOLEM.get(), com.golemcraft.golemcraftmod.client.renderer.FarmerGolemRenderer::new);
     }
 
     @SubscribeEvent
     public static void registerLayerDefinitions(EntityRenderersEvent.RegisterLayerDefinitions event) {
         event.registerLayerDefinition(FLOWER_GOLEM_LAYER, com.golemcraft.golemcraftmod.client.model.BaseGolemModel::createBodyLayer);
+        event.registerLayerDefinition(FARMER_GOLEM_LAYER, com.golemcraft.golemcraftmod.client.model.BaseGolemModel::createFarmerBodyLayer);
     }
     
     public static class ModelLayers {}

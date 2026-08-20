@@ -1,6 +1,6 @@
 package com.golemcraft.golemcraftmod.entity.ai;
 
-import com.golemcraft.golemcraftmod.entity.FlowerGolemEntity;
+import com.golemcraft.golemcraftmod.entity.BaseGolemEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.ai.goal.Goal;
@@ -12,11 +12,11 @@ import java.util.EnumSet;
 import java.util.Optional;
 
 public class DepositInChestGoal extends Goal {
-    private final FlowerGolemEntity golem;
+    private final BaseGolemEntity golem;
     private BlockPos targetChestPos;
     private int depositTicks;
 
-    public DepositInChestGoal(FlowerGolemEntity golem) {
+    public DepositInChestGoal(BaseGolemEntity golem) {
         this.golem = golem;
         this.setFlags(EnumSet.of(Goal.Flag.MOVE));
     }
@@ -27,7 +27,7 @@ public class DepositInChestGoal extends Goal {
             return false;
         }
 
-        boolean timeElapsed = this.golem.level().getGameTime() - this.golem.getLastPickupTime() >= 1200;
+        boolean timeElapsed = this.golem.level().getGameTime() - this.golem.getLastPickupTime() >= 100;
         if (!isInventoryFull() && !timeElapsed) {
             return false;
         }
@@ -38,8 +38,10 @@ public class DepositInChestGoal extends Goal {
         Optional<BlockPos> nearestChest = BlockPos.betweenClosedStream(
                 currentPos.offset(-10, -3, -10),
                 currentPos.offset(10, 3, 10)
-        ).filter(pos -> this.golem.level().getBlockEntity(pos) instanceof ChestBlockEntity)
-         .findFirst().map(BlockPos::immutable);
+        ).map(BlockPos::immutable)
+         .filter(pos -> this.golem.level().getBlockEntity(pos) instanceof ChestBlockEntity)
+         .filter(pos -> this.golem.getNavigation().createPath(pos, 1) != null || this.golem.getNavigation().createPath(pos.above(), 1) != null)
+         .min(java.util.Comparator.comparingDouble(pos -> currentPos.distSqr(pos)));
 
         if (nearestChest.isPresent()) {
             this.targetChestPos = nearestChest.get();
@@ -52,7 +54,7 @@ public class DepositInChestGoal extends Goal {
     @Override
     public void start() {
         this.depositTicks = 0;
-        this.golem.getNavigation().moveTo(this.targetChestPos.getX() + 0.5, this.targetChestPos.getY(), this.targetChestPos.getZ() + 0.5, 1.2D);
+        moveToChest();
     }
 
     @Override
@@ -80,6 +82,9 @@ public class DepositInChestGoal extends Goal {
                         for (int i = 0; i < this.golem.getInventory().getContainerSize(); i++) {
                             ItemStack stack = this.golem.getInventory().getItem(i);
                             if (!stack.isEmpty()) {
+                                if (this.golem instanceof com.golemcraft.golemcraftmod.entity.FarmerGolemEntity && stack.getItem() instanceof net.minecraft.world.item.HoeItem) {
+                                    continue; // Keep hoes!
+                                }
                                 ItemStack remainder = insertItem(container, stack.copy());
                                 this.golem.getInventory().setItem(i, remainder);
                             }
@@ -90,12 +95,26 @@ public class DepositInChestGoal extends Goal {
                     }
                     this.golem.setRummaging(false);
                     this.targetChestPos = null; // Done
-                    this.golem.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, this.golem.getInventory().getItem(0).copy()); // Update visual item
+                    if (!(this.golem instanceof com.golemcraft.golemcraftmod.entity.FarmerGolemEntity)) {
+                        this.golem.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, this.golem.getInventory().getItem(0).copy()); // Update visual item
+                    }
                 }
             } else {
                 // Keep moving
-                this.golem.getNavigation().moveTo(this.targetChestPos.getX() + 0.5, this.targetChestPos.getY(), this.targetChestPos.getZ() + 0.5, 1.2D);
+                if (this.golem.getNavigation().isDone()) {
+                    moveToChest();
+                }
             }
+        }
+    }
+    
+    private void moveToChest() {
+        net.minecraft.world.level.pathfinder.Path path = this.golem.getNavigation().createPath(this.targetChestPos, 1);
+        if (path == null) {
+            path = this.golem.getNavigation().createPath(this.targetChestPos.above(), 1);
+        }
+        if (path != null) {
+            this.golem.getNavigation().moveTo(path, 1.2D);
         }
     }
 
@@ -121,7 +140,11 @@ public class DepositInChestGoal extends Goal {
 
     private boolean hasItemsToDeposit() {
         for (int i = 0; i < this.golem.getInventory().getContainerSize(); i++) {
-            if (!this.golem.getInventory().getItem(i).isEmpty()) {
+            ItemStack stack = this.golem.getInventory().getItem(i);
+            if (!stack.isEmpty()) {
+                if (this.golem instanceof com.golemcraft.golemcraftmod.entity.FarmerGolemEntity && stack.getItem() instanceof net.minecraft.world.item.HoeItem) {
+                    continue;
+                }
                 return true;
             }
         }
@@ -139,7 +162,11 @@ public class DepositInChestGoal extends Goal {
 
     @Override
     public boolean canContinueToUse() {
-        return this.targetChestPos != null && hasItemsToDeposit();
+        if (this.targetChestPos == null || !hasItemsToDeposit()) return false;
+        if (this.golem.getNavigation().isDone() && this.golem.distanceToSqr(this.targetChestPos.getX() + 0.5, this.targetChestPos.getY(), this.targetChestPos.getZ() + 0.5) >= 6.0D) {
+            return false;
+        }
+        return true;
     }
 
     @Override
