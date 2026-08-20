@@ -6,4 +6,5 @@ public class BaseGolemRenderState extends ArmedEntityRenderState {
     public boolean isRummaging;
 
     public net.minecraft.world.entity.HumanoidArm mainArm;
+    public int oxidationLevel;
 }

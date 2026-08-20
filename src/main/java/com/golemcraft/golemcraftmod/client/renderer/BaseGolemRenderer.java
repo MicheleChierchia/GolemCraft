@@ -8,7 +8,12 @@ import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.resources.Identifier;
 
 public class BaseGolemRenderer extends MobRenderer<BaseGolemEntity, BaseGolemRenderState, BaseGolemModel> {
-    private static final Identifier GOLEM_LOCATION = Identifier.fromNamespaceAndPath(GolemCraft.MODID, "textures/entity/base_golem.png");
+    private static final Identifier[] GOLEM_LOCATIONS = new Identifier[]{
+        Identifier.fromNamespaceAndPath(GolemCraft.MODID, "textures/entity/base_golem.png"),
+        Identifier.fromNamespaceAndPath(GolemCraft.MODID, "textures/entity/exposed_base_golem.png"),
+        Identifier.fromNamespaceAndPath(GolemCraft.MODID, "textures/entity/weathered_base_golem.png"),
+        Identifier.fromNamespaceAndPath(GolemCraft.MODID, "textures/entity/oxidized_base_golem.png")
+    };
     private final net.minecraft.client.renderer.item.ItemModelResolver itemModelResolver;
 
     public BaseGolemRenderer(EntityRendererProvider.Context context, net.minecraft.client.model.geom.ModelLayerLocation layer) {
@@ -32,6 +37,7 @@ public class BaseGolemRenderer extends MobRenderer<BaseGolemEntity, BaseGolemRen
         super.extractRenderState(entity, state, partialTick);
         
         state.isRummaging = entity.isRummaging();
+        state.oxidationLevel = entity.getOxidationLevel();
         state.mainArm = entity.getMainArm();
         net.minecraft.world.item.ItemStack mainHandItem = entity.getMainHandItem();
         
@@ -51,6 +57,6 @@ public class BaseGolemRenderer extends MobRenderer<BaseGolemEntity, BaseGolemRen
 
     @Override
     public Identifier getTextureLocation(BaseGolemRenderState state) {
-        return GOLEM_LOCATION;
+        return GOLEM_LOCATIONS[state.oxidationLevel];
     }
 }

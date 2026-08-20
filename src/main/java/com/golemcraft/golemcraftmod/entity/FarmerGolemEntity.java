@@ -28,21 +28,5 @@ public class FarmerGolemEntity extends BaseGolemEntity {
         this.goalSelector.addGoal(6, new WaterAvoidingRandomStrollGoal(this, 1.0D));
     }
     
-    @Override
-    protected InteractionResult mobInteract(Player player, InteractionHand hand) {
-        if (this.getOwnerUUID() == null) {
-            this.setOwnerUUID(player.getUUID());
-        }
-        
-        if (!player.isSecondaryUseActive() && this.getOwnerUUID().equals(player.getUUID())) {
-            if (!this.level().isClientSide()) {
-                player.openMenu(new SimpleMenuProvider(
-                    (id, playerInv, p) -> ChestMenu.threeRows(id, playerInv, this.getInventory()),
-                    Component.literal("Farmer Golem Inventory")
-                ));
-            }
-            return InteractionResult.SUCCESS;
-        }
-        return InteractionResult.PASS;
-    }
+
 }

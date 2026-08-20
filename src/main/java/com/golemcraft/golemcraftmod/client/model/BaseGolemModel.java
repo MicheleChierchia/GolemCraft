@@ -104,6 +104,21 @@ public class BaseGolemModel extends EntityModel<BaseGolemRenderState> implements
     @Override
     public void setupAnim(BaseGolemRenderState state) {
         super.setupAnim(state);
+        
+        if (state.oxidationLevel == 3) {
+            this.head.yRot = state.yRot * ((float)Math.PI / 180F);
+            this.head.xRot = state.xRot * ((float)Math.PI / 180F);
+            this.head.zRot = 0.0F;
+            this.rightLeg.xRot = 0.0F;
+            this.leftLeg.xRot = 0.0F;
+            this.rightArm.xRot = 0.0F;
+            this.leftArm.xRot = 0.0F;
+            this.rightArm.zRot = 0.0F;
+            this.leftArm.zRot = 0.0F;
+            this.body.xRot = 0.0F;
+            return;
+        }
+        
         this.head.yRot = state.yRot * ((float)Math.PI / 180F);
         this.head.xRot = state.xRot * ((float)Math.PI / 180F);
         this.head.zRot = 0.0F; // Reset zRot to avoid glitches

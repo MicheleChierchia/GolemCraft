@@ -6,7 +6,12 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.Identifier;
 
 public class FlowerGolemRenderer extends BaseGolemRenderer {
-    private static final Identifier GOLEM_LOCATION = Identifier.fromNamespaceAndPath(GolemCraft.MODID, "textures/entity/flower_golem.png");
+    private static final Identifier[] GOLEM_LOCATIONS = new Identifier[]{
+        Identifier.fromNamespaceAndPath(GolemCraft.MODID, "textures/entity/flower_golem.png"),
+        Identifier.fromNamespaceAndPath(GolemCraft.MODID, "textures/entity/exposed_flower_golem.png"),
+        Identifier.fromNamespaceAndPath(GolemCraft.MODID, "textures/entity/weathered_flower_golem.png"),
+        Identifier.fromNamespaceAndPath(GolemCraft.MODID, "textures/entity/oxidized_flower_golem.png")
+    };
 
     public FlowerGolemRenderer(EntityRendererProvider.Context context) {
         super(context);
@@ -15,6 +20,6 @@ public class FlowerGolemRenderer extends BaseGolemRenderer {
 
     @Override
     public Identifier getTextureLocation(BaseGolemRenderState state) {
-        return GOLEM_LOCATION;
+        return GOLEM_LOCATIONS[state.oxidationLevel];
     }
 }
