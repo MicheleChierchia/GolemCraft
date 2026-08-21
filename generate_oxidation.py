@@ -36,11 +36,13 @@ BASE_TEXTURES = [
     "base_golem",
     "farmer_golem",
     "flower_golem",
+    "soldier_golem",
 ]
 
 # Pixel rows to protect fully from oxidation per golem
 PROTECTED_ROWS = {
     "farmer_golem": list(range(40, 53)),  # straw hat brim
+    "soldier_golem": list(range(8, 11)), # helmet sides and bandana
 }
 
 # Individual pixels to protect: { "golem_name": set of (x, y) }
@@ -55,8 +57,19 @@ def _farmer_hat_pixels():
         pts.add((x, 10))
     return pts
 
+def _soldier_helmet_pixels():
+    pts = set()
+    for y in range(0, 8):
+        for x in range(8, 24):
+            pts.add((x, y))
+    # the leather strap on the body
+    for x in range(20, 28):
+        pts.add((x, 20 + (x - 20)))
+    return pts
+
 PROTECTED_PIXELS = {
     "farmer_golem": _farmer_hat_pixels(),
+    "soldier_golem": _soldier_helmet_pixels(),
 }
 
 # ── helpers ────────────────────────────────────────────────────────────────────

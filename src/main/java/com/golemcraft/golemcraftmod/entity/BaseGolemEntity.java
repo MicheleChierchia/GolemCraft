@@ -185,7 +185,8 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
                 this.setOxidationLevel(this.getOxidationLevel() + 1);
             }
 
-            if (!(this instanceof com.golemcraft.golemcraftmod.entity.FarmerGolemEntity)) {
+            if (!(this instanceof com.golemcraft.golemcraftmod.entity.FarmerGolemEntity)
+                    && !(this instanceof com.golemcraft.golemcraftmod.entity.SoldierGolemEntity)) {
                 ItemStack slot0 = this.inventory.getItem(0);
                 ItemStack hand = this.getItemInHand(InteractionHand.MAIN_HAND);
                 if (!ItemStack.isSameItemSameComponents(slot0, hand) || slot0.getCount() != hand.getCount()) {
@@ -407,6 +408,56 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
                 }
                 return InteractionResult.SUCCESS;
             }
+
+            String itemName = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(itemstack.getItem()).getPath();
+            boolean isWeapon = itemstack.is(net.minecraft.tags.ItemTags.SWORDS) ||
+                               itemName.contains("sword") ||
+                               itemstack.is(net.minecraft.world.item.Items.BOW) ||
+                               itemstack.is(net.minecraft.world.item.Items.CROSSBOW) ||
+                               itemstack.is(net.minecraft.world.item.Items.TRIDENT) ||
+                               (itemstack.getItem() instanceof net.minecraft.world.item.AxeItem && this.getOxidationLevel() == 0 && !this.isWaxed());
+
+            if (isWeapon) {
+                if (!this.level().isClientSide()) {
+                    SoldierGolemEntity soldierGolem = ModEntities.SOLDIER_GOLEM.get().create(this.level(), net.minecraft.world.entity.EntitySpawnReason.CONVERSION);
+                    if (soldierGolem != null) {
+                        soldierGolem.setPos(this.getX(), this.getY(), this.getZ());
+                        soldierGolem.setYRot(this.getYRot());
+                        soldierGolem.setXRot(this.getXRot());
+                        soldierGolem.setHealth(this.getHealth());
+                        soldierGolem.yBodyRot = this.yBodyRot;
+                        if (this.hasCustomName()) {
+                            soldierGolem.setCustomName(this.getCustomName());
+                            soldierGolem.setCustomNameVisible(this.isCustomNameVisible());
+                        }
+
+                        soldierGolem.setOwnerUUID(this.ownerUUID);
+                        soldierGolem.setLastPickupTime(this.lastPickupTime);
+                        for (int i = 0; i < this.inventory.getContainerSize(); i++) {
+                            soldierGolem.getInventory().setItem(i, this.inventory.getItem(i));
+                        }
+
+                        // Equip weapon only to the equipment slot (not inventory), like FarmerGolem
+                        ItemStack weaponStack = itemstack.copy();
+                        weaponStack.setCount(1);
+                        soldierGolem.setItemInHand(InteractionHand.MAIN_HAND, weaponStack);
+                        soldierGolem.setDropChance(net.minecraft.world.entity.EquipmentSlot.MAINHAND, 0.0F);
+
+                        this.level().addFreshEntity(soldierGolem);
+
+                        // Particles and sounds
+                        net.minecraft.server.level.ServerLevel serverLevel = (net.minecraft.server.level.ServerLevel) this.level();
+                        serverLevel.sendParticles(ParticleTypes.HAPPY_VILLAGER, this.getX(), this.getY() + 0.5D, this.getZ(), 15, 0.2D, 0.2D, 0.2D, 0.0D);
+                        this.playSound(SoundEvents.ZOMBIE_VILLAGER_CURE, 1.0F, 1.0F);
+
+                        if (!player.getAbilities().instabuild) {
+                            itemstack.shrink(1);
+                        }
+                        this.discard();
+                    }
+                }
+                return InteractionResult.SUCCESS;
+            }
         }
         
         InteractionResult interactionResult = super.mobInteract(player, hand);
@@ -414,9 +465,15 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
             return interactionResult;
         }
 
+        String itemNameForTool = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(itemstack.getItem()).getPath();
         boolean isHoldingTool = itemstack.getItem() instanceof net.minecraft.world.item.AxeItem || 
                                 itemstack.is(net.minecraft.world.item.Items.HONEYCOMB) ||
                                 itemstack.is(net.minecraft.tags.ItemTags.HOES) ||
+                                itemstack.is(net.minecraft.tags.ItemTags.SWORDS) ||
+                                itemNameForTool.contains("sword") ||
+                                itemstack.is(net.minecraft.world.item.Items.BOW) ||
+                                itemstack.is(net.minecraft.world.item.Items.CROSSBOW) ||
+                                itemstack.is(net.minecraft.world.item.Items.TRIDENT) ||
                                 itemstack.is(net.minecraft.world.item.Items.LEAD) ||
                                 itemstack.is(net.minecraft.tags.ItemTags.PICKAXES);
 

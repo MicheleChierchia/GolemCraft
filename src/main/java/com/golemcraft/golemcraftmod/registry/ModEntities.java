@@ -2,6 +2,7 @@ package com.golemcraft.golemcraftmod.registry;
 
 import com.golemcraft.golemcraftmod.GolemCraft;
 import com.golemcraft.golemcraftmod.entity.FlowerGolemEntity;
+import com.golemcraft.golemcraftmod.entity.SoldierGolemEntity;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
@@ -33,6 +34,12 @@ public class ModEntities {
                     EntityType.Builder.of(com.golemcraft.golemcraftmod.entity.FarmerGolemEntity::new, MobCategory.MISC)
                             .sized(0.5f, 1.0f)
                             .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(GolemCraft.MODID, "farmer_golem"))));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<SoldierGolemEntity>> SOLDIER_GOLEM =
+            ENTITY_TYPES.register("soldier_golem", () ->
+                    EntityType.Builder.of(SoldierGolemEntity::new, MobCategory.MISC)
+                            .sized(0.5f, 1.0f)
+                            .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(GolemCraft.MODID, "soldier_golem"))));
 
     public static void register(IEventBus eventBus) {
         ENTITY_TYPES.register(eventBus);

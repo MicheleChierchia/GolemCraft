@@ -22,6 +22,7 @@ public class ClientEvents {
         event.registerEntityRenderer(ModEntities.FLOWER_GOLEM.get(), FlowerGolemRenderer::new);
         event.registerEntityRenderer(ModEntities.BASE_GOLEM.get(), com.golemcraft.golemcraftmod.client.renderer.BaseGolemRenderer::new);
         event.registerEntityRenderer(ModEntities.FARMER_GOLEM.get(), com.golemcraft.golemcraftmod.client.renderer.FarmerGolemRenderer::new);
+        event.registerEntityRenderer(ModEntities.SOLDIER_GOLEM.get(), com.golemcraft.golemcraftmod.client.renderer.SoldierGolemRenderer::new);
     }
 
     @SubscribeEvent

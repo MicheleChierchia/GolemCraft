@@ -164,17 +164,35 @@ public class BaseGolemModel extends EntityModel<BaseGolemRenderState> implements
         this.leftArm.zRot = -(Mth.cos(time * 0.09F) * 0.05F + 0.05F);
         
         if (state.isRummaging) {
-            this.body.xRot = 0.2F; // Si piega leggermente in avanti
-            this.head.xRot += 0.4F; // Guarda giù verso la cassa
-            
-            // Allunga il braccio destro nella cassa come fa il Copper Golem col bottone
+            this.body.xRot = 0.2F;
+            this.head.xRot += 0.4F;
             this.rightArm.xRot = -1.2F;
-            this.leftArm.xRot = -0.2F; // Il braccio sinistro resta più rilassato
+            this.leftArm.xRot = -0.2F;
             this.rightArm.zRot = 0.0F;
+        } else if (state.attackAnimProgress > 0.0F) {
+            // attackAnimProgress: 1.0 (just hit) → 0.0 (done)
+            // t: 0.0 → 1.0
+            float t = 1.0f - state.attackAnimProgress;
+            float swing = Mth.sin(t * (float) Math.PI);
+            
+            // Il corpo si piega in avanti (lunge) e ruota col colpo per dare peso
+            this.body.xRot = swing * 0.4F;
+            this.body.yRot = -swing * 0.3F;
+            this.head.xRot += swing * 0.2F; // Abbassa un po' la testa
+            
+            // Braccio destro: fendente pesante e ampio dall'alto verso il basso
+            this.rightArm.xRot -= swing * 2.5F; // Più verticale
+            this.rightArm.yRot  = -swing * 0.5F; // Taglia verso l'interno
+            this.rightArm.zRot  = swing * 0.2F;
+            
+            // Braccio sinistro: va indietro per bilanciare il colpo
+            this.leftArm.xRot += swing * 0.8F;
+            this.leftArm.yRot  = swing * 0.2F;
         } else {
             this.body.xRot = 0.0F;
+            this.body.yRot = 0.0F;
             this.rightArm.xRot += Mth.sin(time * 0.06F) * 0.05F;
-            this.leftArm.xRot -= Mth.sin(time * 0.06F) * 0.05F;
+            this.leftArm.xRot  -= Mth.sin(time * 0.06F) * 0.05F;
         }
     }
 

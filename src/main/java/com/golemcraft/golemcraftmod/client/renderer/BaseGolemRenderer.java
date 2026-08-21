@@ -39,6 +39,10 @@ public class BaseGolemRenderer extends MobRenderer<BaseGolemEntity, BaseGolemRen
         state.isRummaging = entity.isRummaging();
         state.oxidationLevel = entity.getOxidationLevel();
         state.mainArm = entity.getMainArm();
+
+        // Populate attackTime so the model can play the swing animation
+        state.attackTime = entity.getAttackAnim(partialTick);
+
         net.minecraft.world.item.ItemStack mainHandItem = entity.getMainHandItem();
         
         if (!mainHandItem.isEmpty()) {
