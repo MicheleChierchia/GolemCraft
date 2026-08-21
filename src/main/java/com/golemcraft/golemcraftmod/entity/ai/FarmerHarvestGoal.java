@@ -39,7 +39,10 @@ public class FarmerHarvestGoal extends Goal {
 
         for (BlockPos pos : BlockPos.betweenClosed(currentPos.offset(-8, -2, -8), currentPos.offset(8, 2, 8))) {
             BlockState state = level.getBlockState(pos);
-            if (state.getBlock() instanceof CropBlock crop && crop.isMaxAge(state)) {
+            Block block = state.getBlock();
+            if (block instanceof CropBlock crop && crop.isMaxAge(state)) {
+                validCrops.add(pos.immutable());
+            } else if (block == net.minecraft.world.level.block.Blocks.MELON || block == net.minecraft.world.level.block.Blocks.PUMPKIN) {
                 validCrops.add(pos.immutable());
             }
         }
@@ -83,44 +86,64 @@ public class FarmerHarvestGoal extends Goal {
                 Level level = this.golem.level();
                 BlockState state = level.getBlockState(this.targetPos);
                 
-                if (state.getBlock() instanceof CropBlock crop && crop.isMaxAge(state) && level instanceof ServerLevel serverLevel) {
+                Block block = state.getBlock();
+                boolean isCrop = block instanceof CropBlock crop && crop.isMaxAge(state);
+                boolean isFruit = block == net.minecraft.world.level.block.Blocks.MELON || block == net.minecraft.world.level.block.Blocks.PUMPKIN;
+                
+                if ((isCrop || isFruit) && level instanceof ServerLevel serverLevel) {
                     java.util.List<ItemStack> drops = Block.getDrops(state, serverLevel, this.targetPos, null, this.golem, this.golem.getMainHandItem());
-                    boolean seedFound = false;
                     
-                    // First try to replant from drops
-                    for (ItemStack drop : drops) {
-                        if (!seedFound && drop.getItem() instanceof BlockItem bi && bi.getBlock() == crop) {
-                            seedFound = true;
-                            drop.shrink(1); // Consume one for replanting
+                    if (isCrop) {
+                        CropBlock crop = (CropBlock) block;
+                        boolean seedFound = false;
+                        
+                        // First try to replant from drops
+                        for (ItemStack drop : drops) {
+                            if (!seedFound && drop.getItem() instanceof BlockItem bi && bi.getBlock() == crop) {
+                                seedFound = true;
+                                drop.shrink(1); // Consume one for replanting
+                            }
+                            
+                            // Add remainder to inventory or drop in world
+                            if (!drop.isEmpty()) {
+                                ItemStack remainder = this.golem.getInventory().addItem(drop);
+                                this.golem.setLastPickupTime(level.getGameTime());
+                                if (!remainder.isEmpty()) {
+                                    net.minecraft.world.entity.item.ItemEntity itemEntity = new net.minecraft.world.entity.item.ItemEntity(level, this.targetPos.getX() + 0.5, this.targetPos.getY() + 0.5, this.targetPos.getZ() + 0.5, remainder);
+                                    level.addFreshEntity(itemEntity);
+                                }
+                            }
                         }
                         
-                        // Add remainder to inventory or drop in world
-                        if (!drop.isEmpty()) {
-                            ItemStack remainder = this.golem.getInventory().addItem(drop);
-                            this.golem.setLastPickupTime(level.getGameTime());
-                            if (!remainder.isEmpty()) {
-                                net.minecraft.world.entity.item.ItemEntity itemEntity = new net.minecraft.world.entity.item.ItemEntity(level, this.targetPos.getX() + 0.5, this.targetPos.getY() + 0.5, this.targetPos.getZ() + 0.5, remainder);
-                                level.addFreshEntity(itemEntity);
+                        // If no seed in drops, check inventory
+                        if (!seedFound) {
+                            for (int i = 0; i < this.golem.getInventory().getContainerSize(); i++) {
+                                ItemStack invStack = this.golem.getInventory().getItem(i);
+                                if (invStack.getItem() instanceof BlockItem bi && bi.getBlock() == crop) {
+                                    seedFound = true;
+                                    invStack.shrink(1);
+                                    break;
+                                }
                             }
                         }
-                    }
-                    
-                    // If no seed in drops, check inventory
-                    if (!seedFound) {
-                        for (int i = 0; i < this.golem.getInventory().getContainerSize(); i++) {
-                            ItemStack invStack = this.golem.getInventory().getItem(i);
-                            if (invStack.getItem() instanceof BlockItem bi && bi.getBlock() == crop) {
-                                seedFound = true;
-                                invStack.shrink(1);
-                                break;
+                        
+                        if (seedFound) {
+                            level.setBlock(this.targetPos, crop.defaultBlockState(), 3); // Replant
+                        } else {
+                            level.destroyBlock(this.targetPos, false); // Just break if no seed
+                        }
+                    } else if (isFruit) {
+                        for (ItemStack drop : drops) {
+                            if (!drop.isEmpty()) {
+                                ItemStack remainder = this.golem.getInventory().addItem(drop);
+                                this.golem.setLastPickupTime(level.getGameTime());
+                                if (!remainder.isEmpty()) {
+                                    net.minecraft.world.entity.item.ItemEntity itemEntity = new net.minecraft.world.entity.item.ItemEntity(level, this.targetPos.getX() + 0.5, this.targetPos.getY() + 0.5, this.targetPos.getZ() + 0.5, remainder);
+                                    level.addFreshEntity(itemEntity);
+                                }
                             }
                         }
-                    }
-                    
-                    if (seedFound) {
-                        level.setBlock(this.targetPos, crop.defaultBlockState(), 3); // Replant
-                    } else {
-                        level.destroyBlock(this.targetPos, false); // Just break if no seed
+                        level.destroyBlock(this.targetPos, false);
                     }
                 }
                 
@@ -136,7 +159,8 @@ public class FarmerHarvestGoal extends Goal {
             return false;
         }
         BlockState state = this.golem.level().getBlockState(this.targetPos);
-        return state.getBlock() instanceof CropBlock crop && crop.isMaxAge(state);
+        Block block = state.getBlock();
+        return (block instanceof CropBlock crop && crop.isMaxAge(state)) || block == net.minecraft.world.level.block.Blocks.MELON || block == net.minecraft.world.level.block.Blocks.PUMPKIN;
     }
 
     @Override
