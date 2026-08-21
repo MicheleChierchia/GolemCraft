@@ -19,4 +19,11 @@ public class FlowerGolemEyesLayer extends EyesLayer<BaseGolemRenderState, BaseGo
     public RenderType renderType() {
         return EYES;
     }
+
+    @Override
+    public void submit(com.mojang.blaze3d.vertex.PoseStack poseStack, net.minecraft.client.renderer.SubmitNodeCollector submitNodeCollector, int packedLight, BaseGolemRenderState state, float limbSwing, float limbSwingAmount) {
+        if (state.oxidationLevel < 3) {
+            super.submit(poseStack, submitNodeCollector, packedLight, state, limbSwing, limbSwingAmount);
+        }
+    }
 }

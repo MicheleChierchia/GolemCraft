@@ -109,15 +109,34 @@ public class BaseGolemModel extends EntityModel<BaseGolemRenderState> implements
             this.head.yRot = state.yRot * ((float)Math.PI / 180F);
             this.head.xRot = state.xRot * ((float)Math.PI / 180F);
             this.head.zRot = 0.0F;
-            this.rightLeg.xRot = 0.0F;
-            this.leftLeg.xRot = 0.0F;
+            this.rightLeg.xRot = -1.4F;
+            this.leftLeg.xRot = -1.4F;
             this.rightArm.xRot = 0.0F;
             this.leftArm.xRot = 0.0F;
             this.rightArm.zRot = 0.0F;
             this.leftArm.zRot = 0.0F;
             this.body.xRot = 0.0F;
+            
+            this.head.y = 13.0F + 5.0F;
+            this.body.y = 13.0F + 5.0F;
+            this.rightArm.y = 13.0F + 5.0F;
+            this.leftArm.y = 13.0F + 5.0F;
+            this.rightLeg.y = 22.0F;
+            this.leftLeg.y = 22.0F;
+            this.rightLeg.z = -3.0F;
+            this.leftLeg.z = -3.0F;
             return;
         }
+        
+        // Reset Y and Z
+        this.head.y = 13.0F;
+        this.body.y = 13.0F;
+        this.rightArm.y = 13.0F;
+        this.leftArm.y = 13.0F;
+        this.rightLeg.y = 19.0F;
+        this.leftLeg.y = 19.0F;
+        this.rightLeg.z = 0.0F;
+        this.leftLeg.z = 0.0F;
         
         this.head.yRot = state.yRot * ((float)Math.PI / 180F);
         this.head.xRot = state.xRot * ((float)Math.PI / 180F);

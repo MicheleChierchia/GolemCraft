@@ -146,7 +146,8 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
     
     @Override
     protected void registerGoals() {
-        this.goalSelector.addGoal(0, new FloatGoal(this));
+        this.goalSelector.addGoal(0, new com.golemcraft.golemcraftmod.entity.ai.StatueGoal(this));
+        this.goalSelector.addGoal(1, new FloatGoal(this));
         this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 6.0F));
         this.goalSelector.addGoal(7, new RandomLookAroundGoal(this));
     }
@@ -194,10 +195,7 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
         }
     }
 
-    @Override
-    public boolean isNoAi() {
-        return super.isNoAi() || this.getOxidationLevel() == 3;
-    }
+
 
     @Override
     public void travel(net.minecraft.world.phys.Vec3 travelVector) {
@@ -259,7 +257,7 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
 
     @Override
     protected net.minecraft.sounds.SoundEvent getAmbientSound() {
-        return net.minecraft.world.level.block.SoundType.COPPER.getStepSound(); 
+        return this.getOxidationLevel() == 3 ? null : net.minecraft.world.level.block.SoundType.COPPER.getStepSound(); 
     }
 
     @Override
@@ -274,7 +272,9 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
 
     @Override
     protected void playStepSound(net.minecraft.core.BlockPos pos, net.minecraft.world.level.block.state.BlockState blockState) {
-        this.playSound(net.minecraft.world.level.block.SoundType.COPPER.getStepSound(), 0.15F, 1.0F);
+        if (this.getOxidationLevel() < 3) {
+            this.playSound(net.minecraft.world.level.block.SoundType.COPPER.getStepSound(), 0.15F, 1.0F);
+        }
     }
     
     @Override
@@ -299,6 +299,7 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
             } else if (this.getOxidationLevel() > 0) {
                 if (!this.level().isClientSide()) {
                     this.setOxidationLevel(this.getOxidationLevel() - 1);
+                    this.setNoAi(false); // Fix golems corrupted by the old isNoAi override
                     net.minecraft.server.level.ServerLevel serverLevel = (net.minecraft.server.level.ServerLevel) this.level();
                     serverLevel.sendParticles(ParticleTypes.SCRAPE, this.getX(), this.getY() + 0.5D, this.getZ(), 10, 0.2D, 0.2D, 0.2D, 0.0D);
                     this.playSound(SoundEvents.AXE_SCRAPE, 1.0F, 1.0F);
@@ -328,82 +329,84 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
         }
 
         // Transform logic
-        if (itemstack.is(net.minecraft.tags.ItemTags.SMALL_FLOWERS) || itemstack.is(net.minecraft.tags.ItemTags.FLOWERS) || (itemstack.getItem() instanceof net.minecraft.world.item.BlockItem bi && (bi.getBlock() instanceof net.minecraft.world.level.block.FlowerBlock || bi.getBlock() instanceof net.minecraft.world.level.block.TallFlowerBlock))) {
-            if (!this.level().isClientSide()) {
-                FlowerGolemEntity flowerGolem = ModEntities.FLOWER_GOLEM.get().create(this.level(), net.minecraft.world.entity.EntitySpawnReason.CONVERSION);
-                if (flowerGolem != null) {
-                    flowerGolem.setPos(this.getX(), this.getY(), this.getZ());
-                    flowerGolem.setYRot(this.getYRot());
-                    flowerGolem.setXRot(this.getXRot());
-                    flowerGolem.setHealth(this.getHealth());
-                    flowerGolem.yBodyRot = this.yBodyRot;
-                    if (this.hasCustomName()) {
-                        flowerGolem.setCustomName(this.getCustomName());
-                        flowerGolem.setCustomNameVisible(this.isCustomNameVisible());
+        if (this.getType() == com.golemcraft.golemcraftmod.registry.ModEntities.BASE_GOLEM.get()) {
+            if (itemstack.is(net.minecraft.tags.ItemTags.SMALL_FLOWERS) || itemstack.is(net.minecraft.tags.ItemTags.FLOWERS) || (itemstack.getItem() instanceof net.minecraft.world.item.BlockItem bi && (bi.getBlock() instanceof net.minecraft.world.level.block.FlowerBlock || bi.getBlock() instanceof net.minecraft.world.level.block.TallFlowerBlock))) {
+                if (!this.level().isClientSide()) {
+                    FlowerGolemEntity flowerGolem = ModEntities.FLOWER_GOLEM.get().create(this.level(), net.minecraft.world.entity.EntitySpawnReason.CONVERSION);
+                    if (flowerGolem != null) {
+                        flowerGolem.setPos(this.getX(), this.getY(), this.getZ());
+                        flowerGolem.setYRot(this.getYRot());
+                        flowerGolem.setXRot(this.getXRot());
+                        flowerGolem.setHealth(this.getHealth());
+                        flowerGolem.yBodyRot = this.yBodyRot;
+                        if (this.hasCustomName()) {
+                            flowerGolem.setCustomName(this.getCustomName());
+                            flowerGolem.setCustomNameVisible(this.isCustomNameVisible());
+                        }
+                        
+                        flowerGolem.setOwnerUUID(this.ownerUUID);
+                        flowerGolem.setLastPickupTime(this.lastPickupTime);
+                        for (int i = 0; i < this.inventory.getContainerSize(); i++) {
+                            flowerGolem.getInventory().setItem(i, this.inventory.getItem(i));
+                        }
+                        
+                        this.level().addFreshEntity(flowerGolem);
+                        
+                        // Particles and sounds
+                        net.minecraft.server.level.ServerLevel serverLevel = (net.minecraft.server.level.ServerLevel) this.level();
+                        serverLevel.sendParticles(ParticleTypes.HAPPY_VILLAGER, this.getX(), this.getY() + 0.5D, this.getZ(), 15, 0.2D, 0.2D, 0.2D, 0.0D);
+                        this.playSound(SoundEvents.ZOMBIE_VILLAGER_CURE, 1.0F, 1.0F);
+                        
+                        if (!player.getAbilities().instabuild) {
+                            itemstack.shrink(1);
+                        }
+                        this.discard();
                     }
-                    
-                    flowerGolem.setOwnerUUID(this.ownerUUID);
-                    flowerGolem.setLastPickupTime(this.lastPickupTime);
-                    for (int i = 0; i < this.inventory.getContainerSize(); i++) {
-                        flowerGolem.getInventory().setItem(i, this.inventory.getItem(i));
-                    }
-                    
-                    this.level().addFreshEntity(flowerGolem);
-                    
-                    // Particles and sounds
-                    net.minecraft.server.level.ServerLevel serverLevel = (net.minecraft.server.level.ServerLevel) this.level();
-                    serverLevel.sendParticles(ParticleTypes.HAPPY_VILLAGER, this.getX(), this.getY() + 0.5D, this.getZ(), 15, 0.2D, 0.2D, 0.2D, 0.0D);
-                    this.playSound(SoundEvents.ZOMBIE_VILLAGER_CURE, 1.0F, 1.0F);
-                    
-                    if (!player.getAbilities().instabuild) {
-                        itemstack.shrink(1);
-                    }
-                    this.discard();
                 }
+                return InteractionResult.SUCCESS;
             }
-            return InteractionResult.SUCCESS;
-        }
 
-        if (itemstack.getItem() instanceof net.minecraft.world.item.HoeItem) {
-            if (!this.level().isClientSide()) {
-                FarmerGolemEntity farmerGolem = ModEntities.FARMER_GOLEM.get().create(this.level(), net.minecraft.world.entity.EntitySpawnReason.CONVERSION);
-                if (farmerGolem != null) {
-                    farmerGolem.setPos(this.getX(), this.getY(), this.getZ());
-                    farmerGolem.setYRot(this.getYRot());
-                    farmerGolem.setXRot(this.getXRot());
-                    farmerGolem.setHealth(this.getHealth());
-                    farmerGolem.yBodyRot = this.yBodyRot;
-                    if (this.hasCustomName()) {
-                        farmerGolem.setCustomName(this.getCustomName());
-                        farmerGolem.setCustomNameVisible(this.isCustomNameVisible());
+            if (itemstack.getItem() instanceof net.minecraft.world.item.HoeItem) {
+                if (!this.level().isClientSide()) {
+                    FarmerGolemEntity farmerGolem = ModEntities.FARMER_GOLEM.get().create(this.level(), net.minecraft.world.entity.EntitySpawnReason.CONVERSION);
+                    if (farmerGolem != null) {
+                        farmerGolem.setPos(this.getX(), this.getY(), this.getZ());
+                        farmerGolem.setYRot(this.getYRot());
+                        farmerGolem.setXRot(this.getXRot());
+                        farmerGolem.setHealth(this.getHealth());
+                        farmerGolem.yBodyRot = this.yBodyRot;
+                        if (this.hasCustomName()) {
+                            farmerGolem.setCustomName(this.getCustomName());
+                            farmerGolem.setCustomNameVisible(this.isCustomNameVisible());
+                        }
+
+                        farmerGolem.setOwnerUUID(this.ownerUUID);
+                        farmerGolem.setLastPickupTime(this.lastPickupTime);
+                        for (int i = 0; i < this.inventory.getContainerSize(); i++) {
+                            farmerGolem.getInventory().setItem(i, this.inventory.getItem(i));
+                        }
+
+                        // Equip the hoe directly to hand
+                        ItemStack hoeStack = itemstack.copy();
+                        hoeStack.setCount(1);
+                        farmerGolem.setItemInHand(InteractionHand.MAIN_HAND, hoeStack);
+                        farmerGolem.setDropChance(net.minecraft.world.entity.EquipmentSlot.MAINHAND, 0.0F);
+
+                        this.level().addFreshEntity(farmerGolem);
+
+                        // Particles and sounds
+                        net.minecraft.server.level.ServerLevel serverLevel = (net.minecraft.server.level.ServerLevel) this.level();
+                        serverLevel.sendParticles(ParticleTypes.HAPPY_VILLAGER, this.getX(), this.getY() + 0.5D, this.getZ(), 15, 0.2D, 0.2D, 0.2D, 0.0D);
+                        this.playSound(SoundEvents.ZOMBIE_VILLAGER_CURE, 1.0F, 1.0F);
+
+                        if (!player.getAbilities().instabuild) {
+                            itemstack.shrink(1);
+                        }
+                        this.discard();
                     }
-
-                    farmerGolem.setOwnerUUID(this.ownerUUID);
-                    farmerGolem.setLastPickupTime(this.lastPickupTime);
-                    for (int i = 0; i < this.inventory.getContainerSize(); i++) {
-                        farmerGolem.getInventory().setItem(i, this.inventory.getItem(i));
-                    }
-
-                    // Equip the hoe directly to hand
-                    ItemStack hoeStack = itemstack.copy();
-                    hoeStack.setCount(1);
-                    farmerGolem.setItemInHand(InteractionHand.MAIN_HAND, hoeStack);
-                    farmerGolem.setDropChance(net.minecraft.world.entity.EquipmentSlot.MAINHAND, 0.0F);
-
-                    this.level().addFreshEntity(farmerGolem);
-
-                    // Particles and sounds
-                    net.minecraft.server.level.ServerLevel serverLevel = (net.minecraft.server.level.ServerLevel) this.level();
-                    serverLevel.sendParticles(ParticleTypes.HAPPY_VILLAGER, this.getX(), this.getY() + 0.5D, this.getZ(), 15, 0.2D, 0.2D, 0.2D, 0.0D);
-                    this.playSound(SoundEvents.ZOMBIE_VILLAGER_CURE, 1.0F, 1.0F);
-
-                    if (!player.getAbilities().instabuild) {
-                        itemstack.shrink(1);
-                    }
-                    this.discard();
                 }
+                return InteractionResult.SUCCESS;
             }
-            return InteractionResult.SUCCESS;
         }
         
         InteractionResult interactionResult = super.mobInteract(player, hand);
