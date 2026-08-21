@@ -15,6 +15,7 @@ public class SoldierGolemRenderer extends BaseGolemRenderer {
 
     public SoldierGolemRenderer(EntityRendererProvider.Context context) {
         super(context);
+        this.addLayer(new FlowerGolemEyesLayer(this));
     }
 
     @Override

@@ -170,29 +170,48 @@ public class BaseGolemModel extends EntityModel<BaseGolemRenderState> implements
             this.leftArm.xRot = -0.2F;
             this.rightArm.zRot = 0.0F;
         } else if (state.attackAnimProgress > 0.0F) {
-            // attackAnimProgress: 1.0 (just hit) → 0.0 (done)
-            // t: 0.0 → 1.0
             float t = 1.0f - state.attackAnimProgress;
-            float swing = Mth.sin(t * (float) Math.PI);
             
-            // Il corpo si piega in avanti (lunge) e ruota col colpo per dare peso
-            this.body.xRot = swing * 0.4F;
-            this.body.yRot = -swing * 0.3F;
-            this.head.xRot += swing * 0.2F; // Abbassa un po' la testa
+            // Animazione "Slash": colpo veloce (0->0.3) e recupero lento (0.3->1.0)
+            float strike = t < 0.3f ? (t / 0.3f) : 1.0f;
+            float recovery = t < 0.3f ? 0.0f : ((t - 0.3f) / 0.7f);
             
-            // Braccio destro: fendente pesante e ampio dall'alto verso il basso
-            this.rightArm.xRot -= swing * 2.5F; // Più verticale
-            this.rightArm.yRot  = -swing * 0.5F; // Taglia verso l'interno
-            this.rightArm.zRot  = swing * 0.2F;
+            float strikeEase = Mth.sin(strike * (float)Math.PI / 2.0f);
+            float recoveryEase = 1.0f - (float)Math.pow(recovery, 2.0);
+            float blend = strikeEase * recoveryEase;
+
+            // Il corpo ruota violentemente seguendo il fendente
+            this.body.yRot = -blend * 0.8F;
+            this.body.xRot = blend * 0.2F;
+            this.head.xRot += blend * 0.1F;
             
-            // Braccio sinistro: va indietro per bilanciare il colpo
-            this.leftArm.xRot += swing * 0.8F;
-            this.leftArm.yRot  = swing * 0.2F;
+            // Fendente orizzontale profondo (Sweep)
+            this.rightArm.xRot -= blend * 1.2F;
+            this.rightArm.yRot  = -blend * 1.5F;
+            this.rightArm.zRot  = blend * 0.5F;
+            
+            // Il braccio sinistro si ritrae per bilanciare la rotazione
+            this.leftArm.xRot += blend * 0.6F;
+            this.leftArm.yRot  = blend * 0.3F;
         } else {
             this.body.xRot = 0.0F;
             this.body.yRot = 0.0F;
             this.rightArm.xRot += Mth.sin(time * 0.06F) * 0.05F;
             this.leftArm.xRot  -= Mth.sin(time * 0.06F) * 0.05F;
+        }
+
+        if (state.isAggressive && state.hasBow) {
+            if (state.mainArm == net.minecraft.world.entity.HumanoidArm.RIGHT) {
+                this.rightArm.yRot = -0.1F + this.head.yRot;
+                this.leftArm.yRot = 0.1F + this.head.yRot + 0.4F;
+                this.rightArm.xRot = -((float)Math.PI / 2F) + this.head.xRot;
+                this.leftArm.xRot = -((float)Math.PI / 2F) + this.head.xRot;
+            } else {
+                this.leftArm.yRot = 0.1F + this.head.yRot;
+                this.rightArm.yRot = -0.1F + this.head.yRot - 0.4F;
+                this.rightArm.xRot = -((float)Math.PI / 2F) + this.head.xRot;
+                this.leftArm.xRot = -((float)Math.PI / 2F) + this.head.xRot;
+            }
         }
     }
 

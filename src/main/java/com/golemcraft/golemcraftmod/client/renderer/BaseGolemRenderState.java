@@ -8,4 +8,6 @@ public class BaseGolemRenderState extends ArmedEntityRenderState {
     public int oxidationLevel;
     /** Used by SoldierGolemRenderer: 0.0 = idle, 1.0 = peak swing */
     public float attackAnimProgress;
+    public boolean isAggressive;
+    public boolean hasBow;
 }

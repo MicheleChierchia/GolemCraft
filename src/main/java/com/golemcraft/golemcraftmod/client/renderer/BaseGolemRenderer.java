@@ -57,6 +57,9 @@ public class BaseGolemRenderer extends MobRenderer<BaseGolemEntity, BaseGolemRen
             state.rightHandItemState.clear();
             state.leftHandItemState.clear();
         }
+        
+        state.isAggressive = entity.isAggressive();
+        state.hasBow = !mainHandItem.isEmpty() && mainHandItem.is(net.minecraft.world.item.Items.BOW);
     }
 
     @Override

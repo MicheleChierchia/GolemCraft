@@ -43,12 +43,13 @@ public class SoldierGolemEntity extends BaseGolemEntity implements RangedAttackM
             SynchedEntityData.defineId(SoldierGolemEntity.class, EntityDataSerializers.INT);
 
     // ── Combat goals (swapped based on equipped weapon) ────────────────────────
-    private final RangedBowAttackGoal<SoldierGolemEntity>      bowGoal      = new RangedBowAttackGoal<>(this, 1.0D, 20, 15.0F);
+    private final RangedBowAttackGoal<SoldierGolemEntity>      bowGoal      = new RangedBowAttackGoal<>(this, 1.0D, 40, 15.0F);
     private final RangedCrossbowAttackGoal<SoldierGolemEntity> crossbowGoal = new RangedCrossbowAttackGoal<>(this, 1.0D, 12.0F);
     private final MeleeAttackGoal                              meleeGoal    = new MeleeAttackGoal(this, 1.2D, true);
 
     private enum WeaponMode { NONE, MELEE, BOW, CROSSBOW }
     private WeaponMode currentWeaponMode = null;
+    private int weaponSwapCooldown = 0;
 
     public SoldierGolemEntity(EntityType<? extends PathfinderMob> entityType, Level level) {
         super(entityType, level);
@@ -96,6 +97,8 @@ public class SoldierGolemEntity extends BaseGolemEntity implements RangedAttackM
     public void tick() {
         super.tick();
         if (!this.level().isClientSide()) {
+            if (weaponSwapCooldown > 0) weaponSwapCooldown--;
+
             // Countdown attack animation
             int anim = getAttackAnimTicks();
             if (anim > 0) setAttackAnimTicks(anim - 1);
@@ -155,6 +158,79 @@ public class SoldierGolemEntity extends BaseGolemEntity implements RangedAttackM
         return path.contains("sword") || path.contains("blade") || path.contains("saber");
     }
 
+    public static boolean isArrow(ItemStack stack) {
+        if (stack.isEmpty()) return false;
+        return stack.is(ItemTags.ARROWS) || stack.is(Items.ARROW) || stack.is(Items.TIPPED_ARROW) || stack.is(Items.SPECTRAL_ARROW);
+    }
+
+    private boolean hasArrows() {
+        if (isArrow(this.getItemInHand(InteractionHand.OFF_HAND))) return true;
+        net.minecraft.world.SimpleContainer inv = this.getInventory();
+        for (int i = 0; i < inv.getContainerSize(); i++) {
+            if (isArrow(inv.getItem(i))) return true;
+        }
+        return false;
+    }
+
+    private void swapToMeleeWeaponIfAvailable() {
+        net.minecraft.world.SimpleContainer inv = this.getInventory();
+        for (int i = 0; i < inv.getContainerSize(); i++) {
+            ItemStack stack = inv.getItem(i);
+            if (!stack.isEmpty() && isWeapon(stack) && !stack.is(Items.BOW) && !stack.is(Items.CROSSBOW)) {
+                ItemStack current = this.getItemInHand(InteractionHand.MAIN_HAND);
+                this.setItemInHand(InteractionHand.MAIN_HAND, stack.copy());
+                inv.setItem(i, current.copy());
+                return;
+            }
+        }
+    }
+
+    private void swapToRangedWeaponIfAvailable() {
+        net.minecraft.world.SimpleContainer inv = this.getInventory();
+        for (int i = 0; i < inv.getContainerSize(); i++) {
+            ItemStack stack = inv.getItem(i);
+            if (!stack.isEmpty() && (stack.is(Items.BOW) || stack.is(Items.CROSSBOW))) {
+                ItemStack current = this.getItemInHand(InteractionHand.MAIN_HAND);
+                this.setItemInHand(InteractionHand.MAIN_HAND, stack.copy());
+                inv.setItem(i, current.copy());
+                return;
+            }
+        }
+    }
+
+    private void equipBestWeaponFromInventory() {
+        net.minecraft.world.SimpleContainer inv = this.getInventory();
+        int bestMeleeIndex = -1;
+        int bestRangedIndex = -1;
+
+        for (int i = 0; i < inv.getContainerSize(); i++) {
+            ItemStack stack = inv.getItem(i);
+            if (!stack.isEmpty() && isWeapon(stack)) {
+                if (stack.is(Items.BOW) || stack.is(Items.CROSSBOW)) {
+                    if (bestRangedIndex == -1) bestRangedIndex = i;
+                } else {
+                    if (bestMeleeIndex == -1) bestMeleeIndex = i;
+                }
+            }
+        }
+
+        int targetIndex = -1;
+        if (hasArrows() && bestRangedIndex != -1) {
+            targetIndex = bestRangedIndex;
+        } else if (bestMeleeIndex != -1) {
+            targetIndex = bestMeleeIndex;
+        } else if (!hasArrows() && bestRangedIndex != -1) {
+            targetIndex = bestRangedIndex;
+        }
+
+        if (targetIndex != -1) {
+            ItemStack stack = inv.getItem(targetIndex);
+            ItemStack current = this.getItemInHand(InteractionHand.MAIN_HAND);
+            this.setItemInHand(InteractionHand.MAIN_HAND, stack.copy());
+            inv.setItem(targetIndex, current.copy());
+        }
+    }
+
     /**
      * Swaps the active combat goal only when the weapon type actually changes.
      * When no weapon is equipped, ALL combat goals are removed so the golem cannot attack.
@@ -162,13 +238,55 @@ public class SoldierGolemEntity extends BaseGolemEntity implements RangedAttackM
     private void updateAttackGoals() {
         ItemStack item = this.getItemInHand(InteractionHand.MAIN_HAND);
 
-        WeaponMode desired;
+        // Se non abbiamo armi, cerchiamo di pescarne una dall'inventario
         if (item.isEmpty()) {
+            equipBestWeaponFromInventory();
+            item = this.getItemInHand(InteractionHand.MAIN_HAND);
+        }
+
+        // Calcolo della distanza dal target
+        LivingEntity target = this.getTarget();
+        boolean preferRanged = false;
+        boolean preferMelee = false;
+
+        if (target != null && target.isAlive()) {
+            double distSq = this.distanceToSqr(target);
+            if (distSq > 36.0D) {
+                preferRanged = true;
+            } else {
+                preferMelee = true;
+            }
+        }
+
+        if (weaponSwapCooldown <= 0) {
+            if (preferRanged && hasArrows()) {
+                if (!item.is(Items.BOW) && !item.is(Items.CROSSBOW)) {
+                    swapToRangedWeaponIfAvailable();
+                    ItemStack newItem = this.getItemInHand(InteractionHand.MAIN_HAND);
+                    if (newItem != item) {
+                        item = newItem;
+                        weaponSwapCooldown = 20;
+                    }
+                }
+            } else if (preferMelee || !hasArrows()) {
+                if (item.is(Items.BOW) || item.is(Items.CROSSBOW)) {
+                    swapToMeleeWeaponIfAvailable();
+                    ItemStack newItem = this.getItemInHand(InteractionHand.MAIN_HAND);
+                    if (newItem != item) {
+                        item = newItem;
+                        weaponSwapCooldown = 20;
+                    }
+                }
+            }
+        }
+
+        WeaponMode desired;
+        if (item.isEmpty() || !isWeapon(item)) {
             desired = WeaponMode.NONE;
         } else if (item.is(Items.BOW)) {
-            desired = WeaponMode.BOW;
+            desired = hasArrows() ? WeaponMode.BOW : WeaponMode.NONE;
         } else if (item.is(Items.CROSSBOW)) {
-            desired = WeaponMode.CROSSBOW;
+            desired = hasArrows() ? WeaponMode.CROSSBOW : WeaponMode.NONE;
         } else {
             desired = WeaponMode.MELEE;
         }
@@ -222,13 +340,39 @@ public class SoldierGolemEntity extends BaseGolemEntity implements RangedAttackM
 
     // ── Ranged Attacks ────────────────────────────────────────────────────────
 
+    private ItemStack consumeArrow() {
+        ItemStack offhand = this.getItemInHand(InteractionHand.OFF_HAND);
+        if (isArrow(offhand)) {
+            ItemStack ammo = offhand.copyWithCount(1);
+            offhand.shrink(1);
+            if (offhand.isEmpty()) this.setItemInHand(InteractionHand.OFF_HAND, ItemStack.EMPTY);
+            return ammo;
+        }
+        net.minecraft.world.SimpleContainer inv = this.getInventory();
+        for (int i = 0; i < inv.getContainerSize(); i++) {
+            ItemStack stack = inv.getItem(i);
+            if (isArrow(stack)) {
+                ItemStack ammo = stack.copyWithCount(1);
+                stack.shrink(1);
+                if (stack.isEmpty()) inv.setItem(i, ItemStack.EMPTY);
+                return ammo;
+            }
+        }
+        return new ItemStack(Items.ARROW); // Fallback if somehow empty
+    }
+
     @Override
     public void performRangedAttack(LivingEntity target, float pullProgress) {
         ItemStack handItem = this.getItemInHand(InteractionHand.MAIN_HAND);
         setAttackAnimTicks(10);
 
-        ItemStack ammo = new ItemStack(Items.ARROW);
+        ItemStack ammo = consumeArrow();
         Projectile projectile = ProjectileUtil.getMobArrow(this, ammo, pullProgress, handItem);
+        try {
+            java.lang.reflect.Method setBaseDamage = projectile.getClass().getMethod("setBaseDamage", double.class);
+            setBaseDamage.invoke(projectile, 2.0D + (double)pullProgress * 1.5D);
+        } catch (Exception ignored) {
+        }
 
         double dx = target.getX() - this.getX();
         double dy = target.getY(0.3333333333333333D) - projectile.getY();
@@ -243,6 +387,15 @@ public class SoldierGolemEntity extends BaseGolemEntity implements RangedAttackM
                 1.0F, 1.0F / (this.getRandom().nextFloat() * 0.4F + 0.8F)
         );
         this.level().addFreshEntity(projectile);
+        
+        if (!handItem.isEmpty() && handItem.isDamageableItem()) {
+            if (this.level() instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+                handItem.hurtAndBreak(1, serverLevel, null, item -> {
+                    this.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+                    this.playSound(net.minecraft.sounds.SoundEvents.ITEM_BREAK.value(), 1.0F, 1.0F);
+                });
+            }
+        }
     }
 
     @Override
@@ -250,12 +403,23 @@ public class SoldierGolemEntity extends BaseGolemEntity implements RangedAttackM
 
     public void shootCrossbowProjectile(LivingEntity target, ItemStack crossbow,
                                          Projectile projectile, float angle) {
+        consumeArrow(); // Consuma la freccia vera!
+
         double dx = target.getX() - this.getX();
         double dy = target.getY(0.3333333333333333D) - projectile.getY();
         double dz = target.getZ() - this.getZ();
         double h  = Math.sqrt(dx * dx + dz * dz);
         projectile.shoot(dx, dy + h * 0.20000000298023224D, dz, 1.6F, 1.5F);
         this.level().addFreshEntity(projectile);
+        
+        if (!crossbow.isEmpty() && crossbow.isDamageableItem()) {
+            if (this.level() instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+                crossbow.hurtAndBreak(1, serverLevel, null, item -> {
+                    this.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+                    this.playSound(net.minecraft.sounds.SoundEvents.ITEM_BREAK.value(), 1.0F, 1.0F);
+                });
+            }
+        }
     }
 
     public void onCrossbowAttackPerformed() { this.noActionTime = 0; }

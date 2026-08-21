@@ -154,6 +154,14 @@ def process_texture(base_name, delta_maps):
                 for (x, y) in PROTECTED_PIXELS[base_name]:
                     out_px[x, y] = base_px[x, y]
 
+        if level_name == "oxidized":
+            dead_eyes_path = os.path.join(TEXTURE_DIR, "died_golem_eyes.png")
+            if os.path.exists(dead_eyes_path):
+                dead_eyes_img = Image.open(dead_eyes_path).convert("RGBA")
+                if dead_eyes_img.size != out_img.size:
+                    dead_eyes_img = dead_eyes_img.resize(out_img.size, Image.NEAREST)
+                out_img.alpha_composite(dead_eyes_img)
+
         out_path = os.path.join(TEXTURE_DIR, f"{level_name}_{base_name}.png")
         out_img.save(out_path)
         print(f"  [ok] {out_path}")
