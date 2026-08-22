@@ -35,16 +35,83 @@ import net.minecraft.core.BlockPos;
 
 import java.util.EnumSet;
 import java.util.List;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.core.particles.ParticleTypes;
 
 public class SoldierGolemEntity extends BaseGolemEntity implements RangedAttackMob, CrossbowAttackMob {
 
     // ── Synced attack animation ────────────────────────────────────────────────
     private static final EntityDataAccessor<Integer> ATTACK_ANIM_TICKS =
             SynchedEntityData.defineId(SoldierGolemEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Boolean> IS_GUARDING =
+            SynchedEntityData.defineId(SoldierGolemEntity.class, EntityDataSerializers.BOOLEAN);
+
+    private BlockPos guardPos = null;
 
     // ── Combat goals (swapped based on equipped weapon) ────────────────────────
-    private final RangedBowAttackGoal<SoldierGolemEntity>      bowGoal      = new RangedBowAttackGoal<>(this, 1.0D, 40, 15.0F);
-    private final RangedCrossbowAttackGoal<SoldierGolemEntity> crossbowGoal = new RangedCrossbowAttackGoal<>(this, 1.0D, 12.0F);
+    private final RangedBowAttackGoal<SoldierGolemEntity>      bowGoal      = new RangedBowAttackGoal<>(this, 1.0D, 40, 20.0F) {
+        @Override
+        public void tick() {
+            super.tick();
+            if (SoldierGolemEntity.this.isGuarding()) {
+                SoldierGolemEntity.this.getNavigation().stop();
+                LivingEntity target = SoldierGolemEntity.this.getTarget();
+                if (target != null && SoldierGolemEntity.this.getGuardPos() != null) {
+                    double distFromCenterSq = SoldierGolemEntity.this.distanceToSqr(net.minecraft.world.phys.Vec3.atBottomCenterOf(SoldierGolemEntity.this.getGuardPos()));
+                    if (distFromCenterSq < 0.5D) {
+                        SoldierGolemEntity.this.getMoveControl().setWantedPosition(target.getX(), target.getY(), target.getZ(), 0.5D);
+                    } else if (distFromCenterSq > 0.64D) {
+                        SoldierGolemEntity.this.getMoveControl().setWantedPosition(
+                            SoldierGolemEntity.this.getGuardPos().getX() + 0.5D,
+                            SoldierGolemEntity.this.getGuardPos().getY(),
+                            SoldierGolemEntity.this.getGuardPos().getZ() + 0.5D,
+                            0.5D
+                        );
+                    } else {
+                        // Cancella lo strafing generato da super.tick() che causava la rotazione continua!
+                        SoldierGolemEntity.this.getMoveControl().strafe(0.0F, 0.0F);
+                    }
+                    SoldierGolemEntity.this.getLookControl().setLookAt(target, 30.0F, 30.0F);
+                }
+            } else {
+                LivingEntity target = SoldierGolemEntity.this.getTarget();
+                if (target != null && SoldierGolemEntity.this.distanceToSqr(target) < 100.0D) { // 10 blocks
+                    SoldierGolemEntity.this.getNavigation().stop();
+                }
+            }
+        }
+    };
+    private final RangedCrossbowAttackGoal<SoldierGolemEntity> crossbowGoal = new RangedCrossbowAttackGoal<>(this, 1.0D, 20.0F) {
+        @Override
+        public void tick() {
+            super.tick();
+            if (SoldierGolemEntity.this.isGuarding()) {
+                SoldierGolemEntity.this.getNavigation().stop();
+                LivingEntity target = SoldierGolemEntity.this.getTarget();
+                if (target != null && SoldierGolemEntity.this.getGuardPos() != null) {
+                    double distFromCenterSq = SoldierGolemEntity.this.distanceToSqr(net.minecraft.world.phys.Vec3.atBottomCenterOf(SoldierGolemEntity.this.getGuardPos()));
+                    if (distFromCenterSq < 0.5D) {
+                        SoldierGolemEntity.this.getMoveControl().setWantedPosition(target.getX(), target.getY(), target.getZ(), 0.5D);
+                    } else if (distFromCenterSq > 0.64D) {
+                        SoldierGolemEntity.this.getMoveControl().setWantedPosition(
+                            SoldierGolemEntity.this.getGuardPos().getX() + 0.5D,
+                            SoldierGolemEntity.this.getGuardPos().getY(),
+                            SoldierGolemEntity.this.getGuardPos().getZ() + 0.5D,
+                            0.5D
+                        );
+                    } else {
+                        SoldierGolemEntity.this.getMoveControl().strafe(0.0F, 0.0F);
+                    }
+                    SoldierGolemEntity.this.getLookControl().setLookAt(target, 30.0F, 30.0F);
+                }
+            } else {
+                LivingEntity target = SoldierGolemEntity.this.getTarget();
+                if (target != null && SoldierGolemEntity.this.distanceToSqr(target) < 100.0D) {
+                    SoldierGolemEntity.this.getNavigation().stop();
+                }
+            }
+        }
+    };
     private final MeleeAttackGoal                              meleeGoal    = new MeleeAttackGoal(this, 1.2D, true);
 
     private enum WeaponMode { NONE, MELEE, BOW, CROSSBOW }
@@ -61,10 +128,33 @@ public class SoldierGolemEntity extends BaseGolemEntity implements RangedAttackM
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         super.defineSynchedData(builder);
         builder.define(ATTACK_ANIM_TICKS, 0);
+        builder.define(IS_GUARDING, false);
     }
 
     public int getAttackAnimTicks() { return this.entityData.get(ATTACK_ANIM_TICKS); }
     public void setAttackAnimTicks(int t) { this.entityData.set(ATTACK_ANIM_TICKS, t); }
+
+    public boolean isGuarding() { return this.entityData.get(IS_GUARDING); }
+    public void setGuarding(boolean guarding) { this.entityData.set(IS_GUARDING, guarding); }
+
+    public BlockPos getGuardPos() { return this.guardPos; }
+    public void setGuardPos(BlockPos pos) { this.guardPos = pos; }
+
+    @Override
+    public void addAdditionalSaveData(net.minecraft.world.level.storage.ValueOutput output) {
+        super.addAdditionalSaveData(output);
+        output.store("IsGuarding", com.mojang.serialization.Codec.BOOL, this.isGuarding());
+        if (this.guardPos != null) {
+            output.store("GuardPos", BlockPos.CODEC, this.guardPos);
+        }
+    }
+
+    @Override
+    public void readAdditionalSaveData(net.minecraft.world.level.storage.ValueInput input) {
+        super.readAdditionalSaveData(input);
+        input.read("IsGuarding", com.mojang.serialization.Codec.BOOL).ifPresent(this::setGuarding);
+        input.read("GuardPos", BlockPos.CODEC).ifPresent(this::setGuardPos);
+    }
 
     // ── Attributes ───────────────────────────────────────────────────────────
 
@@ -80,14 +170,26 @@ public class SoldierGolemEntity extends BaseGolemEntity implements RangedAttackM
     @Override
     protected void registerGoals() {
         super.registerGoals();
+        this.goalSelector.addGoal(1, new ReturnToGuardPositionGoal(this, 1.0D));
         this.goalSelector.addGoal(2, new FollowOwnerGoal(this, 1.4D, 10.0F, 3.0F));
         // Priority 3: combat goal — added dynamically by updateAttackGoals()
         this.goalSelector.addGoal(4, new com.golemcraft.golemcraftmod.entity.ai.EquipWeaponGoal(this));
-        this.goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 1.0D));
+        this.goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 1.0D) {
+            @Override
+            public boolean canUse() {
+                if (isGuarding() && !hasMeleeWeapon()) return false;
+                return super.canUse();
+            }
+            @Override
+            public boolean canContinueToUse() {
+                if (isGuarding() && !hasMeleeWeapon()) return false;
+                return super.canContinueToUse();
+            }
+        });
 
         this.targetSelector.addGoal(1, new OwnerHurtByTargetGoal(this));
         this.targetSelector.addGoal(2, new OwnerHurtTargetGoal(this));
-        this.targetSelector.addGoal(3, new NearOwnerEnemyGoal(this, 10.0D));
+        this.targetSelector.addGoal(3, new NearOwnerEnemyGoal(this, 20.0D)); // Range incrementato a 20.0D (era 10.0D)
         this.targetSelector.addGoal(4, new HurtByTargetGoal(this));
     }
 
@@ -230,6 +332,23 @@ public class SoldierGolemEntity extends BaseGolemEntity implements RangedAttackM
             inv.setItem(targetIndex, current.copy());
         }
     }
+
+    public boolean hasMeleeWeapon() {
+        ItemStack hand = this.getItemInHand(InteractionHand.MAIN_HAND);
+        if (!hand.isEmpty() && isWeapon(hand) && !hand.is(Items.BOW) && !hand.is(Items.CROSSBOW)) {
+            return true;
+        }
+        net.minecraft.world.SimpleContainer inv = this.getInventory();
+        for (int i = 0; i < inv.getContainerSize(); i++) {
+            ItemStack stack = inv.getItem(i);
+            if (!stack.isEmpty() && isWeapon(stack) && !stack.is(Items.BOW) && !stack.is(Items.CROSSBOW)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
 
     /**
      * Swaps the active combat goal only when the weapon type actually changes.
@@ -431,6 +550,82 @@ public class SoldierGolemEntity extends BaseGolemEntity implements RangedAttackM
         return this.level().getPlayerByUUID(this.getOwnerUUID());
     }
 
+    @Override
+    protected InteractionResult mobInteract(Player player, InteractionHand hand) {
+        // Prima lascia che BaseGolemEntity gestisca armi, asce (cera/ossidazione), miele ecc.
+        InteractionResult result = super.mobInteract(player, hand);
+        if (result.consumesAction()) {
+            return result;
+        }
+
+        // Se il click non è stato consumato, e la mano è vuota, alterniamo la modalità
+        ItemStack stackInHand = player.getItemInHand(hand);
+        if (stackInHand.isEmpty() && this.getOwnerUUID() != null && this.getOwnerUUID().equals(player.getUUID())) {
+            if (!this.level().isClientSide()) {
+                boolean nextState = !this.isGuarding();
+                this.setGuarding(nextState);
+                if (nextState) {
+                    this.setGuardPos(this.blockPosition());
+                    this.playSound(SoundEvents.IRON_GOLEM_REPAIR, 1.0F, 1.0F); // suono metallico rassicurante
+                    if (this.level() instanceof net.minecraft.server.level.ServerLevel sl) {
+                        sl.sendParticles(ParticleTypes.HAPPY_VILLAGER, this.getX(), this.getY() + 1.0D, this.getZ(), 5, 0.3D, 0.3D, 0.3D, 0.0D);
+                    }
+                } else {
+                    this.setGuardPos(null);
+                    this.playSound(SoundEvents.EXPERIENCE_ORB_PICKUP, 1.0F, 0.8F);
+                    if (this.level() instanceof net.minecraft.server.level.ServerLevel sl) {
+                        sl.sendParticles(ParticleTypes.HEART, this.getX(), this.getY() + 1.0D, this.getZ(), 3, 0.3D, 0.3D, 0.3D, 0.0D);
+                    }
+                }
+            }
+            return InteractionResult.SUCCESS;
+        }
+
+        return InteractionResult.PASS;
+    }
+
+    // =========================================================================
+    //  Guard Goal
+    // =========================================================================
+
+    static class ReturnToGuardPositionGoal extends Goal {
+        private final SoldierGolemEntity golem;
+        private final double speed;
+
+        ReturnToGuardPositionGoal(SoldierGolemEntity golem, double speed) {
+            this.golem = golem;
+            this.speed = speed;
+            this.setFlags(EnumSet.of(Flag.MOVE));
+        }
+
+        @Override
+        public boolean canUse() {
+            if (!golem.isGuarding() || golem.getGuardPos() == null) return false;
+            LivingEntity t = golem.getTarget();
+            if (t != null && t.isAlive()) return false; // in combat
+            return golem.distanceToSqr(net.minecraft.world.phys.Vec3.atBottomCenterOf(golem.getGuardPos())) > 4.0D;
+        }
+
+        @Override
+        public boolean canContinueToUse() {
+            if (!golem.isGuarding() || golem.getGuardPos() == null) return false;
+            LivingEntity t = golem.getTarget();
+            if (t != null && t.isAlive()) return false;
+            return !golem.getNavigation().isDone() && golem.distanceToSqr(net.minecraft.world.phys.Vec3.atBottomCenterOf(golem.getGuardPos())) > 2.25D;
+        }
+
+        @Override
+        public void start() {
+            if (golem.distanceToSqr(net.minecraft.world.phys.Vec3.atBottomCenterOf(golem.getGuardPos())) > 144.0D) {
+                // Teletrasporto se caduto o spinto troppo lontano
+                golem.teleportTo(golem.getGuardPos().getX() + 0.5D, golem.getGuardPos().getY(), golem.getGuardPos().getZ() + 0.5D);
+                golem.getNavigation().stop();
+            } else {
+                golem.getNavigation().moveTo(golem.getGuardPos().getX() + 0.5D, golem.getGuardPos().getY(), golem.getGuardPos().getZ() + 0.5D, speed);
+            }
+        }
+    }
+
     // =========================================================================
     //  Follow Owner Goal — wolf-like behaviour
     // =========================================================================
@@ -453,6 +648,7 @@ public class SoldierGolemEntity extends BaseGolemEntity implements RangedAttackM
 
         @Override
         public boolean canUse() {
+            if (golem.isGuarding()) return false;
             owner = golem.getOwnerPlayer();
             if (owner == null) return false;
             LivingEntity t = golem.getTarget();
@@ -462,6 +658,7 @@ public class SoldierGolemEntity extends BaseGolemEntity implements RangedAttackM
 
         @Override
         public boolean canContinueToUse() {
+            if (golem.isGuarding()) return false;
             owner = golem.getOwnerPlayer();
             if (owner == null || !owner.isAlive()) return false;
             LivingEntity t = golem.getTarget();
@@ -538,6 +735,7 @@ public class SoldierGolemEntity extends BaseGolemEntity implements RangedAttackM
         OwnerHurtByTargetGoal(SoldierGolemEntity g) { super(g, false); }
 
         @Override public boolean canUse() {
+            if (((SoldierGolemEntity) mob).isGuarding()) return false; // don't care if owner is hurt while guarding
             Player owner = ((SoldierGolemEntity) mob).getOwnerPlayer();
             if (owner == null) return false;
             attackerOfOwner = owner.getLastHurtByMob();
@@ -560,6 +758,7 @@ public class SoldierGolemEntity extends BaseGolemEntity implements RangedAttackM
         OwnerHurtTargetGoal(SoldierGolemEntity g) { super(g, false); }
 
         @Override public boolean canUse() {
+            if (((SoldierGolemEntity) mob).isGuarding()) return false; // don't care about owner targets while guarding
             Player owner = ((SoldierGolemEntity) mob).getOwnerPlayer();
             if (owner == null) return false;
             ownerTarget = owner.getLastHurtMob();
@@ -588,17 +787,31 @@ public class SoldierGolemEntity extends BaseGolemEntity implements RangedAttackM
         @Override public boolean canUse() {
             LivingEntity ex = mob.getTarget();
             if (ex != null && ex.isAlive()) return false;
-            Player owner = ((SoldierGolemEntity) mob).getOwnerPlayer();
-            if (owner == null) return false;
+            
+            SoldierGolemEntity sg = (SoldierGolemEntity) mob;
+            
+            net.minecraft.world.phys.AABB searchBox;
+            if (sg.isGuarding() && sg.getGuardPos() != null) {
+                // If guarding, protect the guard area
+                searchBox = new net.minecraft.world.phys.AABB(sg.getGuardPos()).inflate(range);
+            } else {
+                // If companion, protect owner
+                Player owner = sg.getOwnerPlayer();
+                if (owner == null) return false;
+                searchBox = owner.getBoundingBox().inflate(range);
+            }
 
             List<Mob> enemies = mob.level().getEntitiesOfClass(
                     Mob.class,
-                    owner.getBoundingBox().inflate(range),
+                    searchBox,
                     e -> e instanceof Enemy && e.isAlive() && !e.is(mob)
             );
             if (enemies.isEmpty()) return false;
+            
+            net.minecraft.world.phys.Vec3 center = sg.isGuarding() ? net.minecraft.world.phys.Vec3.atBottomCenterOf(sg.getGuardPos()) : sg.getOwnerPlayer().position();
+            
             foundEnemy = enemies.stream()
-                    .min(java.util.Comparator.comparingDouble(e -> e.distanceToSqr(owner)))
+                    .min(java.util.Comparator.comparingDouble(e -> e.distanceToSqr(center)))
                     .orElse(null);
             return foundEnemy != null && canAttack(foundEnemy, TargetingConditions.DEFAULT);
         }

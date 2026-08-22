@@ -15,7 +15,7 @@ public class SoldierGolemRenderer extends BaseGolemRenderer {
 
     public SoldierGolemRenderer(EntityRendererProvider.Context context) {
         super(context);
-        this.addLayer(new FlowerGolemEyesLayer(this));
+        this.addLayer(new SoldierGolemEyesLayer(this));
     }
 
     @Override
@@ -26,6 +26,7 @@ public class SoldierGolemRenderer extends BaseGolemRenderer {
             int ticks = soldier.getAttackAnimTicks();
             // Convert ticks (10→0) into a 0→1→0 bell-curve progress
             state.attackAnimProgress = ticks > 0 ? ticks / 10.0f : 0.0f;
+            state.isGuarding = soldier.isGuarding();
         }
     }
 

@@ -10,4 +10,5 @@ public class BaseGolemRenderState extends ArmedEntityRenderState {
     public float attackAnimProgress;
     public boolean isAggressive;
     public boolean hasBow;
+    public boolean isGuarding;
 }
