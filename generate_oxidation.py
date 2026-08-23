@@ -37,11 +37,13 @@ BASE_TEXTURES = [
     "farmer_golem",
     "flower_golem",
     "soldier_golem",
+    "fisherman_golem",
 ]
 
 # Pixel rows to protect fully from oxidation per golem
 PROTECTED_ROWS = {
     "farmer_golem": list(range(40, 53)),  # straw hat brim
+    "fisherman_golem": list(range(40, 53)), # bucket hat
     "soldier_golem": list(range(8, 11)), # helmet sides and bandana
 }
 

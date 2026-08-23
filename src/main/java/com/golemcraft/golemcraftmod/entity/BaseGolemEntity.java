@@ -186,7 +186,8 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
             }
 
             if (!(this instanceof com.golemcraft.golemcraftmod.entity.FarmerGolemEntity)
-                    && !(this instanceof com.golemcraft.golemcraftmod.entity.SoldierGolemEntity)) {
+                    && !(this instanceof com.golemcraft.golemcraftmod.entity.SoldierGolemEntity)
+                    && !(this instanceof com.golemcraft.golemcraftmod.entity.FishermanGolemEntity)) {
                 ItemStack slot0 = this.inventory.getItem(0);
                 ItemStack hand = this.getItemInHand(InteractionHand.MAIN_HAND);
                 if (!ItemStack.isSameItemSameComponents(slot0, hand) || slot0.getCount() != hand.getCount()) {
@@ -409,6 +410,48 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
                 return InteractionResult.SUCCESS;
             }
 
+            if (itemstack.getItem() instanceof net.minecraft.world.item.FishingRodItem) {
+                if (!this.level().isClientSide()) {
+                    FishermanGolemEntity fishermanGolem = ModEntities.FISHERMAN_GOLEM.get().create(this.level(), net.minecraft.world.entity.EntitySpawnReason.CONVERSION);
+                    if (fishermanGolem != null) {
+                        fishermanGolem.setPos(this.getX(), this.getY(), this.getZ());
+                        fishermanGolem.setYRot(this.getYRot());
+                        fishermanGolem.setXRot(this.getXRot());
+                        fishermanGolem.setHealth(this.getHealth());
+                        fishermanGolem.yBodyRot = this.yBodyRot;
+                        if (this.hasCustomName()) {
+                            fishermanGolem.setCustomName(this.getCustomName());
+                            fishermanGolem.setCustomNameVisible(this.isCustomNameVisible());
+                        }
+
+                        fishermanGolem.setOwnerUUID(this.ownerUUID);
+                        fishermanGolem.setLastPickupTime(this.lastPickupTime);
+                        for (int i = 0; i < this.inventory.getContainerSize(); i++) {
+                            fishermanGolem.getInventory().setItem(i, this.inventory.getItem(i));
+                        }
+
+                        // Equip the rod directly to hand
+                        ItemStack rodStack = itemstack.copy();
+                        rodStack.setCount(1);
+                        fishermanGolem.setItemInHand(InteractionHand.MAIN_HAND, rodStack);
+                        fishermanGolem.setDropChance(net.minecraft.world.entity.EquipmentSlot.MAINHAND, 0.0F);
+
+                        this.level().addFreshEntity(fishermanGolem);
+
+                        // Particles and sounds
+                        net.minecraft.server.level.ServerLevel serverLevel = (net.minecraft.server.level.ServerLevel) this.level();
+                        serverLevel.sendParticles(ParticleTypes.HAPPY_VILLAGER, this.getX(), this.getY() + 0.5D, this.getZ(), 15, 0.2D, 0.2D, 0.2D, 0.0D);
+                        this.playSound(SoundEvents.ZOMBIE_VILLAGER_CURE, 1.0F, 1.0F);
+
+                        if (!player.getAbilities().instabuild) {
+                            itemstack.shrink(1);
+                        }
+                        this.discard();
+                    }
+                }
+                return InteractionResult.SUCCESS;
+            }
+
             String itemName = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(itemstack.getItem()).getPath();
             boolean isWeapon = itemstack.is(net.minecraft.tags.ItemTags.SWORDS) ||
                                itemName.contains("sword") ||
@@ -475,13 +518,14 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
                                 itemstack.is(net.minecraft.world.item.Items.CROSSBOW) ||
                                 itemstack.is(net.minecraft.world.item.Items.TRIDENT) ||
                                 itemstack.is(net.minecraft.world.item.Items.LEAD) ||
-                                itemstack.is(net.minecraft.tags.ItemTags.PICKAXES);
+                                itemstack.is(net.minecraft.tags.ItemTags.PICKAXES) ||
+                                itemstack.getItem() instanceof net.minecraft.world.item.FishingRodItem;
 
         // Require sneaking (Shift+Right Click) to open inventory, to completely avoid tool conflicts
         if (player.isSecondaryUseActive() && this.ownerUUID != null && this.ownerUUID.equals(player.getUUID())) {
             if (!this.level().isClientSide()) {
                 player.openMenu(new SimpleMenuProvider(
-                    (id, playerInv, p) -> ChestMenu.threeRows(id, playerInv, this.inventory),
+                    (id, playerInv, p) -> net.minecraft.world.inventory.ChestMenu.threeRows(id, playerInv, this.inventory),
                     this.getDisplayName()
                 ));
             }

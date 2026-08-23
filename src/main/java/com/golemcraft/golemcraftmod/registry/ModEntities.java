@@ -2,6 +2,7 @@ package com.golemcraft.golemcraftmod.registry;
 
 import com.golemcraft.golemcraftmod.GolemCraft;
 import com.golemcraft.golemcraftmod.entity.FlowerGolemEntity;
+import com.golemcraft.golemcraftmod.entity.FishermanGolemEntity;
 import com.golemcraft.golemcraftmod.entity.SoldierGolemEntity;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -35,11 +36,27 @@ public class ModEntities {
                             .sized(0.5f, 1.0f)
                             .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(GolemCraft.MODID, "farmer_golem"))));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<FishermanGolemEntity>> FISHERMAN_GOLEM =
+            ENTITY_TYPES.register("fisherman_golem", () ->
+                    EntityType.Builder.of(FishermanGolemEntity::new, MobCategory.MISC)
+                            .sized(0.5f, 1.0f)
+                            .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(GolemCraft.MODID, "fisherman_golem"))));
+
     public static final DeferredHolder<EntityType<?>, EntityType<SoldierGolemEntity>> SOLDIER_GOLEM =
             ENTITY_TYPES.register("soldier_golem", () ->
                     EntityType.Builder.of(SoldierGolemEntity::new, MobCategory.MISC)
                             .sized(0.5f, 1.0f)
                             .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(GolemCraft.MODID, "soldier_golem"))));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<com.golemcraft.golemcraftmod.entity.projectile.GolemFishingHook>> GOLEM_FISHING_HOOK =
+            ENTITY_TYPES.register("golem_fishing_hook", () ->
+                    EntityType.Builder.<com.golemcraft.golemcraftmod.entity.projectile.GolemFishingHook>of(com.golemcraft.golemcraftmod.entity.projectile.GolemFishingHook::new, MobCategory.MISC)
+                            .noSave()
+                            .noSummon()
+                            .sized(0.25F, 0.25F)
+                            .clientTrackingRange(4)
+                            .updateInterval(5)
+                            .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(GolemCraft.MODID, "golem_fishing_hook"))));
 
     public static void register(IEventBus eventBus) {
         ENTITY_TYPES.register(eventBus);

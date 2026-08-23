@@ -100,6 +100,41 @@ public class BaseGolemModel extends EntityModel<BaseGolemRenderState> implements
         return LayerDefinition.create(meshdefinition, 64, 64);
     }
 
+    public static LayerDefinition createFishermanBodyLayer() {
+        MeshDefinition meshdefinition = new MeshDefinition();
+        PartDefinition partdefinition = meshdefinition.getRoot();
+
+        partdefinition.addOrReplaceChild("head", CubeListBuilder.create()
+                .texOffs(0, 0).addBox(-4.0F, -5.0F, -5.0F, 8.0F, 5.0F, 10.0F)
+                .texOffs(0, 40).addBox(-4.5F, -5.5F, -5.5F, 9.0F, 2.0F, 11.0F) // Fisherman hat brim
+                .texOffs(37, 8).addBox(-1.0F, -9.0F, -1.0F, 2.0F, 4.0F, 2.0F) // Parafulmine (Base sottile)
+                .texOffs(37, 0).addBox(-2.0F, -13.0F, -2.0F, 4.0F, 4.0F, 4.0F) // Parafulmine (Punta grossa)
+                .texOffs(56, 0).addBox(-1.0F, -3.0F, -7.0F, 2.0F, 3.0F, 2.0F), // Naso
+                PartPose.offset(0.0F, 13.0F, 0.0F));
+
+        partdefinition.addOrReplaceChild("body", CubeListBuilder.create()
+                .texOffs(0, 15).addBox(-4.0F, 0.0F, -3.0F, 8.0F, 6.0F, 6.0F),
+                PartPose.offset(0.0F, 13.0F, 0.0F));
+
+        partdefinition.addOrReplaceChild("right_arm", CubeListBuilder.create()
+                .texOffs(36, 16).addBox(-1.5F, 0.0F, -2.0F, 3.0F, 10.0F, 4.0F),
+                PartPose.offset(-5.5F, 13.0F, 0.0F));
+
+        partdefinition.addOrReplaceChild("left_arm", CubeListBuilder.create()
+                .texOffs(50, 16).addBox(-1.5F, 0.0F, -2.0F, 3.0F, 10.0F, 4.0F),
+                PartPose.offset(5.5F, 13.0F, 0.0F));
+
+        partdefinition.addOrReplaceChild("right_leg", CubeListBuilder.create()
+                .texOffs(0, 27).addBox(-2.0F, 0.0F, -2.0F, 4.0F, 5.0F, 4.0F),
+                PartPose.offset(-2.0F, 19.0F, 0.0F));
+
+        partdefinition.addOrReplaceChild("left_leg", CubeListBuilder.create()
+                .texOffs(16, 27).addBox(-2.0F, 0.0F, -2.0F, 4.0F, 5.0F, 4.0F),
+                PartPose.offset(2.0F, 19.0F, 0.0F));
+
+        return LayerDefinition.create(meshdefinition, 64, 64);
+    }
+
 
     @Override
     public void setupAnim(BaseGolemRenderState state) {
@@ -163,7 +198,29 @@ public class BaseGolemModel extends EntityModel<BaseGolemRenderState> implements
         this.rightArm.zRot = (Mth.cos(time * 0.09F) * 0.05F + 0.05F);
         this.leftArm.zRot = -(Mth.cos(time * 0.09F) * 0.05F + 0.05F);
         
-        if (state.isRummaging) {
+        if (state.isFishing) {
+            // (No sitting pose)
+
+            // ── CORPO leggera inclinazione in avanti ──────────────────────
+            this.body.xRot = 0.15F + Mth.sin(time * 0.05F) * 0.02F; // respiro lento
+
+            // ── TESTA guarda verso l'acqua ────────────────────────────────
+            // (yRot già impostato sopra, aggiungiamo solo un pitch verso il basso)
+            this.head.xRot = 0.35F + Mth.sin(time * 0.07F) * 0.03F;
+
+            // ── BRACCIA: impugnatura asimmetrica della canna ──────────────
+            // Braccio destro: mano alta (impugnatura posteriore), leggermente
+            // spostato verso sinistra per tenere la canna
+            float rodSway = Mth.sin(time * 0.06F) * 0.04F; // micro-oscillazione d'attesa
+            this.rightArm.xRot = -1.35F + rodSway;
+            this.rightArm.zRot = -0.08F;
+            this.rightArm.yRot =  0.12F;
+
+            // Braccio sinistro: mano bassa (impugnatura anteriore)
+            this.leftArm.xRot = -1.05F + rodSway;
+            this.leftArm.zRot =  0.08F;
+            this.leftArm.yRot = -0.12F;
+        } else if (state.isRummaging) {
             this.body.xRot = 0.2F;
             this.head.xRot += 0.4F;
             this.rightArm.xRot = -1.2F;

@@ -87,6 +87,9 @@ public class DepositInChestGoal extends Goal {
                                 if (this.golem instanceof com.golemcraft.golemcraftmod.entity.FarmerGolemEntity && stack.getItem() instanceof net.minecraft.world.item.HoeItem) {
                                     continue; // Keep hoes!
                                 }
+                                if (this.golem instanceof com.golemcraft.golemcraftmod.entity.FishermanGolemEntity && stack.getItem() instanceof net.minecraft.world.item.FishingRodItem) {
+                                    continue; // Keep fishing rods!
+                                }
                                 ItemStack remainder = insertItem(container, stack.copy());
                                 this.golem.getInventory().setItem(i, remainder);
                             }
@@ -98,7 +101,7 @@ public class DepositInChestGoal extends Goal {
                     this.golem.setRummaging(false);
                     this.targetChestPos = null; // Done
                     this.golem.actionCooldown = 15;
-                    if (!(this.golem instanceof com.golemcraft.golemcraftmod.entity.FarmerGolemEntity)) {
+                    if (!(this.golem instanceof com.golemcraft.golemcraftmod.entity.FarmerGolemEntity) && !(this.golem instanceof com.golemcraft.golemcraftmod.entity.FishermanGolemEntity)) {
                         this.golem.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, this.golem.getInventory().getItem(0).copy()); // Update visual item
                     }
                 }
@@ -146,6 +149,9 @@ public class DepositInChestGoal extends Goal {
             ItemStack stack = this.golem.getInventory().getItem(i);
             if (!stack.isEmpty()) {
                 if (this.golem instanceof com.golemcraft.golemcraftmod.entity.FarmerGolemEntity && stack.getItem() instanceof net.minecraft.world.item.HoeItem) {
+                    continue;
+                }
+                if (this.golem instanceof com.golemcraft.golemcraftmod.entity.FishermanGolemEntity && stack.getItem() instanceof net.minecraft.world.item.FishingRodItem) {
                     continue;
                 }
                 return true;
