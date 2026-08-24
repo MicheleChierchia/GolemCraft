@@ -16,37 +16,47 @@ out_path = os.path.join(TEXTURE_DIR, "fisherman_golem.png")
 # Start with a COPY of the base texture (keeps copper structure: lightning rod, nose, eyes glow)
 img = Image.open(base_path).convert("RGBA")
 px = img.load()
+# Tint the whole base golem from grey to copper color
+SKIN_LIGHT = (215, 120, 60, 255) # Copper light
+SKIN_MID   = (175, 85, 35, 255) # Copper mid
+SKIN_DARK  = (130, 55, 20, 255) # Copper dark
+for y in range(64):
+    for x in range(64):
+        c = px[x,y]
+        if c[3] > 0:
+            if c[0] > 120: px[x,y] = SKIN_LIGHT
+            elif c[0] > 90: px[x,y] = SKIN_MID
+            else: px[x,y] = SKIN_DARK
+px = img.load()
 
 # ─────────────────────────── PALETTE ────────────────────────────
-# COPPER BODY (keep the existing copper tones as base)
-# Hat - Navy Captain hat
-HAT_NAVY_LIGHT   = (55, 80, 135, 255)
-HAT_NAVY_MID     = (35, 55, 100, 255)
-HAT_NAVY_DARK    = (20, 35, 70,  255)
-HAT_VISOR_BLACK  = (18, 18, 25,  255)
-HAT_BAND_GOLD    = (200, 165, 40, 255)
-HAT_BADGE_GOLD   = (220, 190, 60, 255)
+# Hat - Blue Bucket Hat
+HAT_BLUE_LIGHT   = (65, 85, 145, 255)
+HAT_BLUE_MID     = (45, 65, 115, 255)
+HAT_BLUE_DARK    = (25, 45, 85,  255)
+HAT_BAND_LIGHT   = (140, 170, 210, 255)
+HAT_BAND_DARK    = (100, 130, 180, 255)
 
-# Life vest - Orange rescue vest
-VEST_ORANGE_LIGHT = (245, 135, 30, 255)
-VEST_ORANGE_MID   = (215, 105, 15, 255)
-VEST_ORANGE_DARK  = (175, 78,  8,  255)
-VEST_STRAP_DARK   = (155, 65,  5,  255)
+# Vest - Blue vest
+VEST_BLUE_LIGHT = (100, 130, 170, 255)
+VEST_BLUE_MID   = (70, 100, 140, 255)
+VEST_BLUE_DARK  = (50, 75,  110,  255)
+VEST_STRAP_DARK = (40, 60,  90,  255)
 
 # Shirt (under vest, visible on arms)
-SHIRT_WHITE_LIGHT = (240, 240, 235, 255)
-SHIRT_WHITE_MID   = (210, 210, 205, 255)
-SHIRT_WHITE_DARK  = (170, 170, 165, 255)
+SHIRT_BEIGE_LIGHT = (215, 205, 180, 255)
+SHIRT_BEIGE_MID   = (190, 180, 155, 255)
+SHIRT_BEIGE_DARK  = (160, 150, 125, 255)
 
-# Pants - Dark navy
-PANTS_NAVY_LIGHT  = (60,  75, 110, 255)
-PANTS_NAVY_MID    = (40,  55, 90,  255)
-PANTS_NAVY_DARK   = (25,  38, 65,  255)
+# Pants - Dark grey shorts
+PANTS_GREY_LIGHT  = (90, 95, 100, 255)
+PANTS_GREY_MID    = (70, 75, 80,  255)
+PANTS_GREY_DARK   = (50, 55, 60,  255)
 
-# Boots - Rubber black
-BOOT_BLACK_LIGHT  = (55, 55, 60, 255)
-BOOT_BLACK_MID    = (35, 35, 40, 255)
-BOOT_BLACK_DARK   = (18, 18, 22, 255)
+# Boots - Rubber yellow
+BOOT_YELLOW_LIGHT = (245, 215, 60, 255)
+BOOT_YELLOW_MID   = (215, 185, 30, 255)
+BOOT_YELLOW_DARK  = (175, 145, 10, 255)
 
 # Seam/pocket details
 DETAIL_DARK       = (30, 30, 30, 255)
@@ -104,21 +114,21 @@ for y in range(21, 27):
         # Central white shirt stripe down the middle
         if rel_x in [3, 4]:
             if rel_y < 4:
-                c = SHIRT_WHITE_LIGHT if rel_y < 2 else SHIRT_WHITE_MID
+                c = SHIRT_BEIGE_LIGHT if rel_y < 2 else SHIRT_BEIGE_MID
             else:
-                c = SHIRT_WHITE_DARK
+                c = SHIRT_BEIGE_DARK
         # Orange vest sides
         elif rel_x in [0, 1]:
-            c = VEST_ORANGE_MID if rel_y > 0 else VEST_ORANGE_LIGHT
+            c = VEST_BLUE_MID if rel_y > 0 else VEST_BLUE_LIGHT
         elif rel_x in [6, 7]:
-            c = VEST_ORANGE_MID if rel_y > 0 else VEST_ORANGE_LIGHT
+            c = VEST_BLUE_MID if rel_y > 0 else VEST_BLUE_LIGHT
         # Vest main body
         elif rel_x in [2]:
-            c = VEST_ORANGE_LIGHT if rel_y < 2 else VEST_ORANGE_MID
+            c = VEST_BLUE_LIGHT if rel_y < 2 else VEST_BLUE_MID
         elif rel_x in [5]:
-            c = VEST_ORANGE_LIGHT if rel_y < 2 else VEST_ORANGE_MID
+            c = VEST_BLUE_LIGHT if rel_y < 2 else VEST_BLUE_MID
         else:
-            c = VEST_ORANGE_DARK
+            c = VEST_BLUE_DARK
         # Bottom strap
         if rel_y == 5:
             c = VEST_STRAP_DARK
@@ -128,7 +138,7 @@ for y in range(21, 27):
 for y in range(21, 27):
     for x in range(0, 6):
         rel_y = y - 21
-        c = VEST_ORANGE_MID if rel_y < 3 else VEST_ORANGE_DARK
+        c = VEST_BLUE_MID if rel_y < 3 else VEST_BLUE_DARK
         if rel_y == 5: c = VEST_STRAP_DARK
         put(x, y, c)
 
@@ -136,7 +146,7 @@ for y in range(21, 27):
 for y in range(21, 27):
     for x in range(14, 20):
         rel_y = y - 21
-        c = VEST_ORANGE_MID if rel_y < 3 else VEST_ORANGE_DARK
+        c = VEST_BLUE_MID if rel_y < 3 else VEST_BLUE_DARK
         if rel_y == 5: c = VEST_STRAP_DARK
         put(x, y, c)
 
@@ -144,20 +154,20 @@ for y in range(21, 27):
 for y in range(21, 27):
     for x in range(20, 28):
         rel_y = y - 21
-        c = VEST_ORANGE_LIGHT if rel_y < 2 else VEST_ORANGE_MID
+        c = VEST_BLUE_LIGHT if rel_y < 2 else VEST_BLUE_MID
         if rel_y == 5: c = VEST_STRAP_DARK
         put(x, y, c)
 
 # Top of body: x:6-13, y:15-20
 for y in range(15, 21):
     for x in range(6, 14):
-        c = VEST_ORANGE_MID
+        c = VEST_BLUE_MID
         put(x, y, c)
 
 # Bottom of body: x:14-21, y:15-20
 for y in range(15, 21):
     for x in range(14, 22):
-        c = VEST_ORANGE_DARK
+        c = VEST_BLUE_DARK
         put(x, y, c)
 
 # ═══════════════════════════════════════════════════════════════
@@ -176,33 +186,34 @@ for y in range(16, 30):
     for x in range(36, 50):
         rel_x = x - 36  # 0-13
         rel_y = y - 16  # 0-13
+        orig = px[x, y]
         
         # Top of arm (rel_y 0-3)
         if rel_y < 4:
-            if rel_x < 4:      c = VEST_ORANGE_MID    # left top
-            elif rel_x < 7:    c = VEST_ORANGE_LIGHT   # front top
-            elif rel_x < 10:   c = VEST_ORANGE_MID    # right top (bottom face)
+            if rel_x < 4:      c = VEST_BLUE_MID    # left top
+            elif rel_x < 7:    c = VEST_BLUE_LIGHT   # front top
+            elif rel_x < 10:   c = VEST_BLUE_MID    # right top (bottom face)
             else:              c = (0,0,0,0)            # transparent (unused)
         # Arm faces (rel_y 4-13)
         else:
             arm_y = rel_y - 4  # 0-9
             if rel_x < 4:       # left face
-                c = SHIRT_WHITE_MID if arm_y < 6 else PANTS_NAVY_MID
-                if arm_y == 6: c = DETAIL_DARK  # cuff line
+                c = SHIRT_BEIGE_MID if arm_y < 4 else orig
+                if arm_y == 4: c = DETAIL_DARK  # cuff line
             elif rel_x < 7:     # front face
-                c = SHIRT_WHITE_LIGHT if arm_y < 6 else PANTS_NAVY_LIGHT
-                if arm_y == 6: c = DETAIL_DARK
+                c = SHIRT_BEIGE_LIGHT if arm_y < 4 else orig
+                if arm_y == 4: c = DETAIL_DARK
                 # Orange shoulder patch
                 if arm_y < 3:
-                    c = VEST_ORANGE_MID
+                    c = VEST_BLUE_MID
             elif rel_x < 11:    # right face
-                c = SHIRT_WHITE_MID if arm_y < 6 else PANTS_NAVY_MID
-                if arm_y == 6: c = DETAIL_DARK
+                c = SHIRT_BEIGE_MID if arm_y < 4 else orig
+                if arm_y == 4: c = DETAIL_DARK
             else:               # back face
-                c = SHIRT_WHITE_DARK if arm_y < 6 else PANTS_NAVY_DARK
-                if arm_y == 6: c = DETAIL_DARK
+                c = SHIRT_BEIGE_DARK if arm_y < 4 else orig
+                if arm_y == 4: c = DETAIL_DARK
                 if arm_y < 3:
-                    c = VEST_ORANGE_DARK
+                    c = VEST_BLUE_DARK
         
         if 0 <= x < 64 and 0 <= y < 64:
             px[x, y] = c
@@ -212,29 +223,30 @@ for y in range(16, 30):
     for x in range(50, 64):
         rel_x = x - 50  # 0-13
         rel_y = y - 16  # 0-13
+        orig = px[x, y]
         
         if rel_y < 4:
-            if rel_x < 4:      c = VEST_ORANGE_MID
-            elif rel_x < 7:    c = VEST_ORANGE_LIGHT
-            elif rel_x < 10:   c = VEST_ORANGE_MID
+            if rel_x < 4:      c = VEST_BLUE_MID
+            elif rel_x < 7:    c = VEST_BLUE_LIGHT
+            elif rel_x < 10:   c = VEST_BLUE_MID
             else:              c = (0,0,0,0)
         else:
             arm_y = rel_y - 4
             if rel_x < 4:
-                c = SHIRT_WHITE_DARK if arm_y < 6 else PANTS_NAVY_DARK
-                if arm_y == 6: c = DETAIL_DARK
-                if arm_y < 3: c = VEST_ORANGE_DARK
+                c = SHIRT_BEIGE_DARK if arm_y < 4 else orig
+                if arm_y == 4: c = DETAIL_DARK
+                if arm_y < 3: c = VEST_BLUE_DARK
             elif rel_x < 7:
-                c = SHIRT_WHITE_LIGHT if arm_y < 6 else PANTS_NAVY_LIGHT
-                if arm_y == 6: c = DETAIL_DARK
-                if arm_y < 3: c = VEST_ORANGE_MID
+                c = SHIRT_BEIGE_LIGHT if arm_y < 4 else orig
+                if arm_y == 4: c = DETAIL_DARK
+                if arm_y < 3: c = VEST_BLUE_MID
             elif rel_x < 11:
-                c = SHIRT_WHITE_MID if arm_y < 6 else PANTS_NAVY_MID
-                if arm_y == 6: c = DETAIL_DARK
+                c = SHIRT_BEIGE_MID if arm_y < 4 else orig
+                if arm_y == 4: c = DETAIL_DARK
             else:
-                c = SHIRT_WHITE_MID if arm_y < 6 else PANTS_NAVY_MID
-                if arm_y == 6: c = DETAIL_DARK
-                if arm_y < 3: c = VEST_ORANGE_MID
+                c = SHIRT_BEIGE_MID if arm_y < 4 else orig
+                if arm_y == 4: c = DETAIL_DARK
+                if arm_y < 3: c = VEST_BLUE_MID
         
         if 0 <= x < 64 and 0 <= y < 64:
             px[x, y] = c
@@ -257,22 +269,22 @@ for y in range(27, 36):
         rel_y = y - 27
         
         if rel_y < 4:  # tops
-            if rel_x < 4:      c = PANTS_NAVY_DARK
-            elif rel_x < 8:    c = PANTS_NAVY_MID
-            elif rel_x < 12:   c = PANTS_NAVY_DARK
+            if rel_x < 4:      c = PANTS_GREY_DARK
+            elif rel_x < 8:    c = PANTS_GREY_MID
+            elif rel_x < 12:   c = PANTS_GREY_DARK
             else:              c = (0,0,0,0)
         else:
             leg_y = rel_y - 4  # 0-4, last 2 are boot
             is_boot = leg_y >= 3
             if rel_x < 4:       # left face
-                c = BOOT_BLACK_MID if is_boot else PANTS_NAVY_MID
+                c = BOOT_YELLOW_MID if is_boot else PANTS_GREY_MID
             elif rel_x < 8:     # front face
-                c = BOOT_BLACK_LIGHT if is_boot else PANTS_NAVY_LIGHT
-                if is_boot and leg_y == 3: c = BOOT_BLACK_MID  # boot top seam
+                c = BOOT_YELLOW_LIGHT if is_boot else PANTS_GREY_LIGHT
+                if is_boot and leg_y == 3: c = BOOT_YELLOW_MID  # boot top seam
             elif rel_x < 12:    # right face
-                c = BOOT_BLACK_MID if is_boot else PANTS_NAVY_MID
+                c = BOOT_YELLOW_MID if is_boot else PANTS_GREY_MID
             else:               # back face
-                c = BOOT_BLACK_DARK if is_boot else PANTS_NAVY_DARK
+                c = BOOT_YELLOW_DARK if is_boot else PANTS_GREY_DARK
         
         put(x, y, c)
 
@@ -283,22 +295,22 @@ for y in range(27, 36):
         rel_y = y - 27
         
         if rel_y < 4:
-            if rel_x < 4:      c = PANTS_NAVY_DARK
-            elif rel_x < 8:    c = PANTS_NAVY_MID
-            elif rel_x < 12:   c = PANTS_NAVY_DARK
+            if rel_x < 4:      c = PANTS_GREY_DARK
+            elif rel_x < 8:    c = PANTS_GREY_MID
+            elif rel_x < 12:   c = PANTS_GREY_DARK
             else:              c = (0,0,0,0)
         else:
             leg_y = rel_y - 4
             is_boot = leg_y >= 3
             if rel_x < 4:
-                c = BOOT_BLACK_DARK if is_boot else PANTS_NAVY_DARK
+                c = BOOT_YELLOW_DARK if is_boot else PANTS_GREY_DARK
             elif rel_x < 8:
-                c = BOOT_BLACK_LIGHT if is_boot else PANTS_NAVY_LIGHT
-                if is_boot and leg_y == 3: c = BOOT_BLACK_MID
+                c = BOOT_YELLOW_LIGHT if is_boot else PANTS_GREY_LIGHT
+                if is_boot and leg_y == 3: c = BOOT_YELLOW_MID
             elif rel_x < 12:
-                c = BOOT_BLACK_MID if is_boot else PANTS_NAVY_MID
+                c = BOOT_YELLOW_MID if is_boot else PANTS_GREY_MID
             else:
-                c = BOOT_BLACK_MID if is_boot else PANTS_NAVY_MID
+                c = BOOT_YELLOW_MID if is_boot else PANTS_GREY_MID
         
         put(x, y, c)
 
@@ -320,13 +332,13 @@ for y in range(40, 53):
         rel_y = y - 40  # 0-12
         # Top of the brim = hat top plate (lighter)
         if rel_y < 11:
-            if x < 11:        c = HAT_VISOR_BLACK        # left side face
-            elif x < 20:      c = HAT_NAVY_LIGHT         # top face
-            elif x < 29:      c = HAT_NAVY_MID           # bottom face 
-            elif x < 31:      c = HAT_VISOR_BLACK        # right side face
-            else:             c = HAT_NAVY_DARK          # extra
+            if x < 11:        c = HAT_BLUE_MID        # left side face
+            elif x < 20:      c = HAT_BLUE_LIGHT         # top face
+            elif x < 29:      c = HAT_BLUE_MID           # bottom face 
+            elif x < 31:      c = HAT_BLUE_MID        # right side face
+            else:             c = HAT_BLUE_DARK          # extra
         else:  # Bottom 2 rows = brim edge: front, sides, back
-            c = HAT_VISOR_BLACK  # Black visor brim
+            c = HAT_BLUE_MID  # Black visor brim
         put(x, y, c)
 
 # Now paint the head top zone to look like the hat continuation
@@ -338,8 +350,8 @@ for y in range(0, 5):
         orig = px[x, y]
         if orig[3] > 0:
             # Hat crown top
-            c = HAT_NAVY_LIGHT
-            if y > 2: c = HAT_NAVY_MID
+            c = HAT_BLUE_LIGHT
+            if y > 2: c = HAT_BLUE_MID
             put(x, y, c)
 
 # Hat band (gold stripe around the hat)
@@ -349,7 +361,7 @@ for y in range(8, 10):  # bottom of head front
     for x in range(10, 18):
         orig = px[x, y]
         if orig[3] > 0:
-            c = HAT_BAND_GOLD if y == 9 else HAT_BADGE_GOLD
+            c = HAT_BAND_LIGHT if y == 9 else HAT_BAND_LIGHT
             put(x, y, c)
 
 # Hat sides gold band
@@ -358,24 +370,24 @@ for y in range(8, 10):
     for x in range(0, 10):
         orig = px[x, y]
         if orig[3] > 0:
-            put(x, y, HAT_BAND_GOLD)
+            put(x, y, HAT_BAND_LIGHT)
     # Right side: x:18-27, y:5-9
     for x in range(18, 28):
         orig = px[x, y]
         if orig[3] > 0:
-            put(x, y, HAT_BAND_GOLD)
+            put(x, y, HAT_BAND_LIGHT)
     # Back: x:28-35, y:5-9
     for x in range(28, 36):
         orig = px[x, y]
         if orig[3] > 0:
-            put(x, y, HAT_BAND_GOLD)
+            put(x, y, HAT_BAND_LIGHT)
 
 # Upper head crown area (above band) = navy
 for y in range(5, 8):
     for x in range(0, 36):
         orig = px[x, y]
         if orig[3] > 0:
-            c = HAT_NAVY_MID
+            c = HAT_BLUE_MID
             put(x, y, c)
 
 img.save(out_path)

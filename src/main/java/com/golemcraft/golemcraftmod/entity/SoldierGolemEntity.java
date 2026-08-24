@@ -460,11 +460,21 @@ public class SoldierGolemEntity extends BaseGolemEntity implements RangedAttackM
     // ── Ranged Attacks ────────────────────────────────────────────────────────
 
     private ItemStack consumeArrow() {
+        ItemStack handItem = this.getItemInHand(InteractionHand.MAIN_HAND);
+        boolean hasInfinity = false;
+        try {
+            var registry = this.level().registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT);
+            var infinity = registry.getOrThrow(net.minecraft.world.item.enchantment.Enchantments.INFINITY);
+            hasInfinity = handItem.getEnchantmentLevel(infinity) > 0;
+        } catch (Exception e) {}
+
         ItemStack offhand = this.getItemInHand(InteractionHand.OFF_HAND);
         if (isArrow(offhand)) {
             ItemStack ammo = offhand.copyWithCount(1);
-            offhand.shrink(1);
-            if (offhand.isEmpty()) this.setItemInHand(InteractionHand.OFF_HAND, ItemStack.EMPTY);
+            if (!hasInfinity) {
+                offhand.shrink(1);
+                if (offhand.isEmpty()) this.setItemInHand(InteractionHand.OFF_HAND, ItemStack.EMPTY);
+            }
             return ammo;
         }
         net.minecraft.world.SimpleContainer inv = this.getInventory();
@@ -472,8 +482,10 @@ public class SoldierGolemEntity extends BaseGolemEntity implements RangedAttackM
             ItemStack stack = inv.getItem(i);
             if (isArrow(stack)) {
                 ItemStack ammo = stack.copyWithCount(1);
-                stack.shrink(1);
-                if (stack.isEmpty()) inv.setItem(i, ItemStack.EMPTY);
+                if (!hasInfinity) {
+                    stack.shrink(1);
+                    if (stack.isEmpty()) inv.setItem(i, ItemStack.EMPTY);
+                }
                 return ammo;
             }
         }

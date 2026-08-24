@@ -21,7 +21,7 @@ public class FishermanGolemRenderer extends MobRenderer<BaseGolemEntity, BaseGol
         super(context, new BaseGolemModel(context.bakeLayer(com.golemcraft.golemcraftmod.events.ClientEvents.FISHERMAN_GOLEM_LAYER)), 0.5F);
         this.itemModelResolver = context.getItemModelResolver();
         this.addLayer(new net.minecraft.client.renderer.entity.layers.ItemInHandLayer<>(this));
-        this.addLayer(new BaseGolemEyesLayer(this));
+        this.addLayer(new FlowerGolemEyesLayer(this));
     }
 
     @Override
