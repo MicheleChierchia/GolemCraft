@@ -15,7 +15,8 @@ public class GolemFakePlayerHelper {
         if (!(golem.level() instanceof ServerLevel sl)) return;
         
         FakePlayer player = FakePlayerFactory.getMinecraft(sl);
-        player.setPos(golem.getX(), golem.getY(), golem.getZ());
+        // Allineiamo l'altezza degli occhi del FakePlayer a quella del Golem
+        player.setPos(golem.getX(), golem.getEyeY() - player.getEyeHeight(), golem.getZ());
         player.setYRot(golem.getYRot());
         player.setXRot(golem.getXRot());
         player.yHeadRot = golem.yHeadRot;

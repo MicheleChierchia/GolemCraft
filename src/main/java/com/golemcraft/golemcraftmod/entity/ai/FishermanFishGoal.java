@@ -126,6 +126,7 @@ public class FishermanFishGoal extends Goal {
         boolean lootSuccess = false;
         try {
             java.util.concurrent.atomic.AtomicBoolean success = new java.util.concurrent.atomic.AtomicBoolean(false);
+            java.util.List<ItemStack> pendingDrops = new java.util.ArrayList<>();
             
             com.golemcraft.golemcraftmod.entity.GolemFakePlayerHelper.executeAsPlayer(this.golem, player -> {
                 net.minecraft.world.level.storage.loot.LootTable lootTable =
@@ -141,9 +142,7 @@ public class FishermanFishGoal extends Goal {
                 GolemCraft.LOGGER.debug("[FishermanGolem] Loot table returned {} items", drops.size());
 
                 if (!drops.isEmpty()) {
-                    for (ItemStack stack : drops) {
-                        insertIntoInventory(stack);
-                    }
+                    pendingDrops.addAll(drops);
                     success.set(true);
                 }
                 
@@ -158,6 +157,11 @@ public class FishermanFishGoal extends Goal {
                 }
             });
             
+            if (success.get()) {
+                for (ItemStack stack : pendingDrops) {
+                    insertIntoInventory(stack);
+                }
+            }
             lootSuccess = success.get();
         } catch (Exception e) {
             GolemCraft.LOGGER.warn("[FishermanGolem] Loot table failed ({}), using fallback drops", e.getMessage());
