@@ -47,7 +47,7 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
 
     public static AttributeSupplier.Builder createAttributes() {
         return Mob.createMobAttributes()
-                .add(Attributes.MAX_HEALTH, 15.0D)
+                .add(Attributes.MAX_HEALTH, 45.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.25D);
     }
 
@@ -220,8 +220,37 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
         }
     }
     
+    public boolean isAlly(net.minecraft.world.entity.Entity other) {
+        if (this.ownerUUID != null && other != null) {
+            if (other instanceof BaseGolemEntity golem) {
+                if (this.ownerUUID.equals(golem.getOwnerUUID())) {
+                    return true;
+                }
+            }
+            if (other.getUUID().equals(this.ownerUUID)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public boolean canAttack(LivingEntity target) {
+        if (this.isAlly(target)) {
+            return false;
+        }
+        return super.canAttack(target);
+    }
+
     @Override
     public boolean hurtServer(net.minecraft.server.level.ServerLevel level, net.minecraft.world.damagesource.DamageSource damageSource, float amount) {
+        net.minecraft.world.entity.Entity attacker = damageSource.getEntity();
+        if (attacker != null && this.isAlly(attacker)) {
+            if (!(attacker instanceof Player)) {
+                return false; // I golem alleati non si fanno danno tra loro.
+            }
+        }
+        
         if (this.getOxidationLevel() == 3) {
             if (damageSource.getEntity() instanceof Player player && player.getItemInHand(InteractionHand.MAIN_HAND).is(net.minecraft.tags.ItemTags.PICKAXES)) {
                 // Drop as item
