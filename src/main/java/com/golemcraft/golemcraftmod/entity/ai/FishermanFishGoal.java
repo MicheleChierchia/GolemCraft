@@ -125,24 +125,40 @@ public class FishermanFishGoal extends Goal {
         // Try vanilla fishing loot table first
         boolean lootSuccess = false;
         try {
-            net.minecraft.world.level.storage.loot.LootTable lootTable =
-                    serverLevel.getServer().reloadableRegistries().getLootTable(BuiltInLootTables.FISHING);
+            java.util.concurrent.atomic.AtomicBoolean success = new java.util.concurrent.atomic.AtomicBoolean(false);
+            
+            com.golemcraft.golemcraftmod.entity.GolemFakePlayerHelper.executeAsPlayer(this.golem, player -> {
+                net.minecraft.world.level.storage.loot.LootTable lootTable =
+                        serverLevel.getServer().reloadableRegistries().getLootTable(BuiltInLootTables.FISHING);
 
-            LootParams lootParams = new LootParams.Builder(serverLevel)
-                    .withParameter(LootContextParams.ORIGIN, this.golem.position())
-                    .withParameter(LootContextParams.TOOL, this.golem.getItemInHand(InteractionHand.MAIN_HAND))
-                    .withParameter(LootContextParams.THIS_ENTITY, this.golem)
-                    .create(LootContextParamSets.FISHING);
+                LootParams lootParams = new LootParams.Builder(serverLevel)
+                        .withParameter(LootContextParams.ORIGIN, this.golem.position())
+                        .withParameter(LootContextParams.TOOL, player.getItemInHand(InteractionHand.MAIN_HAND))
+                        .withParameter(LootContextParams.THIS_ENTITY, player)
+                        .create(LootContextParamSets.FISHING);
 
-            List<ItemStack> drops = lootTable.getRandomItems(lootParams);
-            GolemCraft.LOGGER.debug("[FishermanGolem] Loot table returned {} items", drops.size());
+                List<ItemStack> drops = lootTable.getRandomItems(lootParams);
+                GolemCraft.LOGGER.debug("[FishermanGolem] Loot table returned {} items", drops.size());
 
-            if (!drops.isEmpty()) {
-                for (ItemStack stack : drops) {
-                    insertIntoInventory(stack);
+                if (!drops.isEmpty()) {
+                    for (ItemStack stack : drops) {
+                        insertIntoInventory(stack);
+                    }
+                    success.set(true);
                 }
-                lootSuccess = true;
-            }
+                
+                // Consume rod durability using FakePlayer
+                ItemStack rod = player.getItemInHand(InteractionHand.MAIN_HAND);
+                if (!rod.isEmpty() && rod.isDamageableItem()) {
+                    rod.hurtAndBreak(1, serverLevel, player, item -> {
+                        player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+                        this.golem.playSound(SoundEvents.ITEM_BREAK.value(), 1.0F, 1.0F);
+                        GolemCraft.LOGGER.debug("[FishermanGolem] Fishing rod broke!");
+                    });
+                }
+            });
+            
+            lootSuccess = success.get();
         } catch (Exception e) {
             GolemCraft.LOGGER.warn("[FishermanGolem] Loot table failed ({}), using fallback drops", e.getMessage());
         }
@@ -155,16 +171,6 @@ public class FishermanFishGoal extends Goal {
         }
 
         this.golem.setLastPickupTime(serverLevel.getGameTime());
-
-        // Consume rod durability
-        ItemStack rod = this.golem.getItemInHand(InteractionHand.MAIN_HAND);
-        if (!rod.isEmpty() && rod.isDamageableItem()) {
-            rod.hurtAndBreak(1, serverLevel, null, item -> {
-                this.golem.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
-                this.golem.playSound(SoundEvents.ITEM_BREAK.value(), 1.0F, 1.0F);
-                GolemCraft.LOGGER.debug("[FishermanGolem] Fishing rod broke!");
-            });
-        }
     }
 
     /** Weighted random fishing drop for the fallback system. */

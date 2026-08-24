@@ -1,9 +1,10 @@
 package com.golemcraft.golemcraftmod;
 
-import net.minecraft.world.entity.monster.Skeleton;
+import net.neoforged.neoforge.common.util.FakePlayerFactory;
+import net.neoforged.neoforge.common.util.FakePlayer;
 
 public class TestCheck {
     public static void main(String[] args) {
-        System.out.println("Skeleton exists!");
+        System.out.println("FakePlayerFactory exists!");
     }
 }

@@ -94,17 +94,17 @@ public class FarmerTillGoal extends Goal {
                 BlockState state = level.getBlockState(this.targetPos);
                 
                 if ((state.is(Blocks.DIRT) || state.is(Blocks.GRASS_BLOCK) || state.is(Blocks.DIRT_PATH)) && level.getBlockState(this.targetPos.above()).isAir()) {
-                    level.setBlock(this.targetPos, Blocks.FARMLAND.defaultBlockState(), 11);
-                    level.playSound(null, this.targetPos, SoundEvents.HOE_TILL, SoundSource.BLOCKS, 1.0F, 1.0F);
-                    level.gameEvent(GameEvent.BLOCK_CHANGE, this.targetPos, GameEvent.Context.of(this.golem, Blocks.FARMLAND.defaultBlockState()));
-                    
-                    ItemStack hoe = this.golem.getItemInHand(InteractionHand.MAIN_HAND);
-                    if (hoe.isDamageableItem() && level instanceof net.minecraft.server.level.ServerLevel serverLevel) {
-                        hoe.hurtAndBreak(1, serverLevel, null, (item) -> {
-                            this.golem.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
-                            this.golem.playSound(SoundEvents.ITEM_BREAK.value(), 1.0F, 1.0F);
-                        });
-                    }
+                    com.golemcraft.golemcraftmod.entity.GolemFakePlayerHelper.executeAsPlayer(this.golem, player -> {
+                        ItemStack hoe = player.getItemInHand(InteractionHand.MAIN_HAND);
+                        net.minecraft.world.phys.BlockHitResult hitResult = new net.minecraft.world.phys.BlockHitResult(
+                            new net.minecraft.world.phys.Vec3(this.targetPos.getX() + 0.5, this.targetPos.getY() + 1.0, this.targetPos.getZ() + 0.5),
+                            net.minecraft.core.Direction.UP,
+                            this.targetPos,
+                            false
+                        );
+                        net.minecraft.world.item.context.UseOnContext ctx = new net.minecraft.world.item.context.UseOnContext(player, InteractionHand.MAIN_HAND, hitResult);
+                        hoe.useOn(ctx);
+                    });
                 }
                 
                 this.targetPos = null;

@@ -459,82 +459,53 @@ public class SoldierGolemEntity extends BaseGolemEntity implements RangedAttackM
 
     // ── Ranged Attacks ────────────────────────────────────────────────────────
 
-    private ItemStack consumeArrow() {
-        ItemStack handItem = this.getItemInHand(InteractionHand.MAIN_HAND);
-        boolean hasInfinity = false;
-        try {
-            var registry = this.level().registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT);
-            var infinity = registry.getOrThrow(net.minecraft.world.item.enchantment.Enchantments.INFINITY);
-            hasInfinity = handItem.getEnchantmentLevel(infinity) > 0;
-        } catch (Exception e) {}
-
-        ItemStack offhand = this.getItemInHand(InteractionHand.OFF_HAND);
-        if (isArrow(offhand)) {
-            ItemStack ammo = offhand.copyWithCount(1);
-            if (!hasInfinity) {
-                offhand.shrink(1);
-                if (offhand.isEmpty()) this.setItemInHand(InteractionHand.OFF_HAND, ItemStack.EMPTY);
-            }
-            return ammo;
-        }
-        net.minecraft.world.SimpleContainer inv = this.getInventory();
-        for (int i = 0; i < inv.getContainerSize(); i++) {
-            ItemStack stack = inv.getItem(i);
-            if (isArrow(stack)) {
-                ItemStack ammo = stack.copyWithCount(1);
-                if (!hasInfinity) {
-                    stack.shrink(1);
-                    if (stack.isEmpty()) inv.setItem(i, ItemStack.EMPTY);
-                }
-                return ammo;
-            }
-        }
-        return new ItemStack(Items.ARROW); // Fallback if somehow empty
-    }
-
     @Override
     public void performRangedAttack(LivingEntity target, float pullProgress) {
-        ItemStack handItem = this.getItemInHand(InteractionHand.MAIN_HAND);
         setAttackAnimTicks(10);
-
-        ItemStack ammo = consumeArrow();
-        Projectile projectile = ProjectileUtil.getMobArrow(this, ammo, pullProgress, handItem);
-        try {
-            java.lang.reflect.Method setBaseDamage = projectile.getClass().getMethod("setBaseDamage", double.class);
-            setBaseDamage.invoke(projectile, 2.0D + (double)pullProgress * 1.5D);
-        } catch (Exception ignored) {
-        }
-
-        double dx = target.getX() - this.getX();
-        double dy = target.getY(0.3333333333333333D) - projectile.getY();
-        double dz = target.getZ() - this.getZ();
-        double horizDist = Math.sqrt(dx * dx + dz * dz);
-
-        // Inaccuracy: 1.5 = very precise (skeleton at normal difficulty = 6)
-        projectile.shoot(dx, dy + horizDist * 0.20000000298023224D, dz, 1.6F, 1.5F);
-
-        this.playSound(
-                handItem.is(Items.BOW) ? SoundEvents.SKELETON_SHOOT : SoundEvents.DROWNED_SHOOT,
-                1.0F, 1.0F / (this.getRandom().nextFloat() * 0.4F + 0.8F)
-        );
-        this.level().addFreshEntity(projectile);
         
-        if (!handItem.isEmpty() && handItem.isDamageableItem()) {
-            if (this.level() instanceof net.minecraft.server.level.ServerLevel serverLevel) {
-                handItem.hurtAndBreak(1, serverLevel, null, item -> {
-                    this.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
-                    this.playSound(net.minecraft.sounds.SoundEvents.ITEM_BREAK.value(), 1.0F, 1.0F);
-                });
+        GolemFakePlayerHelper.executeAsPlayer(this, player -> {
+            net.minecraft.world.item.ItemStack weapon = player.getItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND);
+            if (weapon.getItem() instanceof net.minecraft.world.item.BowItem bowItem) {
+                int timeLeft = 72000 - (int)(pullProgress * 20.0f);
+                
+                double dx = target.getX() - player.getX();
+                double dy = target.getY(0.3333333333333333D) - player.getEyeY();
+                double dz = target.getZ() - player.getZ();
+                double horizDist = Math.sqrt(dx * dx + dz * dz);
+                dy += horizDist * 0.20000000298023224D;
+                
+                player.setXRot((float)(-(net.minecraft.util.Mth.atan2(dy, horizDist) * (180F / (float)Math.PI))));
+                player.setYRot((float)(net.minecraft.util.Mth.atan2(dz, dx) * (180F / (float)Math.PI)) - 90.0F);
+                
+                bowItem.releaseUsing(weapon, player.level(), player, timeLeft);
             }
-        }
+        });
     }
 
     @Override
     public void setChargingCrossbow(boolean isCharging) { this.setRummaging(isCharging); }
 
+    private void consumeArrowForCrossbow() {
+        ItemStack offhand = this.getItemInHand(InteractionHand.OFF_HAND);
+        if (isArrow(offhand)) {
+            offhand.shrink(1);
+            if (offhand.isEmpty()) this.setItemInHand(InteractionHand.OFF_HAND, ItemStack.EMPTY);
+            return;
+        }
+        net.minecraft.world.SimpleContainer inv = this.getInventory();
+        for (int i = 0; i < inv.getContainerSize(); i++) {
+            ItemStack stack = inv.getItem(i);
+            if (isArrow(stack)) {
+                stack.shrink(1);
+                if (stack.isEmpty()) inv.setItem(i, ItemStack.EMPTY);
+                return;
+            }
+        }
+    }
+
     public void shootCrossbowProjectile(LivingEntity target, ItemStack crossbow,
                                          Projectile projectile, float angle) {
-        consumeArrow(); // Consuma la freccia vera!
+        consumeArrowForCrossbow(); // Consuma la freccia vera!
 
         double dx = target.getX() - this.getX();
         double dy = target.getY(0.3333333333333333D) - projectile.getY();
