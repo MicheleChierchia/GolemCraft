@@ -3,5 +3,12 @@
   "entity.golemcraft.flower_golem": "Flower Golem",
   "entity.golemcraft.farmer_golem": "Farmer Golem",
   "entity.golemcraft.soldier_golem": "Soldier Golem",
-  "item.golemcraft.base_golem_item": "Copper Golem"
+  "entity.golemcraft.fisherman_golem": "Fisherman Golem",
+  "entity.golemcraft.lumberjack_golem": "Lumberjack Golem",
+  "item.golemcraft.base_golem_item": "Copper Golem",
+  "item.golemcraft.flower_golem_item": "Flower Golem",
+  "item.golemcraft.farmer_golem_item": "Farmer Golem",
+  "item.golemcraft.soldier_golem_item": "Soldier Golem",
+  "item.golemcraft.fisherman_golem_item": "Fisherman Golem",
+  "item.golemcraft.lumberjack_golem_item": "Lumberjack Golem"
 }

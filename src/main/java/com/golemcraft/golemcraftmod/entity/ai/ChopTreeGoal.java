@@ -68,7 +68,7 @@ public class ChopTreeGoal extends Goal {
     public boolean canContinueToUse() {
         if (!golem.hasAxe()) return false;
         if (isInventoryFull()) return false;
-        return this.targetLog != null && isLog(golem.level().getBlockState(this.targetLog));
+        return this.targetLog != null && (isLog(golem.level().getBlockState(this.targetLog)) || isLeaf(golem.level().getBlockState(this.targetLog)));
     }
 
     @Override
@@ -96,13 +96,24 @@ public class ChopTreeGoal extends Goal {
 
         if (dx * dx + dz * dz > 4.0D) {
             this.golem.getNavigation().moveTo(this.targetLog.getX(), this.targetLog.getY(), this.targetLog.getZ(), this.speed);
+            
+            // Se la navigazione si è fermata ma siamo ancora lontani (foglie che bloccano)
+            if (this.golem.getNavigation().isDone() && this.breakTime == 0) {
+                BlockPos blockingLeaf = findBlockingLeaf();
+                if (blockingLeaf != null) {
+                    this.targetLog = blockingLeaf;
+                } else {
+                    // Non troviamo foglie da rompere e non arriviamo all'albero: annulla
+                    this.targetLog = null;
+                }
+            }
         } else {
             this.golem.getNavigation().stop();
             this.breakTime++;
             
             // Sync attack animation visually every 15 ticks
             if (this.breakTime % 15 == 0) {
-                this.golem.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+                this.golem.setAttackAnimTicks(10);
             }
             
             if (this.breakTime >= 40) { // 2 seconds to chop a block
@@ -114,10 +125,12 @@ public class ChopTreeGoal extends Goal {
                 
                 // (Sapling planting logic moved to PlantSaplingGoal)
                 
-                // Move target to the next block up
-                this.targetLog = this.targetLog.above();
-                if (!isLog(golem.level().getBlockState(this.targetLog))) {
-                    this.targetLog = null; // Done with this tree
+                // Trova il prossimo blocco connesso (per gestire rami e alberi giganti 2x2)
+                BlockPos nextLog = findConnectedLog(this.targetLog);
+                this.targetLog = nextLog;
+                if (this.targetLog == null) {
+                    // Cerca un altro tronco dal basso (nel caso di alberi della giungla molto spessi)
+                    this.targetLog = findNearestLog();
                 }
             }
         }
@@ -127,7 +140,7 @@ public class ChopTreeGoal extends Goal {
         if (!(this.golem.level() instanceof ServerLevel serverLevel)) return;
         
         BlockPos pos = this.targetLog;
-        if (isLog(serverLevel.getBlockState(pos))) {
+        if (isLog(serverLevel.getBlockState(pos)) || isLeaf(serverLevel.getBlockState(pos))) {
             serverLevel.destroyBlock(pos, true);
             
             // Damage the axe
@@ -138,15 +151,13 @@ public class ChopTreeGoal extends Goal {
                     this.golem.playSound(net.minecraft.sounds.SoundEvents.ITEM_BREAK.value(), 1.0F, 1.0F);
                 });
             }
-            
-            // (Leaf breaking logic removed)
         }
     }
 
     // tryPlantSapling removed
 
     private void collectDrops() {
-        AABB aabb = this.golem.getBoundingBox().inflate(4.0D, 4.0D, 4.0D);
+        AABB aabb = this.golem.getBoundingBox().inflate(16.0D, 16.0D, 16.0D);
         List<ItemEntity> items = this.golem.level().getEntitiesOfClass(ItemEntity.class, aabb);
         for (ItemEntity itemEntity : items) {
             ItemStack stack = itemEntity.getItem();
@@ -154,8 +165,12 @@ public class ChopTreeGoal extends Goal {
             if (remainder.isEmpty()) {
                 itemEntity.discard();
                 this.golem.playSound(net.minecraft.sounds.SoundEvents.ITEM_PICKUP, 0.2F, 1.5F);
+                this.golem.setLastPickupTime(this.golem.level().getGameTime());
             } else {
                 itemEntity.setItem(remainder);
+                if (stack.getCount() != remainder.getCount()) {
+                    this.golem.setLastPickupTime(this.golem.level().getGameTime());
+                }
             }
         }
     }
@@ -194,6 +209,41 @@ public class ChopTreeGoal extends Goal {
 
     private boolean isLog(BlockState state) {
         return state.is(BlockTags.LOGS);
+    }
+    
+    private boolean isLeaf(BlockState state) {
+        return state.is(BlockTags.LEAVES);
+    }
+
+    private BlockPos findBlockingLeaf() {
+        BlockPos current = this.golem.blockPosition();
+        for (int x = -1; x <= 1; x++) {
+            for (int y = 0; y <= 2; y++) {
+                for (int z = -1; z <= 1; z++) {
+                    BlockPos checkPos = current.offset(x, y, z);
+                    if (isLeaf(this.golem.level().getBlockState(checkPos))) {
+                        return checkPos;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    private BlockPos findConnectedLog(BlockPos pos) {
+        // Priorità: sopra, lati, sotto (per i rami della giungla)
+        for (int y = 1; y >= -1; y--) {
+            for (int x = -1; x <= 1; x++) {
+                for (int z = -1; z <= 1; z++) {
+                    if (x == 0 && y == 0 && z == 0) continue;
+                    BlockPos checkPos = pos.offset(x, y, z);
+                    if (isLog(this.golem.level().getBlockState(checkPos))) {
+                        return checkPos;
+                    }
+                }
+            }
+        }
+        return null;
     }
     
     private boolean isInventoryFull() {

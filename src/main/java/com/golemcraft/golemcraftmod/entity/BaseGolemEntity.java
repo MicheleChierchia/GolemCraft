@@ -33,6 +33,7 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
     private static final EntityDataAccessor<Boolean> RUMMAGING = SynchedEntityData.defineId(BaseGolemEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> OXIDATION_LEVEL = SynchedEntityData.defineId(BaseGolemEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> IS_WAXED = SynchedEntityData.defineId(BaseGolemEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Integer> ATTACK_ANIM_TICKS = SynchedEntityData.defineId(BaseGolemEntity.class, EntityDataSerializers.INT);
     
     private final SimpleContainer inventory = new SimpleContainer(27);
     private UUID ownerUUID;
@@ -57,6 +58,7 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
         builder.define(RUMMAGING, false);
         builder.define(OXIDATION_LEVEL, 0);
         builder.define(IS_WAXED, false);
+        builder.define(ATTACK_ANIM_TICKS, 0);
     }
 
     public void setRummaging(boolean rummaging) {
@@ -168,10 +170,23 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
     }
 
     @Override
+    public int getCurrentSwingDuration() {
+        return 15;
+    }
+
+    public int getAttackAnimTicks() { return this.entityData.get(ATTACK_ANIM_TICKS); }
+    public void setAttackAnimTicks(int ticks) { this.entityData.set(ATTACK_ANIM_TICKS, ticks); }
+
+    @Override
     public void tick() {
         super.tick();
         if (this.actionCooldown > 0) {
             this.actionCooldown--;
+        }
+        
+        int animTicks = this.getAttackAnimTicks();
+        if (animTicks > 0) {
+            this.setAttackAnimTicks(animTicks - 1);
         }
         
         if (!this.level().isClientSide()) {

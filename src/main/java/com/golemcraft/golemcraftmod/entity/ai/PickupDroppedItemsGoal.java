@@ -74,14 +74,18 @@ public class PickupDroppedItemsGoal extends Goal {
         
         golem.getLookControl().setLookAt(targetItem, 30.0F, 30.0F);
 
-        if (golem.distanceToSqr(targetItem) < 2.5D) {
+        if (golem.distanceToSqr(targetItem) < 4.0D) {
             ItemStack stack = targetItem.getItem();
             ItemStack remainder = golem.getInventory().addItem(stack);
             
             if (remainder.isEmpty()) {
                 targetItem.discard();
+                golem.setLastPickupTime(golem.level().getGameTime());
             } else {
                 targetItem.setItem(remainder);
+                if (stack.getCount() != remainder.getCount()) {
+                    golem.setLastPickupTime(golem.level().getGameTime());
+                }
             }
             
             golem.playSound(net.minecraft.sounds.SoundEvents.ITEM_PICKUP, 0.2F, (golem.getRandom().nextFloat() - golem.getRandom().nextFloat()) * 0.2F + 1.0F);

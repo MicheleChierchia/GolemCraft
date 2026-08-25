@@ -262,27 +262,22 @@ public class BaseGolemModel extends EntityModel<BaseGolemRenderState> implements
         } else if (state.attackAnimProgress > 0.0F) {
             float t = 1.0f - state.attackAnimProgress;
             
-            // Animazione "Slash": colpo veloce (0->0.3) e recupero lento (0.3->1.0)
-            float strike = t < 0.3f ? (t / 0.3f) : 1.0f;
-            float recovery = t < 0.3f ? 0.0f : ((t - 0.3f) / 0.7f);
+            // Utilizza l'esatta formula matematica dell'animazione d'attacco di Minecraft (Player)
+            float f = t; // progresso da 0.0 a 1.0
+            this.body.yRot = Mth.sin(Mth.sqrt(f) * ((float)Math.PI * 2F)) * 0.2F;
             
-            float strikeEase = Mth.sin(strike * (float)Math.PI / 2.0f);
-            float recoveryEase = 1.0f - (float)Math.pow(recovery, 2.0);
-            float blend = strikeEase * recoveryEase;
-
-            // Il corpo ruota violentemente seguendo il fendente
-            this.body.yRot = -blend * 0.8F;
-            this.body.xRot = blend * 0.2F;
-            this.head.xRot += blend * 0.1F;
+            if (state.mainArm == net.minecraft.world.entity.HumanoidArm.LEFT) {
+                this.body.yRot *= -1.0F;
+            }
             
-            // Fendente orizzontale profondo (Sweep)
-            this.rightArm.xRot -= blend * 1.2F;
-            this.rightArm.yRot  = -blend * 1.5F;
-            this.rightArm.zRot  = blend * 0.5F;
+            ModelPart attackingArm = (state.mainArm == net.minecraft.world.entity.HumanoidArm.RIGHT) ? this.rightArm : this.leftArm;
             
-            // Il braccio sinistro si ritrae per bilanciare la rotazione
-            this.leftArm.xRot += blend * 0.6F;
-            this.leftArm.yRot  = blend * 0.3F;
+            float f1 = Mth.sin(f * (float)Math.PI);
+            float f2 = Mth.sin((1.0F - (1.0F - f) * (1.0F - f)) * (float)Math.PI);
+            
+            attackingArm.xRot -= f2 * 1.2F + f1 * 0.4F;
+            attackingArm.yRot += this.body.yRot * 2.0F;
+            attackingArm.zRot += Mth.sin(f * (float)Math.PI) * (state.mainArm == net.minecraft.world.entity.HumanoidArm.RIGHT ? -0.4F : 0.4F);
         } else {
             this.body.xRot = 0.0F;
             this.body.yRot = 0.0F;

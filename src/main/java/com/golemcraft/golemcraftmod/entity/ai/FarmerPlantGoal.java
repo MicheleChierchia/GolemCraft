@@ -100,7 +100,9 @@ public class FarmerPlantGoal extends Goal {
             this.golem.getNavigation().stop();
             this.golem.getLookControl().setLookAt(this.targetPos.getX() + 0.5D, this.targetPos.getY() + 1, this.targetPos.getZ() + 0.5D);
             if (this.plantTicks == 0) {
-                this.golem.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+                if (!this.golem.level().isClientSide()) {
+                    this.golem.setAttackAnimTicks(10);
+                }
             }
             this.plantTicks++;
             

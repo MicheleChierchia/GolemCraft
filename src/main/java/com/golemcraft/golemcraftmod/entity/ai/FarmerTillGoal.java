@@ -85,7 +85,9 @@ public class FarmerTillGoal extends Goal {
             this.golem.getNavigation().stop();
             this.golem.getLookControl().setLookAt(this.targetPos.getX() + 0.5D, this.targetPos.getY(), this.targetPos.getZ() + 0.5D);
             if (this.tillTicks == 0) {
-                this.golem.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+                if (!this.golem.level().isClientSide()) {
+                    this.golem.setAttackAnimTicks(10);
+                }
             }
             this.tillTicks++;
             

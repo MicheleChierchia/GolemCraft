@@ -3,5 +3,12 @@
   "entity.golemcraft.flower_golem": "Golem dei Fiori",
   "entity.golemcraft.farmer_golem": "Golem Contadino",
   "entity.golemcraft.soldier_golem": "Golem Soldato",
-  "item.golemcraft.base_golem_item": "Golem di Rame"
+  "entity.golemcraft.fisherman_golem": "Golem Pescatore",
+  "entity.golemcraft.lumberjack_golem": "Golem Taglialegna",
+  "item.golemcraft.base_golem_item": "Golem di Rame",
+  "item.golemcraft.flower_golem_item": "Golem dei Fiori",
+  "item.golemcraft.farmer_golem_item": "Golem Contadino",
+  "item.golemcraft.soldier_golem_item": "Golem Soldato",
+  "item.golemcraft.fisherman_golem_item": "Golem Pescatore",
+  "item.golemcraft.lumberjack_golem_item": "Golem Taglialegna"
 }

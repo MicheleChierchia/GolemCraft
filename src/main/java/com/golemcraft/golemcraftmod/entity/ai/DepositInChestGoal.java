@@ -70,7 +70,7 @@ public class DepositInChestGoal extends Goal {
                 this.golem.getLookControl().setLookAt(this.targetChestPos.getX() + 0.5D, this.targetChestPos.getY() + 0.5D, this.targetChestPos.getZ() + 0.5D);
 
                 if (this.depositTicks == 0) {
-                    this.golem.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+                    this.golem.setAttackAnimTicks(10);
                     BlockEntity blockEntity = this.golem.level().getBlockEntity(this.targetChestPos);
                     if (blockEntity instanceof Container container) {
                         container.startOpen(this.golem);
