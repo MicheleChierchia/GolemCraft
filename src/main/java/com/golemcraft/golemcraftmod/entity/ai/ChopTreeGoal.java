@@ -34,7 +34,20 @@ public class ChopTreeGoal extends Goal {
     public boolean canUse() {
         if (!golem.hasAxe()) return false;
         if (golem.isChopping()) return true;
-        if (golem.getChestPos() == BlockPos.ZERO) return false;
+        if (golem.getChestPos() == BlockPos.ZERO) {
+            BlockPos currentPos = this.golem.blockPosition();
+            java.util.Optional<BlockPos> nearestChest = BlockPos.betweenClosedStream(
+                    currentPos.offset(-10, -3, -10),
+                    currentPos.offset(10, 3, 10)
+            ).map(BlockPos::immutable)
+             .filter(pos -> this.golem.level().getBlockEntity(pos) instanceof net.minecraft.world.level.block.entity.ChestBlockEntity)
+             .min(java.util.Comparator.comparingDouble(pos -> currentPos.distSqr(pos)));
+            if (nearestChest.isPresent()) {
+                golem.setChestPos(nearestChest.get());
+            } else {
+                return false;
+            }
+        }
         if (isInventoryFull()) return false;
 
         if (searchCooldown > 0) {
@@ -78,37 +91,43 @@ public class ChopTreeGoal extends Goal {
 
         this.golem.getLookControl().setLookAt(this.targetLog.getX() + 0.5, this.targetLog.getY() + 0.5, this.targetLog.getZ() + 0.5, 10.0F, this.golem.getMaxHeadXRot());
 
-        if (this.golem.distanceToSqr(this.targetLog.getX() + 0.5, this.targetLog.getY(), this.targetLog.getZ() + 0.5) > 4.0D) {
+        double dx = this.targetLog.getX() + 0.5 - this.golem.getX();
+        double dz = this.targetLog.getZ() + 0.5 - this.golem.getZ();
+
+        if (dx * dx + dz * dz > 4.0D) {
             this.golem.getNavigation().moveTo(this.targetLog.getX(), this.targetLog.getY(), this.targetLog.getZ(), this.speed);
         } else {
             this.golem.getNavigation().stop();
             this.breakTime++;
             
-            // Sync attack animation visually
-            this.golem.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+            // Sync attack animation visually every 15 ticks
+            if (this.breakTime % 15 == 0) {
+                this.golem.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+            }
             
             if (this.breakTime >= 40) { // 2 seconds to chop a block
-                chopLogVertical();
+                chopOneLog();
                 this.breakTime = 0;
                 
                 // Collect dropped items nearby
                 collectDrops();
                 
-                // If the base log is gone and it's a dirt block below, try to plant a sapling
+                // (Sapling planting logic moved to PlantSaplingGoal)
+                
+                // Move target to the next block up
+                this.targetLog = this.targetLog.above();
                 if (!isLog(golem.level().getBlockState(this.targetLog))) {
-                    tryPlantSapling(this.targetLog);
-                    this.targetLog = null; // Done with this tree base
+                    this.targetLog = null; // Done with this tree
                 }
             }
         }
     }
 
-    private void chopLogVertical() {
+    private void chopOneLog() {
         if (!(this.golem.level() instanceof ServerLevel serverLevel)) return;
         
         BlockPos pos = this.targetLog;
-        // Chop from bottom to up, infinitely
-        while (isLog(serverLevel.getBlockState(pos))) {
+        if (isLog(serverLevel.getBlockState(pos))) {
             serverLevel.destroyBlock(pos, true);
             
             // Damage the axe
@@ -120,54 +139,11 @@ public class ChopTreeGoal extends Goal {
                 });
             }
             
-            if (!this.golem.hasAxe()) {
-                break;
-            }
-            
-            // Destroy leaves nearby the chopped log
-            for (int dx = -2; dx <= 2; dx++) {
-                for (int dy = 0; dy <= 2; dy++) {
-                    for (int dz = -2; dz <= 2; dz++) {
-                        BlockPos leafPos = pos.offset(dx, dy, dz);
-                        BlockState state = serverLevel.getBlockState(leafPos);
-                        if (state.is(BlockTags.LEAVES)) {
-                            serverLevel.destroyBlock(leafPos, true);
-                        }
-                    }
-                }
-            }
-            pos = pos.above();
+            // (Leaf breaking logic removed)
         }
     }
 
-    private void tryPlantSapling(BlockPos pos) {
-        if (!(this.golem.level() instanceof ServerLevel serverLevel)) return;
-        
-        // Find a sapling in inventory
-        int saplingIndex = -1;
-        for (int i = 0; i < this.golem.getInventory().getContainerSize(); i++) {
-            ItemStack stack = this.golem.getInventory().getItem(i);
-            if (!stack.isEmpty() && stack.is(ItemTags.SAPLINGS)) {
-                saplingIndex = i;
-                break;
-            }
-        }
-        
-        if (saplingIndex != -1) {
-            ItemStack saplingStack = this.golem.getInventory().getItem(saplingIndex);
-            if (saplingStack.getItem() instanceof BlockItem blockItem) {
-                Block saplingBlock = blockItem.getBlock();
-                BlockPos below = pos.below();
-                if (serverLevel.getBlockState(below).is(BlockTags.DIRT) || serverLevel.getBlockState(below).is(Blocks.GRASS_BLOCK)) {
-                    if (serverLevel.getBlockState(pos).isAir() || serverLevel.getBlockState(pos).canBeReplaced()) {
-                        serverLevel.setBlock(pos, saplingBlock.defaultBlockState(), 3);
-                        saplingStack.shrink(1);
-                        this.golem.playSound(net.minecraft.sounds.SoundEvents.GRASS_PLACE, 1.0F, 1.0F);
-                    }
-                }
-            }
-        }
-    }
+    // tryPlantSapling removed
 
     private void collectDrops() {
         AABB aabb = this.golem.getBoundingBox().inflate(4.0D, 4.0D, 4.0D);

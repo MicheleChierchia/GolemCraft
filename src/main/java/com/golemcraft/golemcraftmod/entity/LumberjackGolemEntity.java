@@ -17,6 +17,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.entity.player.Player;
 import com.golemcraft.golemcraftmod.entity.ai.ChopTreeGoal;
 import com.golemcraft.golemcraftmod.entity.ai.DepositInChestGoal;
+import com.golemcraft.golemcraftmod.entity.ai.PickupDroppedItemsGoal;
+import com.golemcraft.golemcraftmod.entity.ai.PlantSaplingGoal;
 
 public class LumberjackGolemEntity extends BaseGolemEntity {
 
@@ -61,7 +63,9 @@ public class LumberjackGolemEntity extends BaseGolemEntity {
         super.registerGoals();
         this.goalSelector.addGoal(2, new DepositInChestGoal(this));
         this.goalSelector.addGoal(3, new ChopTreeGoal(this, 1.0D));
-        this.goalSelector.addGoal(4, new WaterAvoidingRandomStrollGoal(this, 1.0D));
+        this.goalSelector.addGoal(4, new PlantSaplingGoal(this, 1.0D));
+        this.goalSelector.addGoal(5, new PickupDroppedItemsGoal(this, 1.1D));
+        this.goalSelector.addGoal(6, new WaterAvoidingRandomStrollGoal(this, 1.0D));
     }
 
     @Override

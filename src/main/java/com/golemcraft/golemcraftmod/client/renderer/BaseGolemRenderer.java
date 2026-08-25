@@ -42,6 +42,7 @@ public class BaseGolemRenderer extends MobRenderer<BaseGolemEntity, BaseGolemRen
 
         // Populate attackTime so the model can play the swing animation
         state.attackTime = entity.getAttackAnim(partialTick);
+        state.attackAnimProgress = state.attackTime;
 
         net.minecraft.world.item.ItemStack mainHandItem = entity.getMainHandItem();
         

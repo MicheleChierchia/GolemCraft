@@ -24,6 +24,9 @@ public class DepositInChestGoal extends Goal {
     @Override
     public boolean canUse() {
         if (this.golem.actionCooldown > 0) return false;
+        if (this.golem instanceof com.golemcraft.golemcraftmod.entity.LumberjackGolemEntity lumberjack && lumberjack.isChopping()) {
+            return false;
+        }
 
         if (!hasItemsToDeposit()) {
             return false;

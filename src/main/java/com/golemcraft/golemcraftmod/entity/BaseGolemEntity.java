@@ -187,7 +187,8 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
 
             if (!(this instanceof com.golemcraft.golemcraftmod.entity.FarmerGolemEntity)
                     && !(this instanceof com.golemcraft.golemcraftmod.entity.SoldierGolemEntity)
-                    && !(this instanceof com.golemcraft.golemcraftmod.entity.FishermanGolemEntity)) {
+                    && !(this instanceof com.golemcraft.golemcraftmod.entity.FishermanGolemEntity)
+                    && !(this instanceof com.golemcraft.golemcraftmod.entity.LumberjackGolemEntity)) {
                 ItemStack slot0 = this.inventory.getItem(0);
                 ItemStack hand = this.getItemInHand(InteractionHand.MAIN_HAND);
                 if (!ItemStack.isSameItemSameComponents(slot0, hand) || slot0.getCount() != hand.getCount()) {
