@@ -48,6 +48,12 @@ public class ModEntities {
                             .sized(0.5f, 1.0f)
                             .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(GolemCraft.MODID, "soldier_golem"))));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<com.golemcraft.golemcraftmod.entity.LumberjackGolemEntity>> LUMBERJACK_GOLEM =
+            ENTITY_TYPES.register("lumberjack_golem", () ->
+                    EntityType.Builder.of(com.golemcraft.golemcraftmod.entity.LumberjackGolemEntity::new, MobCategory.MISC)
+                            .sized(0.5f, 1.0f)
+                            .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(GolemCraft.MODID, "lumberjack_golem"))));
+
     public static final DeferredHolder<EntityType<?>, EntityType<com.golemcraft.golemcraftmod.entity.projectile.GolemFishingHook>> GOLEM_FISHING_HOOK =
             ENTITY_TYPES.register("golem_fishing_hook", () ->
                     EntityType.Builder.<com.golemcraft.golemcraftmod.entity.projectile.GolemFishingHook>of(com.golemcraft.golemcraftmod.entity.projectile.GolemFishingHook::new, MobCategory.MISC)

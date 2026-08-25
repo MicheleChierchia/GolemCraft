@@ -38,6 +38,7 @@ BASE_TEXTURES = [
     "flower_golem",
     "soldier_golem",
     "fisherman_golem",
+    "lumberjack_golem",
 ]
 
 # Pixel rows to protect fully from oxidation per golem
@@ -69,9 +70,28 @@ def _soldier_helmet_pixels():
         pts.add((x, 20 + (x - 20)))
     return pts
 
+def _lumberjack_pixels():
+    pts = set()
+    # Beanie top
+    for y in range(0, 10):
+        for x in range(10, 18): pts.add((x, y)) # beanie top
+    for y in range(10, 11):
+        for x in range(0, 36): pts.add((x, y)) # beanie sides
+    # (Beard removed)
+    # Shirt, Pants, Boots (y 15 to 35 for body and legs, 16 to 26 for arms)
+    for y in range(15, 36):
+        for x in range(0, 32): pts.add((x, y)) # body and legs
+    for y in range(16, 27):
+        for x in range(36, 64): pts.add((x, y)) # arms shirt part
+    # Beanie Fold (Brim)
+    for y in range(40, 53):
+        for x in range(0, 40): pts.add((x, y))
+    return pts
+
 PROTECTED_PIXELS = {
     "farmer_golem": _farmer_hat_pixels(),
     "soldier_golem": _soldier_helmet_pixels(),
+    "lumberjack_golem": _lumberjack_pixels(),
 }
 
 # ── helpers ────────────────────────────────────────────────────────────────────

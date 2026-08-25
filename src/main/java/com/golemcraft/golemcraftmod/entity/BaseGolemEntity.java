@@ -486,8 +486,7 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
                                itemName.contains("sword") ||
                                itemstack.is(net.minecraft.world.item.Items.BOW) ||
                                itemstack.is(net.minecraft.world.item.Items.CROSSBOW) ||
-                               itemstack.is(net.minecraft.world.item.Items.TRIDENT) ||
-                               (itemstack.getItem() instanceof net.minecraft.world.item.AxeItem && this.getOxidationLevel() == 0 && !this.isWaxed());
+                               itemstack.is(net.minecraft.world.item.Items.TRIDENT);
 
             if (isWeapon) {
                 if (!this.level().isClientSide()) {
@@ -516,6 +515,48 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
                         soldierGolem.setDropChance(net.minecraft.world.entity.EquipmentSlot.MAINHAND, 0.0F);
 
                         this.level().addFreshEntity(soldierGolem);
+
+                        // Particles and sounds
+                        net.minecraft.server.level.ServerLevel serverLevel = (net.minecraft.server.level.ServerLevel) this.level();
+                        serverLevel.sendParticles(ParticleTypes.HAPPY_VILLAGER, this.getX(), this.getY() + 0.5D, this.getZ(), 15, 0.2D, 0.2D, 0.2D, 0.0D);
+                        this.playSound(SoundEvents.ZOMBIE_VILLAGER_CURE, 1.0F, 1.0F);
+
+                        if (!player.getAbilities().instabuild) {
+                            itemstack.shrink(1);
+                        }
+                        this.discard();
+                    }
+                }
+                return InteractionResult.SUCCESS;
+            }
+
+            if (itemstack.getItem() instanceof net.minecraft.world.item.AxeItem && this.getOxidationLevel() == 0 && !this.isWaxed()) {
+                if (!this.level().isClientSide()) {
+                    LumberjackGolemEntity lumberjackGolem = ModEntities.LUMBERJACK_GOLEM.get().create(this.level(), net.minecraft.world.entity.EntitySpawnReason.CONVERSION);
+                    if (lumberjackGolem != null) {
+                        lumberjackGolem.setPos(this.getX(), this.getY(), this.getZ());
+                        lumberjackGolem.setYRot(this.getYRot());
+                        lumberjackGolem.setXRot(this.getXRot());
+                        lumberjackGolem.setHealth(this.getHealth());
+                        lumberjackGolem.yBodyRot = this.yBodyRot;
+                        if (this.hasCustomName()) {
+                            lumberjackGolem.setCustomName(this.getCustomName());
+                            lumberjackGolem.setCustomNameVisible(this.isCustomNameVisible());
+                        }
+
+                        lumberjackGolem.setOwnerUUID(this.ownerUUID);
+                        lumberjackGolem.setLastPickupTime(this.lastPickupTime);
+                        for (int i = 0; i < this.inventory.getContainerSize(); i++) {
+                            lumberjackGolem.getInventory().setItem(i, this.inventory.getItem(i));
+                        }
+
+                        // Equip the axe directly to hand
+                        ItemStack axeStack = itemstack.copy();
+                        axeStack.setCount(1);
+                        lumberjackGolem.setItemInHand(InteractionHand.MAIN_HAND, axeStack);
+                        lumberjackGolem.setDropChance(net.minecraft.world.entity.EquipmentSlot.MAINHAND, 0.0F);
+
+                        this.level().addFreshEntity(lumberjackGolem);
 
                         // Particles and sounds
                         net.minecraft.server.level.ServerLevel serverLevel = (net.minecraft.server.level.ServerLevel) this.level();

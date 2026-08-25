@@ -90,6 +90,9 @@ public class DepositInChestGoal extends Goal {
                                 if (this.golem instanceof com.golemcraft.golemcraftmod.entity.FishermanGolemEntity && stack.getItem() instanceof net.minecraft.world.item.FishingRodItem) {
                                     continue; // Keep fishing rods!
                                 }
+                                if (this.golem instanceof com.golemcraft.golemcraftmod.entity.LumberjackGolemEntity && stack.getItem() instanceof net.minecraft.world.item.AxeItem) {
+                                    continue; // Keep axes!
+                                }
                                 ItemStack remainder = insertItem(container, stack.copy());
                                 this.golem.getInventory().setItem(i, remainder);
                             }
@@ -101,7 +104,7 @@ public class DepositInChestGoal extends Goal {
                     this.golem.setRummaging(false);
                     this.targetChestPos = null; // Done
                     this.golem.actionCooldown = 15;
-                    if (!(this.golem instanceof com.golemcraft.golemcraftmod.entity.FarmerGolemEntity) && !(this.golem instanceof com.golemcraft.golemcraftmod.entity.FishermanGolemEntity)) {
+                    if (!(this.golem instanceof com.golemcraft.golemcraftmod.entity.FarmerGolemEntity) && !(this.golem instanceof com.golemcraft.golemcraftmod.entity.FishermanGolemEntity) && !(this.golem instanceof com.golemcraft.golemcraftmod.entity.LumberjackGolemEntity)) {
                         this.golem.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, this.golem.getInventory().getItem(0).copy()); // Update visual item
                     }
                 }
@@ -152,6 +155,9 @@ public class DepositInChestGoal extends Goal {
                     continue;
                 }
                 if (this.golem instanceof com.golemcraft.golemcraftmod.entity.FishermanGolemEntity && stack.getItem() instanceof net.minecraft.world.item.FishingRodItem) {
+                    continue;
+                }
+                if (this.golem instanceof com.golemcraft.golemcraftmod.entity.LumberjackGolemEntity && stack.getItem() instanceof net.minecraft.world.item.AxeItem) {
                     continue;
                 }
                 return true;
