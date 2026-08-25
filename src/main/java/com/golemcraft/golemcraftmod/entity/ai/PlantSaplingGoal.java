@@ -81,7 +81,7 @@ public class PlantSaplingGoal extends Goal {
                      if (!this.isGiant && dx == 0 && dz == 0) continue;
                      
                      BlockPos checkPos = pos.offset(dx, 0, dz);
-                     if (golem.level().getBlockState(checkPos).is(BlockTags.SAPLINGS) || 
+                     if (golem.level().getBlockState(checkPos).is(net.minecraft.tags.BlockTags.create(net.minecraft.resources.Identifier.withDefaultNamespace("saplings"))) || 
                          golem.level().getBlockState(checkPos).is(BlockTags.LOGS) ||
                          golem.level().getBlockState(checkPos.above()).is(BlockTags.LOGS)) {
                          return false;

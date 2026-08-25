@@ -47,7 +47,7 @@ public class PickupFlowerGoal extends Goal {
     }
 
     private boolean isFlower(ItemStack stack) {
-        if (stack.is(net.minecraft.tags.ItemTags.SMALL_FLOWERS) || stack.is(net.minecraft.tags.ItemTags.FLOWERS)) return true;
+        if (stack.is(net.minecraft.tags.ItemTags.create(net.minecraft.resources.Identifier.withDefaultNamespace("small_flowers"))) || stack.is(net.minecraft.tags.ItemTags.create(net.minecraft.resources.Identifier.withDefaultNamespace("flowers")))) return true;
         if (stack.getItem() instanceof net.minecraft.world.item.BlockItem blockItem) {
             return blockItem.getBlock() instanceof net.minecraft.world.level.block.FlowerBlock || blockItem.getBlock() instanceof net.minecraft.world.level.block.TallFlowerBlock;
         }

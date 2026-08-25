@@ -377,7 +377,7 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
 
         // Transform logic
         if (this.getType() == com.golemcraft.golemcraftmod.registry.ModEntities.BASE_GOLEM.get()) {
-            if (itemstack.is(net.minecraft.tags.ItemTags.SMALL_FLOWERS) || itemstack.is(net.minecraft.tags.ItemTags.FLOWERS) || (itemstack.getItem() instanceof net.minecraft.world.item.BlockItem bi && (bi.getBlock() instanceof net.minecraft.world.level.block.FlowerBlock || bi.getBlock() instanceof net.minecraft.world.level.block.TallFlowerBlock))) {
+            if (itemstack.is(net.minecraft.tags.ItemTags.create(net.minecraft.resources.Identifier.withDefaultNamespace("small_flowers"))) || itemstack.is(net.minecraft.tags.ItemTags.create(net.minecraft.resources.Identifier.withDefaultNamespace("flowers"))) || (itemstack.getItem() instanceof net.minecraft.world.item.BlockItem bi && (bi.getBlock() instanceof net.minecraft.world.level.block.FlowerBlock || bi.getBlock() instanceof net.minecraft.world.level.block.TallFlowerBlock))) {
                 if (!this.level().isClientSide()) {
                     FlowerGolemEntity flowerGolem = ModEntities.FLOWER_GOLEM.get().create(this.level(), net.minecraft.world.entity.EntitySpawnReason.CONVERSION);
                     if (flowerGolem != null) {
