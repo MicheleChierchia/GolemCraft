@@ -3,6 +3,7 @@ package com.golemcraft.golemcraftmod.entity;
 import com.golemcraft.golemcraftmod.entity.projectile.SonicBoomProjectile;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -30,6 +31,7 @@ import net.minecraft.world.entity.ai.goal.target.TargetGoal;
 import net.minecraft.world.entity.ai.targeting.TargetingConditions;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.gameevent.EntityPositionSource;
@@ -107,8 +109,10 @@ public class DepthGolemEntity extends BaseGolemEntity implements VibrationSystem
         this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 6.0F));
         this.goalSelector.addGoal(7, new RandomLookAroundGoal(this));
 
-        this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
-        this.targetSelector.addGoal(2, new HeardTargetGoal(this));
+        this.targetSelector.addGoal(1, new OwnerHurtByTargetGoal(this));
+        this.targetSelector.addGoal(2, new OwnerHurtTargetGoal(this));
+        this.targetSelector.addGoal(3, new HurtByTargetGoal(this));
+        this.targetSelector.addGoal(4, new HeardTargetGoal(this));
     }
 
     @Override
@@ -150,27 +154,33 @@ public class DepthGolemEntity extends BaseGolemEntity implements VibrationSystem
 
     @Override
     protected InteractionResult mobInteract(Player player, InteractionHand hand) {
-        if (player.getItemInHand(hand).isEmpty() && player == this.getOwnerPlayer()) {
+        InteractionResult result = super.mobInteract(player, hand);
+        if (result.consumesAction()) {
+            return result;
+        }
+
+        ItemStack stackInHand = player.getItemInHand(hand);
+        if (stackInHand.isEmpty() && this.getOwnerUUID() != null && this.getOwnerUUID().equals(player.getUUID())) {
             if (!this.level().isClientSide()) {
-                if (this.isGuarding()) {
-                    this.setGuarding(false);
-                    this.setGuardPos(null);
-                    this.playSound(SoundEvents.EXPERIENCE_ORB_PICKUP, 1.0F, 0.8F);
-                    if (this.level() instanceof ServerLevel sl) {
-                        sl.sendParticles(net.minecraft.core.particles.ParticleTypes.HAPPY_VILLAGER, this.getX(), this.getY() + 1.0D, this.getZ(), 5, 0.3D, 0.3D, 0.3D, 0.0D);
-                    }
-                } else {
-                    this.setGuarding(true);
+                boolean nextState = !this.isGuarding();
+                this.setGuarding(nextState);
+                if (nextState) {
                     this.setGuardPos(this.blockPosition());
                     this.playSound(SoundEvents.WARDEN_HEARTBEAT, 1.0F, 1.0F);
                     if (this.level() instanceof ServerLevel sl) {
-                        sl.sendParticles(net.minecraft.core.particles.ParticleTypes.HAPPY_VILLAGER, this.getX(), this.getY() + 1.0D, this.getZ(), 5, 0.3D, 0.3D, 0.3D, 0.0D);
+                        sl.sendParticles(ParticleTypes.HAPPY_VILLAGER, this.getX(), this.getY() + 1.0D, this.getZ(), 5, 0.3D, 0.3D, 0.3D, 0.0D);
+                    }
+                } else {
+                    this.setGuardPos(null);
+                    this.playSound(SoundEvents.EXPERIENCE_ORB_PICKUP, 1.0F, 0.8F);
+                    if (this.level() instanceof ServerLevel sl) {
+                        sl.sendParticles(ParticleTypes.HEART, this.getX(), this.getY() + 1.0D, this.getZ(), 3, 0.3D, 0.3D, 0.3D, 0.0D);
                     }
                 }
             }
-            return this.level().isClientSide() ? InteractionResult.SUCCESS : InteractionResult.CONSUME;
+            return InteractionResult.SUCCESS;
         }
-        return super.mobInteract(player, hand);
+        return InteractionResult.PASS;
     }
 
     // --- Vibration System ---
@@ -212,6 +222,66 @@ public class DepthGolemEntity extends BaseGolemEntity implements VibrationSystem
     }
 
     // --- AI Goals ---
+
+    static class OwnerHurtByTargetGoal extends TargetGoal {
+        private final DepthGolemEntity golem;
+        private LivingEntity attackerOfOwner;
+        private int lastHurtTs;
+
+        OwnerHurtByTargetGoal(DepthGolemEntity g) {
+            super(g, false);
+            this.golem = g;
+        }
+
+        @Override
+        public boolean canUse() {
+            if (golem.isGuarding()) return false;
+            Player owner = golem.getOwnerPlayer();
+            if (owner == null) return false;
+            attackerOfOwner = owner.getLastHurtByMob();
+            int ts = owner.getLastHurtByMobTimestamp();
+            return ts != lastHurtTs && attackerOfOwner != null && attackerOfOwner != mob && attackerOfOwner != owner
+                    && canAttack(attackerOfOwner, TargetingConditions.DEFAULT);
+        }
+
+        @Override
+        public void start() {
+            mob.setTarget(attackerOfOwner);
+            Player owner = golem.getOwnerPlayer();
+            if (owner != null) lastHurtTs = owner.getLastHurtByMobTimestamp();
+            super.start();
+        }
+    }
+
+    static class OwnerHurtTargetGoal extends TargetGoal {
+        private final DepthGolemEntity golem;
+        private LivingEntity ownerTarget;
+        private int lastHurtTs;
+
+        OwnerHurtTargetGoal(DepthGolemEntity g) {
+            super(g, false);
+            this.golem = g;
+        }
+
+        @Override
+        public boolean canUse() {
+            if (golem.isGuarding()) return false;
+            Player owner = golem.getOwnerPlayer();
+            if (owner == null) return false;
+            ownerTarget = owner.getLastHurtMob();
+            int ts = owner.getLastHurtMobTimestamp();
+            return ts != lastHurtTs && ownerTarget != null && ownerTarget != mob && ownerTarget != owner
+                    && canAttack(ownerTarget, TargetingConditions.DEFAULT);
+        }
+
+        @Override
+        public void start() {
+            mob.setTarget(ownerTarget);
+            Player owner = golem.getOwnerPlayer();
+            if (owner != null) lastHurtTs = owner.getLastHurtMobTimestamp();
+            super.start();
+        }
+    }
 
     static class HeardTargetGoal extends TargetGoal {
         private final DepthGolemEntity golem;

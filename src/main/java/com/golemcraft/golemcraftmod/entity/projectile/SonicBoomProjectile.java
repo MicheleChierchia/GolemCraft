@@ -56,12 +56,21 @@ public class SonicBoomProjectile extends Projectile {
     }
 
     @Override
+    protected boolean canHitEntity(Entity target) {
+        if (this.getOwner() instanceof DepthGolemEntity depthGolem && depthGolem.isAlly(target)) {
+            return false;
+        }
+        return super.canHitEntity(target);
+    }
+
+    @Override
     protected void onHitEntity(EntityHitResult result) {
         super.onHitEntity(result);
         Entity entity = result.getEntity();
         Entity owner = this.getOwner();
         
         if (entity == owner) return;
+        if (owner instanceof DepthGolemEntity depthGolem && depthGolem.isAlly(entity)) return;
         
         if (entity instanceof LivingEntity livingEntity) {
             livingEntity.hurt(this.damageSources().sonicBoom(this.getOwner()), 10.0F); // Sonic boom damage ignores armor
