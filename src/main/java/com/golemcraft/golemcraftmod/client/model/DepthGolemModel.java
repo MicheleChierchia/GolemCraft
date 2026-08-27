@@ -32,11 +32,11 @@ public class DepthGolemModel extends BaseGolemModel {
                 PartPose.offset(0.0F, 13.0F, 0.0F));
 
         head.addOrReplaceChild("left_tendril", CubeListBuilder.create()
-                .texOffs(56, 32).addBox(-0.5F, -5.0F, -0.5F, 1.0F, 5.0F, 1.0F),
+                .texOffs(56, 32).addBox(-1.5F, -5.0F, 0.0F, 3.0F, 5.0F, 0.0F),
                 PartPose.offset(2.0F, -9.0F, 0.0F));
 
         head.addOrReplaceChild("right_tendril", CubeListBuilder.create()
-                .texOffs(56, 32).addBox(-0.5F, -5.0F, -0.5F, 1.0F, 5.0F, 1.0F),
+                .texOffs(56, 32).addBox(-1.5F, -5.0F, 0.0F, 3.0F, 5.0F, 0.0F),
                 PartPose.offset(-2.0F, -9.0F, 0.0F));
 
         partdefinition.addOrReplaceChild("body", CubeListBuilder.create()
@@ -65,15 +65,16 @@ public class DepthGolemModel extends BaseGolemModel {
     @Override
     public void setupAnim(BaseGolemRenderState state) {
         super.setupAnim(state);
-        // Tendrils animation like sculk sensor
+        // Tendrils animation like sculk sensor leaves
         float time = state.ageInTicks * 0.15F;
-        float wiggle = Mth.sin(time) * 0.1F;
-        float wiggle2 = Mth.cos(time * 0.8F) * 0.1F;
+        float wiggle = Mth.sin(time) * 0.15F;
+        float wiggle2 = Mth.cos(time * 0.8F) * 0.15F;
         
+        // Bend them outwards by default (zRot) and wave them
         this.leftTendril.xRot = wiggle;
-        this.leftTendril.zRot = wiggle2;
+        this.leftTendril.zRot = 0.3F + wiggle2;
         
         this.rightTendril.xRot = -wiggle;
-        this.rightTendril.zRot = -wiggle2;
+        this.rightTendril.zRot = -0.3F - wiggle2;
     }
 }
