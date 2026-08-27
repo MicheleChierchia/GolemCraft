@@ -102,12 +102,19 @@ public class DepthGolemEntity extends BaseGolemEntity implements VibrationSystem
         this.goalSelector.addGoal(1, new SonicAttackGoal(this));
         this.goalSelector.addGoal(2, new ReturnToGuardPositionGoal(this, 1.0D));
         this.goalSelector.addGoal(3, new FollowOwnerGoal(this, 1.4D, 10.0F, 3.0F));
+        this.goalSelector.addGoal(4, new net.minecraft.world.entity.ai.goal.MeleeAttackGoal(this, 1.25D, false));
         this.goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 1.0D));
         this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 6.0F));
         this.goalSelector.addGoal(7, new RandomLookAroundGoal(this));
 
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
         this.targetSelector.addGoal(2, new HeardTargetGoal(this));
+    }
+
+    @Override
+    public boolean doHurtTarget(ServerLevel level, Entity target) {
+        this.setAttackAnimTicks(10);
+        return super.doHurtTarget(level, target);
     }
 
     @Override
@@ -250,6 +257,7 @@ public class DepthGolemEntity extends BaseGolemEntity implements VibrationSystem
             this.attackTime = 20; // 1 second charge
             golem.playSound(SoundEvents.WARDEN_SONIC_CHARGE, 1.0F, 1.0F);
             golem.getNavigation().stop();
+            golem.setAttackAnimTicks(20);
         }
 
         @Override
@@ -257,6 +265,7 @@ public class DepthGolemEntity extends BaseGolemEntity implements VibrationSystem
             golem.getLookControl().setLookAt(target, 30.0F, 30.0F);
             if (attackTime > 0) {
                 attackTime--;
+                golem.setAttackAnimTicks(attackTime);
                 if (attackTime == 0) {
                     if (!golem.level().isClientSide()) {
                         SonicBoomProjectile proj = new SonicBoomProjectile(golem.level(), golem);

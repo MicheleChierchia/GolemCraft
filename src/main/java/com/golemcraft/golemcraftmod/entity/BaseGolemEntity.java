@@ -184,12 +184,11 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
             this.actionCooldown--;
         }
         
-        int animTicks = this.getAttackAnimTicks();
-        if (animTicks > 0) {
-            this.setAttackAnimTicks(animTicks - 1);
-        }
-        
         if (!this.level().isClientSide()) {
+            int animTicks = this.getAttackAnimTicks();
+            if (animTicks > 0) {
+                this.setAttackAnimTicks(animTicks - 1);
+            }
             if (this.getOxidationLevel() == 3) {
                 // Statue behavior: no movement, no AI ticking
                 this.setDeltaMovement(this.getDeltaMovement().multiply(0.0D, 1.0D, 0.0D)); // Gravity only

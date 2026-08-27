@@ -12,13 +12,13 @@ import net.minecraft.util.Mth;
 import net.minecraft.client.model.ArmedModel;
 
 public class BaseGolemModel extends EntityModel<BaseGolemRenderState> implements ArmedModel {
-    private final ModelPart root;
-    private final ModelPart head;
-    private final ModelPart body;
-    private final ModelPart rightArm;
-    private final ModelPart leftArm;
-    private final ModelPart rightLeg;
-    private final ModelPart leftLeg;
+    protected final ModelPart root;
+    protected final ModelPart head;
+    protected final ModelPart body;
+    protected final ModelPart rightArm;
+    protected final ModelPart leftArm;
+    protected final ModelPart rightLeg;
+    protected final ModelPart leftLeg;
 
     public BaseGolemModel(ModelPart root) {
         super(root);

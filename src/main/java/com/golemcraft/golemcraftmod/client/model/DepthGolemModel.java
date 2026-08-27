@@ -64,17 +64,97 @@ public class DepthGolemModel extends BaseGolemModel {
 
     @Override
     public void setupAnim(BaseGolemRenderState state) {
-        super.setupAnim(state);
-        // Tendrils animation like sculk sensor leaves
-        float time = state.ageInTicks * 0.15F;
-        float wiggle = Mth.sin(time) * 0.15F;
-        float wiggle2 = Mth.cos(time * 0.8F) * 0.15F;
+        if (state.oxidationLevel == 3) {
+            super.setupAnim(state);
+            return;
+        }
         
-        // Bend them outwards by default (zRot) and wave them
+        // Reset base positions and rotations cleanly (no puppet artifacts)
+        this.head.y = 13.0F;
+        this.body.y = 13.0F;
+        this.rightArm.y = 13.0F;
+        this.leftArm.y = 13.0F;
+        this.rightLeg.y = 19.0F;
+        this.leftLeg.y = 19.0F;
+        this.rightLeg.z = 0.0F;
+        this.leftLeg.z = 0.0F;
+        
+        this.head.yRot = state.yRot * ((float)Math.PI / 180F);
+        this.head.xRot = state.xRot * ((float)Math.PI / 180F);
+        this.head.zRot = 0.0F;
+        
+        this.body.xRot = 0.0F;
+        this.body.yRot = 0.0F;
+        this.body.zRot = 0.0F;
+        
+        float time = state.ageInTicks;
+        
+        // Heavy, lumbering walk animation for legs
+        this.rightLeg.xRot = Mth.cos(state.walkAnimationPos * 0.6662F) * 1.2F * state.walkAnimationSpeed;
+        this.leftLeg.xRot = Mth.cos(state.walkAnimationPos * 0.6662F + (float)Math.PI) * 1.2F * state.walkAnimationSpeed;
+        this.rightLeg.yRot = 0.0F;
+        this.leftLeg.yRot = 0.0F;
+
+        // Tendrils organic sway
+        float tendrilTime = time * 0.15F;
+        float wiggle = Mth.sin(tendrilTime) * 0.12F;
+        float wiggle2 = Mth.cos(tendrilTime * 0.8F) * 0.12F;
         this.leftTendril.xRot = wiggle;
-        this.leftTendril.zRot = 0.3F + wiggle2;
-        
+        this.leftTendril.zRot = 0.25F + wiggle2;
         this.rightTendril.xRot = -wiggle;
-        this.rightTendril.zRot = -0.3F - wiggle2;
+        this.rightTendril.zRot = -0.25F - wiggle2;
+
+        if (state.attackAnimProgress > 0.0F) {
+            float f = 1.0F - Mth.clamp(state.attackAnimProgress, 0.0F, 1.0F); // 0.0 (start of attack) -> 1.0 (end of attack)
+            
+            // Continuous harmonic curves
+            float swing = Mth.sin(f * (float)Math.PI); // 0.0 -> 1.0 -> 0.0 (arms spread wide)
+            float strike = Mth.sin((1.0F - (1.0F - f) * (1.0F - f)) * (float)Math.PI); // forward smash curve
+            
+            // Torso & head lean back on windup, then slam forward on smash
+            float bodySlam = -Mth.sin(f * (float)Math.PI * 2.0F);
+            this.body.xRot = bodySlam * 0.35F;
+            this.body.yRot = 0.0F;
+            this.head.xRot = (state.xRot * ((float)Math.PI / 180F)) + bodySlam * 0.25F;
+            
+            // Both arms raise high and spread far wide open (Warden Roar pose), then smash forward together
+            this.rightArm.xRot = -strike * 1.9F;
+            this.rightArm.zRot = swing * 1.4F;
+            this.rightArm.yRot = -swing * 0.35F;
+            
+            this.leftArm.xRot = -strike * 1.9F;
+            this.leftArm.zRot = -swing * 1.4F;
+            this.leftArm.yRot = swing * 0.35F;
+            
+            // Tendrils flutter with intensity
+            this.leftTendril.zRot += swing * 0.4F;
+            this.rightTendril.zRot -= swing * 0.4F;
+        } else if (state.isAggressive) {
+            // Menacing stalking stance
+            this.body.xRot = 0.18F;
+            this.head.xRot += 0.05F;
+            
+            // Arms spread slightly outward and ready to strike
+            float armSway = Mth.cos(time * 0.1F) * 0.04F;
+            this.rightArm.xRot = 0.2F + Mth.cos(state.walkAnimationPos * 0.6662F + (float)Math.PI) * 0.8F * state.walkAnimationSpeed;
+            this.leftArm.xRot = 0.2F + Mth.cos(state.walkAnimationPos * 0.6662F) * 0.8F * state.walkAnimationSpeed;
+            this.rightArm.zRot = 0.45F + armSway;
+            this.leftArm.zRot = -0.45F - armSway;
+            this.rightArm.yRot = 0.0F;
+            this.leftArm.yRot = 0.0F;
+            
+            // Tendrils twitch excitedly when sensing vibrations
+            float flutter = Mth.sin(time * 0.6F) * 0.18F;
+            this.leftTendril.zRot += flutter;
+            this.rightTendril.zRot -= flutter;
+        } else {
+            // Calm idle & walk arm sway
+            this.rightArm.xRot = Mth.cos(state.walkAnimationPos * 0.6662F + (float)Math.PI) * 1.4F * state.walkAnimationSpeed;
+            this.leftArm.xRot = Mth.cos(state.walkAnimationPos * 0.6662F) * 1.4F * state.walkAnimationSpeed;
+            this.rightArm.zRot = 0.15F + (Mth.cos(time * 0.08F) * 0.05F);
+            this.leftArm.zRot = -0.15F - (Mth.cos(time * 0.08F) * 0.05F);
+            this.rightArm.yRot = 0.0F;
+            this.leftArm.yRot = 0.0F;
+        }
     }
 }

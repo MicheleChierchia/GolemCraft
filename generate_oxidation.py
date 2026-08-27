@@ -39,6 +39,7 @@ BASE_TEXTURES = [
     "soldier_golem",
     "fisherman_golem",
     "lumberjack_golem",
+    "depth_golem",
 ]
 
 # Pixel rows to protect fully from oxidation per golem
