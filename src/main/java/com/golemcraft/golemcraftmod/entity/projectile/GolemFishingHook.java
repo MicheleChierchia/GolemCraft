@@ -103,9 +103,11 @@ public class GolemFishingHook extends Projectile {
             return;
         }
 
-        if (!this.golemOwner.isFishing() || !(this.golemOwner.getItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND).getItem() instanceof net.minecraft.world.item.FishingRodItem)) {
-            this.discard();
-            return;
+        if (!this.level().isClientSide()) {
+            if (!this.golemOwner.isFishing() || !(this.golemOwner.getItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND).getItem() instanceof net.minecraft.world.item.FishingRodItem)) {
+                this.discard();
+                return;
+            }
         }
 
         if (this.onGround()) {

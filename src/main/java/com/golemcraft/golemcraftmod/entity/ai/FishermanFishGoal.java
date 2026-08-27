@@ -85,15 +85,17 @@ public class FishermanFishGoal extends Goal {
                 this.targetWaterPos.getX() + 0.5D,
                 this.targetWaterPos.getY() + 0.5D,
                 this.targetWaterPos.getZ() + 0.5D);
-        this.golem.setFishing(true);
 
         if (this.fishingHook == null) {
+            this.golem.setFishing(false);
             if (this.waitBeforeCasting > 0) {
                 this.waitBeforeCasting--;
             } else {
                 castFishingLine();
+                this.golem.setFishing(true);
             }
         } else {
+            this.golem.setFishing(true);
             if (this.fishingHook.isRemoved()) {
                 this.fishingHook = null;
                 this.waitBeforeCasting = 40; 

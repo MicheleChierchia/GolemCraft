@@ -589,6 +589,52 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
             }
         }
         
+        // Revert to Base Golem with a Brush
+        if (this.getType() != com.golemcraft.golemcraftmod.registry.ModEntities.BASE_GOLEM.get()) {
+            if (itemstack.is(net.minecraft.world.item.Items.BRUSH)) {
+                if (!this.level().isClientSide()) {
+                    BaseGolemEntity baseGolem = ModEntities.BASE_GOLEM.get().create(this.level(), net.minecraft.world.entity.EntitySpawnReason.CONVERSION);
+                    if (baseGolem != null) {
+                        baseGolem.setPos(this.getX(), this.getY(), this.getZ());
+                        baseGolem.setYRot(this.getYRot());
+                        baseGolem.setXRot(this.getXRot());
+                        baseGolem.setHealth(this.getHealth());
+                        baseGolem.yBodyRot = this.yBodyRot;
+                        if (this.hasCustomName()) {
+                            baseGolem.setCustomName(this.getCustomName());
+                            baseGolem.setCustomNameVisible(this.isCustomNameVisible());
+                        }
+
+                        baseGolem.setOwnerUUID(this.ownerUUID);
+                        baseGolem.setLastPickupTime(this.lastPickupTime);
+                        for (int i = 0; i < this.inventory.getContainerSize(); i++) {
+                            baseGolem.getInventory().setItem(i, this.inventory.getItem(i));
+                        }
+                        
+                        // Drop the tool it is holding (if any)
+                        ItemStack mainHand = this.getItemInHand(InteractionHand.MAIN_HAND);
+                        if (!mainHand.isEmpty()) {
+                            this.spawnAtLocation((net.minecraft.server.level.ServerLevel) this.level(), mainHand);
+                            this.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+                        }
+
+                        this.level().addFreshEntity(baseGolem);
+
+                        // Particles and sounds
+                        net.minecraft.server.level.ServerLevel serverLevel = (net.minecraft.server.level.ServerLevel) this.level();
+                        serverLevel.sendParticles(ParticleTypes.HAPPY_VILLAGER, this.getX(), this.getY() + 0.5D, this.getZ(), 15, 0.2D, 0.2D, 0.2D, 0.0D);
+                        this.playSound(SoundEvents.BRUSH_GENERIC, 1.0F, 1.0F);
+
+                        // Damage the brush
+                        itemstack.hurtAndBreak(1, player, hand == InteractionHand.MAIN_HAND ? net.minecraft.world.entity.EquipmentSlot.MAINHAND : net.minecraft.world.entity.EquipmentSlot.OFFHAND);
+                        
+                        this.discard();
+                    }
+                }
+                return InteractionResult.SUCCESS;
+            }
+        }
+        
         InteractionResult interactionResult = super.mobInteract(player, hand);
         if (interactionResult.consumesAction()) {
             return interactionResult;

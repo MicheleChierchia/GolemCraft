@@ -46,6 +46,10 @@ public class BaseGolemRenderer extends MobRenderer<BaseGolemEntity, BaseGolemRen
 
         net.minecraft.world.item.ItemStack mainHandItem = entity.getMainHandItem();
         
+        if (entity instanceof com.golemcraft.golemcraftmod.entity.FishermanGolemEntity fisherman && fisherman.isFishing() && mainHandItem.is(net.minecraft.world.item.Items.FISHING_ROD)) {
+            mainHandItem = new net.minecraft.world.item.ItemStack(com.golemcraft.golemcraftmod.registry.ModBlocks.FISHING_ROD_CAST_DUMMY.get());
+        }
+        
         if (!mainHandItem.isEmpty()) {
             if (state.mainArm == net.minecraft.world.entity.HumanoidArm.RIGHT) {
                 this.itemModelResolver.updateForLiving(state.rightHandItemState, mainHandItem, net.minecraft.world.item.ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, entity);

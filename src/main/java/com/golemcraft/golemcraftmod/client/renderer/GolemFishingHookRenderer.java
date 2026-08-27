@@ -18,7 +18,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
 public class GolemFishingHookRenderer extends EntityRenderer<GolemFishingHook, GolemFishingHookRenderState> {
-    private static final Identifier TEXTURE_LOCATION = Identifier.withDefaultNamespace("textures/entity/fishing_hook.png");
+    private static final Identifier TEXTURE_LOCATION = Identifier.fromNamespaceAndPath(com.golemcraft.golemcraftmod.GolemCraft.MODID, "textures/entity/fishing_hook.png");
     private static final RenderType RENDER_TYPE = RenderTypes.entityCutout(TEXTURE_LOCATION);
 
     public GolemFishingHookRenderer(EntityRendererProvider.Context context) {
@@ -53,9 +53,9 @@ public class GolemFishingHookRenderer extends EntityRenderer<GolemFishingHook, G
             double golemY = Mth.lerp(partialTicks, golem.yo, golem.getY());
             double golemZ = Mth.lerp(partialTicks, golem.zo, golem.getZ());
             
-            double handX = golemX + fwdX * 0.35 + rightX * 0.28;
-            double handY = golemY + 1.25; 
-            double handZ = golemZ + fwdZ * 0.35 + rightZ * 0.28;
+            double handX = golemX + fwdX * 0.4 - rightX * 0.7;
+            double handY = golemY + 1.35; 
+            double handZ = golemZ + fwdZ * 0.4 - rightZ * 0.7;
             
             Vec3 handPos = new Vec3(handX, handY, handZ);
             state.lineOriginOffset = handPos.subtract(hookPos);
