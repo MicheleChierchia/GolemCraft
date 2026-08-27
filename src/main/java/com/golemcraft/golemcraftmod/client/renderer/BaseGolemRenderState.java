@@ -12,4 +12,5 @@ public class BaseGolemRenderState extends ArmedEntityRenderState {
     public boolean hasBow;
     public boolean isGuarding;
     public boolean isFishing;
+    public boolean isDepthGolem;
 }

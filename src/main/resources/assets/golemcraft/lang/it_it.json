@@ -10,5 +10,6 @@
   "item.golemcraft.farmer_golem_item": "Golem Contadino",
   "item.golemcraft.soldier_golem_item": "Golem Soldato",
   "item.golemcraft.fisherman_golem_item": "Golem Pescatore",
-  "item.golemcraft.lumberjack_golem_item": "Golem Taglialegna"
+  "item.golemcraft.lumberjack_golem_item": "Golem Taglialegna",
+  "entity.golemcraft.depth_golem": "Golem delle Profondità"
 }

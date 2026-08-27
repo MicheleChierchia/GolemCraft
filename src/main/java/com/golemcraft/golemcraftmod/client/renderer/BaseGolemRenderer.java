@@ -17,7 +17,11 @@ public class BaseGolemRenderer extends MobRenderer<BaseGolemEntity, BaseGolemRen
     private final net.minecraft.client.renderer.item.ItemModelResolver itemModelResolver;
 
     public BaseGolemRenderer(EntityRendererProvider.Context context, net.minecraft.client.model.geom.ModelLayerLocation layer) {
-        super(context, new BaseGolemModel(context.bakeLayer(layer)), 0.5F);
+        this(context, new BaseGolemModel(context.bakeLayer(layer)));
+    }
+
+    public BaseGolemRenderer(EntityRendererProvider.Context context, BaseGolemModel model) {
+        super(context, model, 0.5F);
         this.itemModelResolver = context.getItemModelResolver();
         this.addLayer(new net.minecraft.client.renderer.entity.layers.ItemInHandLayer<>(this));
         this.addLayer(new BaseGolemEyesLayer(this));

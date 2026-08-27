@@ -4,6 +4,7 @@ import com.golemcraft.golemcraftmod.GolemCraft;
 import com.golemcraft.golemcraftmod.entity.FlowerGolemEntity;
 import com.golemcraft.golemcraftmod.entity.FishermanGolemEntity;
 import com.golemcraft.golemcraftmod.entity.SoldierGolemEntity;
+import com.golemcraft.golemcraftmod.entity.DepthGolemEntity;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
@@ -53,6 +54,22 @@ public class ModEntities {
                     EntityType.Builder.of(com.golemcraft.golemcraftmod.entity.LumberjackGolemEntity::new, MobCategory.MISC)
                             .sized(0.5f, 1.0f)
                             .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(GolemCraft.MODID, "lumberjack_golem"))));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<DepthGolemEntity>> DEPTH_GOLEM =
+            ENTITY_TYPES.register("depth_golem", () ->
+                    EntityType.Builder.of(DepthGolemEntity::new, MobCategory.MISC)
+                            .sized(0.5f, 1.0f)
+                            .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(GolemCraft.MODID, "depth_golem"))));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<com.golemcraft.golemcraftmod.entity.projectile.SonicBoomProjectile>> SONIC_BOOM_PROJECTILE =
+            ENTITY_TYPES.register("sonic_boom_projectile", () ->
+                    EntityType.Builder.<com.golemcraft.golemcraftmod.entity.projectile.SonicBoomProjectile>of(com.golemcraft.golemcraftmod.entity.projectile.SonicBoomProjectile::new, MobCategory.MISC)
+                            .noSave()
+                            .noSummon()
+                            .sized(0.25F, 0.25F)
+                            .clientTrackingRange(8)
+                            .updateInterval(3)
+                            .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(GolemCraft.MODID, "sonic_boom_projectile"))));
 
     public static final DeferredHolder<EntityType<?>, EntityType<com.golemcraft.golemcraftmod.entity.projectile.GolemFishingHook>> GOLEM_FISHING_HOOK =
             ENTITY_TYPES.register("golem_fishing_hook", () ->

@@ -203,7 +203,8 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
             if (!(this instanceof com.golemcraft.golemcraftmod.entity.FarmerGolemEntity)
                     && !(this instanceof com.golemcraft.golemcraftmod.entity.SoldierGolemEntity)
                     && !(this instanceof com.golemcraft.golemcraftmod.entity.FishermanGolemEntity)
-                    && !(this instanceof com.golemcraft.golemcraftmod.entity.LumberjackGolemEntity)) {
+                    && !(this instanceof com.golemcraft.golemcraftmod.entity.LumberjackGolemEntity)
+                    && !(this instanceof com.golemcraft.golemcraftmod.entity.DepthGolemEntity)) {
                 ItemStack slot0 = this.inventory.getItem(0);
                 ItemStack hand = this.getItemInHand(InteractionHand.MAIN_HAND);
                 if (!ItemStack.isSameItemSameComponents(slot0, hand) || slot0.getCount() != hand.getCount()) {
@@ -578,6 +579,42 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
                         net.minecraft.server.level.ServerLevel serverLevel = (net.minecraft.server.level.ServerLevel) this.level();
                         serverLevel.sendParticles(ParticleTypes.HAPPY_VILLAGER, this.getX(), this.getY() + 0.5D, this.getZ(), 15, 0.2D, 0.2D, 0.2D, 0.0D);
                         this.playSound(SoundEvents.ZOMBIE_VILLAGER_CURE, 1.0F, 1.0F);
+
+                        if (!player.getAbilities().instabuild) {
+                            itemstack.shrink(1);
+                        }
+                        this.discard();
+                    }
+                }
+                return InteractionResult.SUCCESS;
+            }
+
+            if (itemstack.is(net.minecraft.world.item.Items.ECHO_SHARD) && this.getOxidationLevel() == 0 && !this.isWaxed()) {
+                if (!this.level().isClientSide()) {
+                    com.golemcraft.golemcraftmod.entity.DepthGolemEntity depthGolem = com.golemcraft.golemcraftmod.registry.ModEntities.DEPTH_GOLEM.get().create(this.level(), net.minecraft.world.entity.EntitySpawnReason.CONVERSION);
+                    if (depthGolem != null) {
+                        depthGolem.setPos(this.getX(), this.getY(), this.getZ());
+                        depthGolem.setYRot(this.getYRot());
+                        depthGolem.setXRot(this.getXRot());
+                        depthGolem.setHealth(this.getHealth());
+                        depthGolem.yBodyRot = this.yBodyRot;
+                        if (this.hasCustomName()) {
+                            depthGolem.setCustomName(this.getCustomName());
+                            depthGolem.setCustomNameVisible(this.isCustomNameVisible());
+                        }
+
+                        depthGolem.setOwnerUUID(this.getOwnerUUID());
+                        depthGolem.setLastPickupTime(this.lastPickupTime);
+                        for (int i = 0; i < this.inventory.getContainerSize(); i++) {
+                            depthGolem.getInventory().setItem(i, this.inventory.getItem(i));
+                        }
+
+                        this.level().addFreshEntity(depthGolem);
+
+                        // Particles and sounds
+                        net.minecraft.server.level.ServerLevel serverLevel = (net.minecraft.server.level.ServerLevel) this.level();
+                        serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.SCULK_SOUL, this.getX(), this.getY() + 0.5D, this.getZ(), 15, 0.2D, 0.2D, 0.2D, 0.0D);
+                        this.playSound(net.minecraft.sounds.SoundEvents.WARDEN_HEARTBEAT, 1.0F, 1.0F);
 
                         if (!player.getAbilities().instabuild) {
                             itemstack.shrink(1);

@@ -176,7 +176,7 @@ def process_texture(base_name, delta_maps):
                 for (x, y) in PROTECTED_PIXELS[base_name]:
                     out_px[x, y] = base_px[x, y]
 
-        if level_name == "oxidized":
+        if level_name == "oxidized" and base_name != "depth_golem":
             dead_eyes_path = os.path.join(TEXTURE_DIR, "died_golem_eyes.png")
             if os.path.exists(dead_eyes_path):
                 dead_eyes_img = Image.open(dead_eyes_path).convert("RGBA")

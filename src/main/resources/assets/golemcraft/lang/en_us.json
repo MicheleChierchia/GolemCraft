@@ -10,5 +10,6 @@
   "item.golemcraft.farmer_golem_item": "Farmer Golem",
   "item.golemcraft.soldier_golem_item": "Soldier Golem",
   "item.golemcraft.fisherman_golem_item": "Fisherman Golem",
-  "item.golemcraft.lumberjack_golem_item": "Lumberjack Golem"
+  "item.golemcraft.lumberjack_golem_item": "Lumberjack Golem",
+  "entity.golemcraft.depth_golem": "Depth Golem"
 }
