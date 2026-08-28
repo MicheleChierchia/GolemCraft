@@ -19,6 +19,7 @@ import net.minecraft.world.level.block.WeatheringCopper;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDropsEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
 
@@ -114,8 +115,38 @@ public class ModEvents {
     }
 
     /**
-     * When a player dies, if they have a nearby ExplorerGolem, transfer all death drops
-     * into the golem's inventory and put the golem into waiting (dormant) state.
+     * When a player dies, if they have a nearby ExplorerGolem, put the golem into waiting (dormant) state.
+     */
+    @SubscribeEvent
+    public static void onPlayerDeath(LivingDeathEvent event) {
+        if (!(event.getEntity() instanceof Player player)) return;
+        Level level = player.level();
+        if (level.isClientSide()) return;
+
+        // Find the closest Explorer Golem owned by this player within 64 blocks
+        List<ExplorerGolemEntity> golems = level.getEntitiesOfClass(
+                ExplorerGolemEntity.class,
+                player.getBoundingBox().inflate(64),
+                g -> player.getUUID().equals(g.getOwnerUUID()) && !g.isWaiting()
+        );
+        if (golems.isEmpty()) return;
+
+        ExplorerGolemEntity golem = golems.stream()
+                .min(Comparator.comparingDouble(g -> g.distanceToSqr(player)))
+                .orElse(null);
+        if (golem == null) return;
+
+        golem.setWaiting(true);
+        if (level instanceof ServerLevel serverLevel) {
+            serverLevel.sendParticles(ParticleTypes.SOUL,
+                    golem.getX(), golem.getY() + 0.5D, golem.getZ(),
+                    20, 0.3D, 0.3D, 0.3D, 0.02D);
+        }
+    }
+
+    /**
+     * When a player drops items on death, if they have a nearby ExplorerGolem, transfer
+     * the death drops into the golem's inventory and ensure the golem is in waiting state.
      */
     @SubscribeEvent
     public static void onPlayerDropItems(LivingDropsEvent event) {
@@ -127,7 +158,7 @@ public class ModEvents {
         List<ExplorerGolemEntity> golems = level.getEntitiesOfClass(
                 ExplorerGolemEntity.class,
                 player.getBoundingBox().inflate(64),
-                g -> player.getUUID().equals(g.getOwnerUUID()) && !g.isWaiting()
+                g -> player.getUUID().equals(g.getOwnerUUID())
         );
         if (golems.isEmpty()) return;
 

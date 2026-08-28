@@ -16,6 +16,9 @@ public class StatueGoal extends Goal {
 
     @Override
     public boolean canUse() {
+        if (this.golem instanceof com.golemcraft.golemcraftmod.entity.ExplorerGolemEntity explorer && explorer.isWaiting()) {
+            return true;
+        }
         return this.golem.getOxidationLevel() == 3;
     }
 

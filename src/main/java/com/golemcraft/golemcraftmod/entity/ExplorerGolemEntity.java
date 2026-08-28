@@ -7,6 +7,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -21,6 +22,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -33,9 +35,11 @@ import net.minecraft.world.level.block.LightBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
-import net.minecraft.network.chat.Component;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -43,9 +47,20 @@ public class ExplorerGolemEntity extends BaseGolemEntity {
 
     private static final EntityDataAccessor<Boolean> IS_WAITING =
             SynchedEntityData.defineId(ExplorerGolemEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> IS_STAYING =
+            SynchedEntityData.defineId(ExplorerGolemEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> IS_COLLECTING_DROPS =
+            SynchedEntityData.defineId(ExplorerGolemEntity.class, EntityDataSerializers.BOOLEAN);
 
     /** The block where we last placed a LIGHT block (server-side only, not persisted). */
     private BlockPos lastLightBlockPos = null;
+
+    /** Anchor position when staying/guarding */
+    private BlockPos stayPos = null;
+
+    /** Target death location for drop collection */
+    private BlockPos deathPos = null;
+    private int collectTimeout = 0;
 
     /** Countdown for updating the linked golem compass in owner's inventory. */
     private int compassUpdateTimer = 0;
@@ -62,16 +77,39 @@ public class ExplorerGolemEntity extends BaseGolemEntity {
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         super.defineSynchedData(builder);
         builder.define(IS_WAITING, false);
+        builder.define(IS_STAYING, false);
+        builder.define(IS_COLLECTING_DROPS, false);
     }
 
     public boolean isWaiting() { return this.entityData.get(IS_WAITING); }
 
     public void setWaiting(boolean waiting) {
         this.entityData.set(IS_WAITING, waiting);
-        if (waiting && !this.level().isClientSide()) {
+        if (!this.level().isClientSide()) {
+            if (waiting) {
+                this.getNavigation().stop();
+                updateLinkedCompasses();
+            }
+        }
+    }
+
+    public boolean isStaying() { return this.entityData.get(IS_STAYING); }
+
+    public void setStaying(boolean staying) {
+        this.entityData.set(IS_STAYING, staying);
+        if (staying && !this.level().isClientSide()) {
             this.getNavigation().stop();
         }
     }
+
+    public boolean isCollectingDrops() { return this.entityData.get(IS_COLLECTING_DROPS); }
+
+    public void setCollectingDrops(boolean collecting) {
+        this.entityData.set(IS_COLLECTING_DROPS, collecting);
+    }
+
+    public BlockPos getStayPos() { return this.stayPos; }
+    public void setStayPos(BlockPos pos) { this.stayPos = pos; }
 
     // ─────────────────────────────────────────────────────────────────────────
     //  Attributes
@@ -91,8 +129,18 @@ public class ExplorerGolemEntity extends BaseGolemEntity {
     @Override
     protected void registerGoals() {
         super.registerGoals();
+        this.goalSelector.addGoal(1, new CollectDeathDropsGoal(this, 1.35D));
         this.goalSelector.addGoal(2, new FollowOwnerGoal(this, 1.3D, 4.0F, 1.8F, 16.0F));
-        this.goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.8D));
+        this.goalSelector.addGoal(3, new ReturnToStayPositionGoal(this, 1.1D));
+        this.goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.8D) {
+            @Override
+            public boolean canUse() {
+                if (ExplorerGolemEntity.this.isStaying() || ExplorerGolemEntity.this.isWaiting() || ExplorerGolemEntity.this.isCollectingDrops()) {
+                    return false;
+                }
+                return super.canUse();
+            }
+        });
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -147,7 +195,6 @@ public class ExplorerGolemEntity extends BaseGolemEntity {
     private void updateLightBlock(ServerLevel serverLevel) {
         if (this.isRemoved()) return;
 
-        // Find the best air block around the golem (torso -> head -> feet -> above)
         BlockPos torsoPos = BlockPos.containing(this.getX(), this.getY() + 0.5D, this.getZ());
         BlockPos targetPos = null;
 
@@ -235,15 +282,45 @@ public class ExplorerGolemEntity extends BaseGolemEntity {
             CustomData data = stack.get(net.minecraft.core.component.DataComponents.CUSTOM_DATA);
             if (data == null) continue;
             CompoundTag tag = data.copyTag();
-            if (myUUID.equals(tag.getString(GolemCompassItem.GOLEM_UUID_KEY))) {
-                stack.set(net.minecraft.core.component.DataComponents.LODESTONE_TRACKER, tracker);
-            }
+            tag.getString(GolemCompassItem.GOLEM_UUID_KEY).ifPresent(uuidStr -> {
+                if (myUUID.equals(uuidStr)) {
+                    stack.set(net.minecraft.core.component.DataComponents.LODESTONE_TRACKER, tracker);
+                }
+            });
         }
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    //  Death drop collection / waiting state
+    //  Drop collection and waiting state
     // ─────────────────────────────────────────────────────────────────────────
+
+    public boolean isInventoryFull() {
+        SimpleContainer inv = this.getInventory();
+        for (int i = 0; i < inv.getContainerSize(); i++) {
+            if (inv.getItem(i).isEmpty()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public void startCollectingDeathDrops(BlockPos deathPos) {
+        this.deathPos = deathPos;
+        this.collectTimeout = 400; // 20 seconds maximum
+        this.setCollectingDrops(true);
+        this.setStaying(false);
+        this.setWaiting(false);
+    }
+
+    public void finishCollectingDrops() {
+        this.setCollectingDrops(false);
+        this.setWaiting(true);
+        if (this.level() instanceof ServerLevel sl) {
+            sl.sendParticles(ParticleTypes.SOUL,
+                    this.getX(), this.getY() + 0.5D, this.getZ(),
+                    20, 0.3D, 0.3D, 0.3D, 0.02D);
+        }
+    }
 
     private void returnItemsToOwner(Player owner) {
         SimpleContainer inv = getInventory();
@@ -274,10 +351,25 @@ public class ExplorerGolemEntity extends BaseGolemEntity {
     protected InteractionResult mobInteract(Player player, InteractionHand hand) {
         ItemStack itemstack = player.getItemInHand(hand);
 
-        // Compass (normal or recovery) → create a GolemCompass item
+        // 1. If waiting, only owner can wake up and get items back
+        if (isWaiting()) {
+            if (this.getOwnerUUID() != null && this.getOwnerUUID().equals(player.getUUID())) {
+                if (!this.level().isClientSide()) {
+                    returnItemsToOwner(player);
+                }
+                return InteractionResult.SUCCESS;
+            }
+            return InteractionResult.PASS;
+        }
+
+        // 2. Compass (normal, recovery, or existing golem compass) → create/link a GolemCompass item
         if (!this.level().isClientSide()
-                && (itemstack.is(Items.COMPASS) || itemstack.is(Items.RECOVERY_COMPASS))
+                && (itemstack.is(Items.COMPASS) || itemstack.is(Items.RECOVERY_COMPASS) || itemstack.is(ModBlocks.GOLEM_COMPASS_ITEM.get()))
                 && this.getOxidationLevel() < 3 && !isWaiting()) {
+
+            if (this.getOwnerUUID() == null) {
+                this.setOwnerUUID(player.getUUID());
+            }
 
             // Build the GolemCompass item
             ItemStack compassOut = new ItemStack(ModBlocks.GOLEM_COMPASS_ITEM.get());
@@ -292,27 +384,58 @@ public class ExplorerGolemEntity extends BaseGolemEntity {
             compassOut.set(net.minecraft.core.component.DataComponents.LODESTONE_TRACKER,
                     new LodestoneTracker(Optional.of(globalPos), false));
 
-            // Consume the compass (unless creative)
-            if (!player.getAbilities().instabuild) {
-                itemstack.shrink(1);
+            // Consume the item in hand and give the golem compass
+            ItemStack result = net.minecraft.world.item.ItemUtils.createFilledResult(itemstack, player, compassOut);
+            player.setItemInHand(hand, result);
+
+            this.playSound(SoundEvents.LODESTONE_COMPASS_LOCK, 1.0F, 1.2F);
+            if (this.level() instanceof ServerLevel serverLevel) {
+                serverLevel.sendParticles(ParticleTypes.HAPPY_VILLAGER,
+                        this.getX(), this.getY() + 0.8D, this.getZ(),
+                        8, 0.2D, 0.2D, 0.2D, 0.05D);
             }
-            player.addItem(compassOut);
-            this.playSound(SoundEvents.LODESTONE_COMPASS_LOCK, 1.0F, 1.0F);
+            player.sendSystemMessage(Component.translatable("entity.golemcraft.explorer_golem.compass_linked"));
             return InteractionResult.SUCCESS;
         }
 
-        // If waiting, only allow owner to interact (returns items)
-        if (isWaiting()) {
-            if (this.getOwnerUUID() != null && this.getOwnerUUID().equals(player.getUUID())) {
-                if (!this.level().isClientSide()) {
-                    returnItemsToOwner(player);
-                }
-                return InteractionResult.SUCCESS;
-            }
+        // 3. Let BaseGolemEntity handle axes (scraping/waxing), honeycomb, or Shift+Click inventory menu
+        InteractionResult baseResult = super.mobInteract(player, hand);
+        if (baseResult.consumesAction()) {
+            return baseResult;
+        }
+
+        if (this.getOxidationLevel() == 3) {
             return InteractionResult.PASS;
         }
 
-        return super.mobInteract(player, hand);
+        // 4. Empty hand click (non-shift) toggles Follow vs Stay mode
+        if (itemstack.isEmpty() && !player.isSecondaryUseActive()) {
+            if (this.getOwnerUUID() == null) {
+                this.setOwnerUUID(player.getUUID());
+            }
+            if (this.getOwnerUUID().equals(player.getUUID())) {
+                if (!this.level().isClientSide()) {
+                    boolean nextState = !this.isStaying();
+                    this.setStaying(nextState);
+                    if (nextState) {
+                        this.setStayPos(this.blockPosition());
+                        this.playSound(SoundEvents.IRON_GOLEM_REPAIR, 1.0F, 1.0F);
+                        if (this.level() instanceof ServerLevel sl) {
+                            sl.sendParticles(ParticleTypes.HAPPY_VILLAGER, this.getX(), this.getY() + 1.0D, this.getZ(), 5, 0.3D, 0.3D, 0.3D, 0.0D);
+                        }
+                    } else {
+                        this.setStayPos(null);
+                        this.playSound(SoundEvents.EXPERIENCE_ORB_PICKUP, 1.0F, 0.8F);
+                        if (this.level() instanceof ServerLevel sl) {
+                            sl.sendParticles(ParticleTypes.HEART, this.getX(), this.getY() + 1.0D, this.getZ(), 3, 0.3D, 0.3D, 0.3D, 0.0D);
+                        }
+                    }
+                }
+                return InteractionResult.SUCCESS;
+            }
+        }
+
+        return InteractionResult.PASS;
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -358,12 +481,18 @@ public class ExplorerGolemEntity extends BaseGolemEntity {
     public void addAdditionalSaveData(ValueOutput output) {
         super.addAdditionalSaveData(output);
         output.store("IsWaiting", com.mojang.serialization.Codec.BOOL, this.isWaiting());
+        output.store("IsStaying", com.mojang.serialization.Codec.BOOL, this.isStaying());
+        if (this.stayPos != null) {
+            output.store("StayPos", BlockPos.CODEC, this.stayPos);
+        }
     }
 
     @Override
     public void readAdditionalSaveData(ValueInput input) {
         super.readAdditionalSaveData(input);
         input.read("IsWaiting", com.mojang.serialization.Codec.BOOL).ifPresent(this::setWaiting);
+        input.read("IsStaying", com.mojang.serialization.Codec.BOOL).ifPresent(this::setStaying);
+        input.read("StayPos", BlockPos.CODEC).ifPresent(this::setStayPos);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -377,8 +506,130 @@ public class ExplorerGolemEntity extends BaseGolemEntity {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    //  Inner goal: FollowOwnerGoal
+    //  Inner goals
     // ─────────────────────────────────────────────────────────────────────────
+
+    private static class CollectDeathDropsGoal extends Goal {
+        private final ExplorerGolemEntity golem;
+        private final double speed;
+        private ItemEntity targetItem;
+
+        public CollectDeathDropsGoal(ExplorerGolemEntity golem, double speed) {
+            this.golem = golem;
+            this.speed = speed;
+            this.setFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK));
+        }
+
+        @Override
+        public boolean canUse() {
+            if (!golem.isCollectingDrops() || golem.isWaiting() || golem.getOxidationLevel() == 3) {
+                return false;
+            }
+            return true;
+        }
+
+        @Override
+        public boolean canContinueToUse() {
+            return golem.isCollectingDrops() && !golem.isWaiting() && golem.getOxidationLevel() < 3;
+        }
+
+        @Override
+        public void start() {
+            targetItem = null;
+        }
+
+        @Override
+        public void stop() {
+            targetItem = null;
+            golem.getNavigation().stop();
+        }
+
+        @Override
+        public void tick() {
+            golem.collectTimeout--;
+
+            if (golem.isInventoryFull() || golem.collectTimeout <= 0) {
+                golem.finishCollectingDrops();
+                return;
+            }
+
+            if (targetItem == null || !targetItem.isAlive() || targetItem.hasPickUpDelay()) {
+                targetItem = findNearestDrop();
+                if (targetItem == null) {
+                    // No items left in the area
+                    golem.finishCollectingDrops();
+                    return;
+                }
+                golem.getNavigation().moveTo(targetItem, speed);
+            }
+
+            if (targetItem != null && targetItem.isAlive()) {
+                golem.getLookControl().setLookAt(targetItem, 30.0F, 30.0F);
+
+                if (golem.distanceToSqr(targetItem) < 4.0D) {
+                    ItemStack stack = targetItem.getItem();
+                    ItemStack remainder = golem.getInventory().addItem(stack);
+
+                    if (remainder.isEmpty()) {
+                        targetItem.discard();
+                        golem.setLastPickupTime(golem.level().getGameTime());
+                    } else {
+                        targetItem.setItem(remainder);
+                        if (stack.getCount() != remainder.getCount()) {
+                            golem.setLastPickupTime(golem.level().getGameTime());
+                        }
+                    }
+
+                    golem.playSound(SoundEvents.ITEM_PICKUP, 0.5F, (golem.getRandom().nextFloat() - golem.getRandom().nextFloat()) * 0.2F + 1.0F);
+                    targetItem = null;
+                } else if (golem.getNavigation().isDone()) {
+                    golem.getNavigation().moveTo(targetItem, speed);
+                }
+            }
+        }
+
+        private ItemEntity findNearestDrop() {
+            BlockPos center = golem.deathPos != null ? golem.deathPos : golem.blockPosition();
+            AABB box = new AABB(center).inflate(24.0D, 12.0D, 24.0D);
+            List<ItemEntity> items = golem.level().getEntitiesOfClass(ItemEntity.class, box, item -> item.isAlive() && !item.hasPickUpDelay());
+            if (items.isEmpty()) return null;
+
+            return items.stream().min(java.util.Comparator.comparingDouble(golem::distanceToSqr)).orElse(null);
+        }
+    }
+
+    private static class ReturnToStayPositionGoal extends Goal {
+        private final ExplorerGolemEntity golem;
+        private final double speed;
+
+        public ReturnToStayPositionGoal(ExplorerGolemEntity golem, double speed) {
+            this.golem = golem;
+            this.speed = speed;
+            this.setFlags(EnumSet.of(Goal.Flag.MOVE));
+        }
+
+        @Override
+        public boolean canUse() {
+            if (!golem.isStaying() || golem.isWaiting() || golem.isCollectingDrops() || golem.getStayPos() == null) return false;
+            return golem.distanceToSqr(Vec3.atBottomCenterOf(golem.getStayPos())) > 4.0D;
+        }
+
+        @Override
+        public boolean canContinueToUse() {
+            if (!golem.isStaying() || golem.isWaiting() || golem.isCollectingDrops() || golem.getStayPos() == null) return false;
+            return !golem.getNavigation().isDone() && golem.distanceToSqr(Vec3.atBottomCenterOf(golem.getStayPos())) > 1.5D;
+        }
+
+        @Override
+        public void start() {
+            if (golem.distanceToSqr(Vec3.atBottomCenterOf(golem.getStayPos())) > 144.0D) {
+                golem.teleportTo(golem.getStayPos().getX() + 0.5D, golem.getStayPos().getY(), golem.getStayPos().getZ() + 0.5D);
+                golem.getNavigation().stop();
+            } else {
+                golem.getNavigation().moveTo(golem.getStayPos().getX() + 0.5D, golem.getStayPos().getY(), golem.getStayPos().getZ() + 0.5D, speed);
+            }
+        }
+    }
 
     private static class FollowOwnerGoal extends Goal {
         private final ExplorerGolemEntity golem;
@@ -400,7 +651,7 @@ public class ExplorerGolemEntity extends BaseGolemEntity {
 
         @Override
         public boolean canUse() {
-            if (golem.isWaiting() || golem.getOxidationLevel() == 3) return false;
+            if (golem.isStaying() || golem.isWaiting() || golem.isCollectingDrops() || golem.getOxidationLevel() == 3) return false;
             Player p = golem.getOwnerPlayer();
             if (p == null || !p.isAlive() || p.isSpectator()) return false;
             if (golem.distanceToSqr(p) < (double) startDistSq) return false;
@@ -410,7 +661,7 @@ public class ExplorerGolemEntity extends BaseGolemEntity {
 
         @Override
         public boolean canContinueToUse() {
-            if (golem.isWaiting() || golem.getOxidationLevel() == 3) return false;
+            if (golem.isStaying() || golem.isWaiting() || golem.isCollectingDrops() || golem.getOxidationLevel() == 3) return false;
             if (owner == null || !owner.isAlive() || owner.isSpectator()) return false;
             return golem.distanceToSqr(owner) > (double) stopDistSq;
         }

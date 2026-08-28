@@ -22,8 +22,9 @@ Usage
 import os, sys, colorsys
 from PIL import Image
 
-TEXTURE_DIR = "src/main/resources/assets/golemcraft/textures/entity"
-COPPER_DIR  = "copper golem"
+ROOT_DIR    = os.path.dirname(os.path.abspath(__file__))
+TEXTURE_DIR = os.path.join(ROOT_DIR, "src/main/resources/assets/golemcraft/textures/entity")
+COPPER_DIR  = os.path.join(ROOT_DIR, "copper golem")
 COPPER_BASE = os.path.join(COPPER_DIR, "copper_golem.png")
 
 LEVELS = {
@@ -49,7 +50,7 @@ PROTECTED_ROWS = {
     "fisherman_golem": list(range(40, 53)), # bucket hat
     "soldier_golem": list(range(8, 11)), # helmet sides and bandana
     "explorer_golem": list(range(32, 64)),  # boots base (32-36) + hat brim/backpack (40-52) + 3D boots (54-62)
-
+}
 # Individual pixels to protect: { "golem_name": set of (x, y) }
 def _farmer_hat_pixels():
     pts = set()
@@ -90,7 +91,23 @@ def _lumberjack_pixels():
         for x in range(0, 40): pts.add((x, y))
     return pts
 
+def _explorer_pixels():
+    pts = set()
+    # Lantern on top of head (cap & body/glow)
+    for y in range(0, 4):
+        for x in range(41, 49):
+            pts.add((x, y))
+    for y in range(4, 8):
+        for x in range(37, 53):
+            pts.add((x, y))
+    # Belt / sash & compass on body
+    for y in range(21, 27):
+        for x in range(7, 14):
+            pts.add((x, y))
+    return pts
+
 PROTECTED_PIXELS = {
+    "farmer_golem": _farmer_hat_pixels(),
     "soldier_golem": _soldier_helmet_pixels(),
     "lumberjack_golem": _lumberjack_pixels(),
     "explorer_golem": _explorer_pixels(),
@@ -170,11 +187,13 @@ def process_texture(base_name, delta_maps):
             base_px  = base_src.load()
             if base_name in PROTECTED_ROWS:
                 for row in PROTECTED_ROWS[base_name]:
-                    for x in range(size[0]):
-                        out_px[x, row] = base_px[x, row]
+                    if 0 <= row < size[1]:
+                        for x in range(size[0]):
+                            out_px[x, row] = base_px[x, row]
             if base_name in PROTECTED_PIXELS:
                 for (x, y) in PROTECTED_PIXELS[base_name]:
-                    out_px[x, y] = base_px[x, y]
+                    if 0 <= x < size[0] and 0 <= y < size[1]:
+                        out_px[x, y] = base_px[x, y]
 
         if level_name == "oxidized" and base_name != "depth_golem":
             dead_eyes_path = os.path.join(TEXTURE_DIR, "died_golem_eyes.png")

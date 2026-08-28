@@ -753,4 +753,14 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
         
         return InteractionResult.PASS;
     }
+
+    @Override
+    public boolean removeWhenFarAway(double distanceToClosestPlayer) {
+        return false;
+    }
+
+    @Override
+    public boolean requiresCustomPersistence() {
+        return true;
+    }
 }
