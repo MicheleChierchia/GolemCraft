@@ -1,6 +1,7 @@
 package com.golemcraft.golemcraftmod.client.renderer;
 
 import com.golemcraft.golemcraftmod.GolemCraft;
+
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.EyesLayer;
 import net.minecraft.client.renderer.rendertype.RenderType;
@@ -21,6 +22,7 @@ public class DepthGolemEyesLayer extends EyesLayer<BaseGolemRenderState, com.gol
 
     @Override
     public void submit(com.mojang.blaze3d.vertex.PoseStack poseStack, net.minecraft.client.renderer.SubmitNodeCollector submitNodeCollector, int packedLight, BaseGolemRenderState state, float limbSwing, float limbSwingAmount) {
+        if (state.oxidationLevel >= 3) return;
         float time = state.ageInTicks; // simplified
         float alpha = (float) (Math.cos(time * 0.1F) * 0.4F + 0.6F); // pulsates between 0.2 and 1.0
         

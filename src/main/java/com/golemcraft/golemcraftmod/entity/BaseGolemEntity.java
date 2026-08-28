@@ -1,19 +1,19 @@
 package com.golemcraft.golemcraftmod.entity;
 
-import com.golemcraft.golemcraftmod.registry.ModEntities;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.network.syncher.EntityDataAccessor;
 import java.util.UUID;
-import net.minecraft.world.SimpleMenuProvider;
-import net.minecraft.world.inventory.ChestMenu;
-import net.minecraft.network.chat.Component;
+
+import com.golemcraft.golemcraftmod.registry.ModEntities;
+
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.SimpleMenuProvider;
+import net.minecraft.world.entity.ContainerUser;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -24,10 +24,8 @@ import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.ContainerUser;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.core.particles.ParticleTypes;
 
 public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
     private static final EntityDataAccessor<Boolean> RUMMAGING = SynchedEntityData.defineId(BaseGolemEntity.class, EntityDataSerializers.BOOLEAN);
@@ -195,6 +193,12 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
                 this.getNavigation().stop();
                 this.setYHeadRot(this.yBodyRot);
                 this.setXRot(0);
+                if (this.getTarget() != null) {
+                    this.setTarget(null);
+                }
+                if (this.getLastHurtByMob() != null) {
+                    this.setLastHurtByMob(null);
+                }
             } else if (!this.isWaxed() && this.random.nextFloat() < 0.0005F) { // Very slow oxidation for testing
                 this.setOxidationLevel(this.getOxidationLevel() + 1);
             }
@@ -203,7 +207,8 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
                     && !(this instanceof com.golemcraft.golemcraftmod.entity.SoldierGolemEntity)
                     && !(this instanceof com.golemcraft.golemcraftmod.entity.FishermanGolemEntity)
                     && !(this instanceof com.golemcraft.golemcraftmod.entity.LumberjackGolemEntity)
-                    && !(this instanceof com.golemcraft.golemcraftmod.entity.DepthGolemEntity)) {
+                    && !(this instanceof com.golemcraft.golemcraftmod.entity.DepthGolemEntity)
+                    && !(this instanceof com.golemcraft.golemcraftmod.entity.ExplorerGolemEntity)) {
                 ItemStack slot0 = this.inventory.getItem(0);
                 ItemStack hand = this.getItemInHand(InteractionHand.MAIN_HAND);
                 if (!ItemStack.isSameItemSameComponents(slot0, hand) || slot0.getCount() != hand.getCount()) {
@@ -252,10 +257,21 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
 
     @Override
     public boolean canAttack(LivingEntity target) {
+        if (this.getOxidationLevel() == 3) {
+            return false;
+        }
         if (this.isAlly(target)) {
             return false;
         }
         return super.canAttack(target);
+    }
+
+    @Override
+    public boolean doHurtTarget(net.minecraft.server.level.ServerLevel level, net.minecraft.world.entity.Entity target) {
+        if (this.getOxidationLevel() == 3) {
+            return false;
+        }
+        return super.doHurtTarget(level, target);
     }
 
     @Override
@@ -614,6 +630,41 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
                         net.minecraft.server.level.ServerLevel serverLevel = (net.minecraft.server.level.ServerLevel) this.level();
                         serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.SCULK_SOUL, this.getX(), this.getY() + 0.5D, this.getZ(), 15, 0.2D, 0.2D, 0.2D, 0.0D);
                         this.playSound(net.minecraft.sounds.SoundEvents.WARDEN_HEARTBEAT, 1.0F, 1.0F);
+
+                        if (!player.getAbilities().instabuild) {
+                            itemstack.shrink(1);
+                        }
+                        this.discard();
+                    }
+                }
+                return InteractionResult.SUCCESS;
+            }
+
+            if (itemstack.is(net.minecraft.world.item.Items.RECOVERY_COMPASS) && this.getOxidationLevel() == 0 && !this.isWaxed()) {
+                if (!this.level().isClientSide()) {
+                    com.golemcraft.golemcraftmod.entity.ExplorerGolemEntity explorerGolem = com.golemcraft.golemcraftmod.registry.ModEntities.EXPLORER_GOLEM.get().create(this.level(), net.minecraft.world.entity.EntitySpawnReason.CONVERSION);
+                    if (explorerGolem != null) {
+                        explorerGolem.setPos(this.getX(), this.getY(), this.getZ());
+                        explorerGolem.setYRot(this.getYRot());
+                        explorerGolem.setXRot(this.getXRot());
+                        explorerGolem.setHealth(this.getHealth());
+                        explorerGolem.yBodyRot = this.yBodyRot;
+                        if (this.hasCustomName()) {
+                            explorerGolem.setCustomName(this.getCustomName());
+                            explorerGolem.setCustomNameVisible(this.isCustomNameVisible());
+                        }
+
+                        explorerGolem.setOwnerUUID(this.getOwnerUUID());
+                        explorerGolem.setLastPickupTime(this.lastPickupTime);
+                        for (int i = 0; i < this.inventory.getContainerSize(); i++) {
+                            explorerGolem.getInventory().setItem(i, this.inventory.getItem(i));
+                        }
+
+                        this.level().addFreshEntity(explorerGolem);
+
+                        net.minecraft.server.level.ServerLevel serverLevel = (net.minecraft.server.level.ServerLevel) this.level();
+                        serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.SOUL_FIRE_FLAME, this.getX(), this.getY() + 0.5D, this.getZ(), 15, 0.2D, 0.2D, 0.2D, 0.0D);
+                        this.playSound(net.minecraft.sounds.SoundEvents.BEACON_ACTIVATE, 1.0F, 1.2F);
 
                         if (!player.getAbilities().instabuild) {
                             itemstack.shrink(1);

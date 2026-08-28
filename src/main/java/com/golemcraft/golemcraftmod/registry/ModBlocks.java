@@ -11,6 +11,8 @@ public class ModBlocks {
     public static final net.neoforged.neoforge.registries.DeferredItem<net.minecraft.world.item.Item> BASE_GOLEM_ITEM = ITEMS.registerItem("base_golem_item", 
             com.golemcraft.golemcraftmod.item.BaseGolemItem::new);
     public static final net.neoforged.neoforge.registries.DeferredItem<net.minecraft.world.item.Item> FISHING_ROD_CAST_DUMMY = ITEMS.registerSimpleItem("fishing_rod_cast_dummy", net.minecraft.world.item.Item.Properties::new);
+    public static final net.neoforged.neoforge.registries.DeferredItem<net.minecraft.world.item.Item> GOLEM_COMPASS_ITEM = ITEMS.registerItem("golem_compass",
+            com.golemcraft.golemcraftmod.item.GolemCompassItem::new);
 
     public static void register(IEventBus eventBus) {
         BLOCKS.register(eventBus);

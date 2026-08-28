@@ -40,6 +40,7 @@ BASE_TEXTURES = [
     "fisherman_golem",
     "lumberjack_golem",
     "depth_golem",
+    "explorer_golem",
 ]
 
 # Pixel rows to protect fully from oxidation per golem
@@ -47,7 +48,7 @@ PROTECTED_ROWS = {
     "farmer_golem": list(range(40, 53)),  # straw hat brim
     "fisherman_golem": list(range(40, 53)), # bucket hat
     "soldier_golem": list(range(8, 11)), # helmet sides and bandana
-}
+    "explorer_golem": list(range(32, 64)),  # boots base (32-36) + hat brim/backpack (40-52) + 3D boots (54-62)
 
 # Individual pixels to protect: { "golem_name": set of (x, y) }
 def _farmer_hat_pixels():
@@ -90,13 +91,11 @@ def _lumberjack_pixels():
     return pts
 
 PROTECTED_PIXELS = {
-    "farmer_golem": _farmer_hat_pixels(),
     "soldier_golem": _soldier_helmet_pixels(),
     "lumberjack_golem": _lumberjack_pixels(),
+    "explorer_golem": _explorer_pixels(),
 }
-
 # ── helpers ────────────────────────────────────────────────────────────────────
-
 def rgb_to_hsv(r, g, b):
     return colorsys.rgb_to_hsv(r / 255.0, g / 255.0, b / 255.0)
 

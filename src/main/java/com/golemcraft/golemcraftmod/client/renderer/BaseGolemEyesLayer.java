@@ -22,7 +22,7 @@ public class BaseGolemEyesLayer extends EyesLayer<BaseGolemRenderState, BaseGole
 
     @Override
     public void submit(com.mojang.blaze3d.vertex.PoseStack poseStack, net.minecraft.client.renderer.SubmitNodeCollector submitNodeCollector, int packedLight, BaseGolemRenderState state, float limbSwing, float limbSwingAmount) {
-        if (state.isDepthGolem) return;
+        if (state.isDepthGolem || state.isExplorerGolem) return;
         if (state.oxidationLevel < 3) {
             super.submit(poseStack, submitNodeCollector, packedLight, state, limbSwing, limbSwingAmount);
         }

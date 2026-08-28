@@ -11,5 +11,10 @@
   "item.golemcraft.soldier_golem_item": "Soldier Golem",
   "item.golemcraft.fisherman_golem_item": "Fisherman Golem",
   "item.golemcraft.lumberjack_golem_item": "Lumberjack Golem",
-  "entity.golemcraft.depth_golem": "Depth Golem"
+  "entity.golemcraft.depth_golem": "Depth Golem",
+  "entity.golemcraft.explorer_golem": "Explorer Golem",
+  "entity.golemcraft.explorer_golem.returned_items": "The Explorer Golem returns your items.",
+  "entity.golemcraft.explorer_golem.compass_linked": "Compass linked to the Explorer Golem!",
+  "item.golemcraft.golem_compass": "Golem Compass",
+  "item.golemcraft.golem_compass.tooltip": "Points towards the linked Explorer Golem"
 }

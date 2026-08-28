@@ -11,5 +11,10 @@
   "item.golemcraft.soldier_golem_item": "Golem Soldato",
   "item.golemcraft.fisherman_golem_item": "Golem Pescatore",
   "item.golemcraft.lumberjack_golem_item": "Golem Taglialegna",
-  "entity.golemcraft.depth_golem": "Golem delle Profondità"
+  "entity.golemcraft.depth_golem": "Golem delle Profondità",
+  "entity.golemcraft.explorer_golem": "Golem Esploratore",
+  "entity.golemcraft.explorer_golem.returned_items": "Il Golem Esploratore ti restituisce i tuoi oggetti.",
+  "entity.golemcraft.explorer_golem.compass_linked": "Bussola collegata al Golem Esploratore!",
+  "item.golemcraft.golem_compass": "Bussola del Golem",
+  "item.golemcraft.golem_compass.tooltip": "Punta verso il Golem Esploratore collegato"
 }

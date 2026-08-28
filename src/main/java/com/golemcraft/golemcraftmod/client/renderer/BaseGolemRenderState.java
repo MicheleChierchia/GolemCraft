@@ -13,4 +13,7 @@ public class BaseGolemRenderState extends ArmedEntityRenderState {
     public boolean isGuarding;
     public boolean isFishing;
     public boolean isDepthGolem;
+    /** Used by ExplorerGolemRenderer: golem is in dormant/waiting state */
+    public boolean isWaiting;
+    public boolean isExplorerGolem;
 }

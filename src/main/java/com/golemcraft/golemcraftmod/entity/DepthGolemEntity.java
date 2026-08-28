@@ -1,16 +1,17 @@
 package com.golemcraft.golemcraftmod.entity;
 
+import java.util.EnumSet;
+import java.util.function.BiConsumer;
+
 import com.golemcraft.golemcraftmod.entity.projectile.SonicBoomProjectile;
+import com.mojang.serialization.Codec;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.world.level.storage.ValueOutput;
-import net.minecraft.world.level.storage.ValueInput;
-import com.mojang.serialization.Codec;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
@@ -21,10 +22,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.Goal;
-import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
-import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.TargetGoal;
@@ -33,16 +31,13 @@ import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.gameevent.GameEvent;
+import net.minecraft.world.level.gameevent.DynamicGameEventListener;
 import net.minecraft.world.level.gameevent.EntityPositionSource;
+import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.gameevent.PositionSource;
 import net.minecraft.world.level.gameevent.vibrations.VibrationSystem;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.level.gameevent.DynamicGameEventListener;
-import java.util.function.BiConsumer;
-
-import java.util.EnumSet;
-import java.util.List;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 
 public class DepthGolemEntity extends BaseGolemEntity implements VibrationSystem, VibrationSystem.User {
 
@@ -100,14 +95,12 @@ public class DepthGolemEntity extends BaseGolemEntity implements VibrationSystem
 
     @Override
     protected void registerGoals() {
-        this.goalSelector.addGoal(0, new FloatGoal(this));
+        super.registerGoals();
         this.goalSelector.addGoal(1, new SonicAttackGoal(this));
         this.goalSelector.addGoal(2, new ReturnToGuardPositionGoal(this, 1.0D));
         this.goalSelector.addGoal(3, new FollowOwnerGoal(this, 1.4D, 10.0F, 3.0F));
         this.goalSelector.addGoal(4, new net.minecraft.world.entity.ai.goal.MeleeAttackGoal(this, 1.25D, false));
         this.goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 1.0D));
-        this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 6.0F));
-        this.goalSelector.addGoal(7, new RandomLookAroundGoal(this));
 
         this.targetSelector.addGoal(1, new OwnerHurtByTargetGoal(this));
         this.targetSelector.addGoal(2, new OwnerHurtTargetGoal(this));
@@ -117,6 +110,7 @@ public class DepthGolemEntity extends BaseGolemEntity implements VibrationSystem
 
     @Override
     public boolean doHurtTarget(ServerLevel level, Entity target) {
+        if (this.getOxidationLevel() == 3) return false;
         this.setAttackAnimTicks(10);
         return super.doHurtTarget(level, target);
     }
@@ -124,6 +118,11 @@ public class DepthGolemEntity extends BaseGolemEntity implements VibrationSystem
     @Override
     public void tick() {
         super.tick();
+        if (this.getOxidationLevel() == 3) {
+            this.heardEntity = null;
+            this.heardEntityTime = 0;
+            return;
+        }
         if (this.level() instanceof ServerLevel serverLevel) {
             VibrationSystem.Ticker.tick(serverLevel, this.getVibrationData(), this.getVibrationUser());
         }
@@ -157,6 +156,9 @@ public class DepthGolemEntity extends BaseGolemEntity implements VibrationSystem
         InteractionResult result = super.mobInteract(player, hand);
         if (result.consumesAction()) {
             return result;
+        }
+        if (this.getOxidationLevel() == 3) {
+            return InteractionResult.PASS;
         }
 
         ItemStack stackInHand = player.getItemInHand(hand);
@@ -197,6 +199,7 @@ public class DepthGolemEntity extends BaseGolemEntity implements VibrationSystem
 
     @Override
     public void onReceiveVibration(ServerLevel level, BlockPos pos, Holder<GameEvent> event, Entity sourceEntity, Entity projectileOwner, float distance) {
+        if (this.getOxidationLevel() == 3) return;
         if (sourceEntity instanceof LivingEntity living && living != this && living != this.getOwnerPlayer()) {
             if (living instanceof Enemy || (living instanceof Player p && p.getLastHurtMob() == this.getOwnerPlayer())) {
                 this.heardEntity = living;
@@ -208,7 +211,7 @@ public class DepthGolemEntity extends BaseGolemEntity implements VibrationSystem
 
     @Override
     public boolean canReceiveVibration(ServerLevel level, BlockPos pos, Holder<GameEvent> event, GameEvent.Context context) {
-        return true;
+        return this.getOxidationLevel() < 3;
     }
 
     @Override
@@ -235,6 +238,7 @@ public class DepthGolemEntity extends BaseGolemEntity implements VibrationSystem
 
         @Override
         public boolean canUse() {
+            if (golem.getOxidationLevel() == 3) return false;
             if (golem.isGuarding()) return false;
             Player owner = golem.getOwnerPlayer();
             if (owner == null) return false;
@@ -265,6 +269,7 @@ public class DepthGolemEntity extends BaseGolemEntity implements VibrationSystem
 
         @Override
         public boolean canUse() {
+            if (golem.getOxidationLevel() == 3) return false;
             if (golem.isGuarding()) return false;
             Player owner = golem.getOwnerPlayer();
             if (owner == null) return false;
@@ -293,6 +298,7 @@ public class DepthGolemEntity extends BaseGolemEntity implements VibrationSystem
 
         @Override
         public boolean canUse() {
+            if (golem.getOxidationLevel() == 3) return false;
             if (golem.heardEntity != null && golem.heardEntity.isAlive()) {
                 return true;
             }
@@ -318,6 +324,7 @@ public class DepthGolemEntity extends BaseGolemEntity implements VibrationSystem
 
         @Override
         public boolean canUse() {
+            if (golem.getOxidationLevel() == 3) return false;
             target = golem.getTarget();
             return target != null && target.isAlive() && golem.sonicAttackCooldown <= 0;
         }
@@ -355,7 +362,7 @@ public class DepthGolemEntity extends BaseGolemEntity implements VibrationSystem
         
         @Override
         public boolean canContinueToUse() {
-            return attackTime > 0 && target != null && target.isAlive();
+            return golem.getOxidationLevel() < 3 && attackTime > 0 && target != null && target.isAlive();
         }
     }
 
@@ -371,6 +378,7 @@ public class DepthGolemEntity extends BaseGolemEntity implements VibrationSystem
 
         @Override
         public boolean canUse() {
+            if (golem.getOxidationLevel() == 3) return false;
             if (!golem.isGuarding() || golem.getGuardPos() == null) return false;
             if (golem.getTarget() != null) return false; // combat takes priority
             return golem.distanceToSqr(net.minecraft.world.phys.Vec3.atBottomCenterOf(golem.getGuardPos())) > 25.0D; // 5 blocks
@@ -383,7 +391,7 @@ public class DepthGolemEntity extends BaseGolemEntity implements VibrationSystem
 
         @Override
         public boolean canContinueToUse() {
-            return !golem.getNavigation().isDone() && golem.getTarget() == null && golem.isGuarding();
+            return golem.getOxidationLevel() < 3 && !golem.getNavigation().isDone() && golem.getTarget() == null && golem.isGuarding();
         }
     }
 
@@ -405,6 +413,7 @@ public class DepthGolemEntity extends BaseGolemEntity implements VibrationSystem
 
         @Override
         public boolean canUse() {
+            if (golem.getOxidationLevel() == 3) return false;
             if (golem.isGuarding()) return false;
             owner = golem.getOwnerPlayer();
             if (owner == null) return false;
@@ -415,6 +424,7 @@ public class DepthGolemEntity extends BaseGolemEntity implements VibrationSystem
 
         @Override
         public boolean canContinueToUse() {
+            if (golem.getOxidationLevel() == 3) return false;
             if (golem.isGuarding()) return false;
             owner = golem.getOwnerPlayer();
             if (owner == null || !owner.isAlive()) return false;

@@ -169,15 +169,55 @@ public class BaseGolemModel extends EntityModel<BaseGolemRenderState> implements
         return LayerDefinition.create(meshdefinition, 64, 64);
     }
 
+    public static LayerDefinition createExplorerBodyLayer() {
+        MeshDefinition meshdefinition = new MeshDefinition();
+        PartDefinition partdefinition = meshdefinition.getRoot();
+
+        // Head with explorer cap/hat (texOffs 0,40 size 9x2x11)
+        partdefinition.addOrReplaceChild("head", CubeListBuilder.create()
+                .texOffs(0, 0).addBox(-4.0F, -5.0F, -5.0F, 8.0F, 5.0F, 10.0F)
+                .texOffs(0, 40).addBox(-4.5F, -5.5F, -5.5F, 9.0F, 2.0F, 11.0F) // Cappello da esploratore
+                .texOffs(37, 8).addBox(-1.0F, -9.0F, -1.0F, 2.0F, 4.0F, 2.0F)   // Parafulmine (Base sottile)
+                .texOffs(37, 0).addBox(-2.0F, -13.0F, -2.0F, 4.0F, 4.0F, 4.0F)  // Parafulmine / Lanterna (Punta grossa)
+                .texOffs(56, 0).addBox(-1.0F, -3.0F, -7.0F, 2.0F, 3.0F, 2.0F),  // Naso
+                PartPose.offset(0.0F, 13.0F, 0.0F));
+
+        // Body with backpack on the back (texOffs 44,40 size 7x5x2)
+        partdefinition.addOrReplaceChild("body", CubeListBuilder.create()
+                .texOffs(0, 15).addBox(-4.0F, 0.0F, -3.0F, 8.0F, 6.0F, 6.0F)
+                .texOffs(44, 40).addBox(-3.5F, 0.5F, 3.0F, 7.0F, 5.0F, 2.0F),   // Zaino da esploratore
+                PartPose.offset(0.0F, 13.0F, 0.0F));
+
+        partdefinition.addOrReplaceChild("right_arm", CubeListBuilder.create()
+                .texOffs(36, 16).addBox(-1.5F, 0.0F, -2.0F, 3.0F, 10.0F, 4.0F),
+                PartPose.offset(-5.5F, 13.0F, 0.0F));
+
+        partdefinition.addOrReplaceChild("left_arm", CubeListBuilder.create()
+                .texOffs(50, 16).addBox(-1.5F, 0.0F, -2.0F, 3.0F, 10.0F, 4.0F),
+                PartPose.offset(5.5F, 13.0F, 0.0F));
+
+        // Legs with 3D boot layer (texOffs 0,54 for right boot and 24,54 for left boot)
+        partdefinition.addOrReplaceChild("right_leg", CubeListBuilder.create()
+                .texOffs(0, 27).addBox(-2.0F, 0.0F, -2.0F, 4.0F, 5.0F, 4.0F)
+                .texOffs(0, 54).addBox(-2.25F, 2.0F, -2.5F, 4.5F, 3.0F, 5.0F), // Stivale destro
+                PartPose.offset(-2.0F, 19.0F, 0.0F));
+
+        partdefinition.addOrReplaceChild("left_leg", CubeListBuilder.create()
+                .texOffs(16, 27).addBox(-2.0F, 0.0F, -2.0F, 4.0F, 5.0F, 4.0F)
+                .texOffs(24, 54).addBox(-2.25F, 2.0F, -2.5F, 4.5F, 3.0F, 5.0F), // Stivale sinistro
+                PartPose.offset(2.0F, 19.0F, 0.0F));
+
+        return LayerDefinition.create(meshdefinition, 64, 64);
+    }
+
     @Override
     public void setupAnim(BaseGolemRenderState state) {
         super.setupAnim(state);
         
-        if (state.oxidationLevel == 3) {
+        if (state.oxidationLevel == 3 || state.isWaiting) {
             this.head.yRot = state.yRot * ((float)Math.PI / 180F);
             this.head.xRot = state.xRot * ((float)Math.PI / 180F);
             this.head.zRot = 0.0F;
-            this.rightLeg.xRot = -1.4F;
             this.leftLeg.xRot = -1.4F;
             this.rightArm.xRot = 0.0F;
             this.leftArm.xRot = 0.0F;

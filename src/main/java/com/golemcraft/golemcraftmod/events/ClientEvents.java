@@ -19,6 +19,7 @@ public class ClientEvents {
     public static final ModelLayerLocation FISHERMAN_GOLEM_LAYER = new ModelLayerLocation(Identifier.fromNamespaceAndPath(GolemCraft.MODID, "fisherman_golem"), "main");
     public static final ModelLayerLocation LUMBERJACK_GOLEM_LAYER = new ModelLayerLocation(Identifier.fromNamespaceAndPath(GolemCraft.MODID, "lumberjack_golem"), "main");
     public static final ModelLayerLocation DEPTH_GOLEM_LAYER = new ModelLayerLocation(Identifier.fromNamespaceAndPath(GolemCraft.MODID, "depth_golem"), "main");
+    public static final ModelLayerLocation EXPLORER_GOLEM_LAYER = new ModelLayerLocation(Identifier.fromNamespaceAndPath(GolemCraft.MODID, "explorer_golem"), "main");
 
     @SubscribeEvent
     public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
@@ -29,6 +30,7 @@ public class ClientEvents {
         event.registerEntityRenderer(ModEntities.SOLDIER_GOLEM.get(), com.golemcraft.golemcraftmod.client.renderer.SoldierGolemRenderer::new);
         event.registerEntityRenderer(ModEntities.LUMBERJACK_GOLEM.get(), com.golemcraft.golemcraftmod.client.renderer.LumberjackGolemRenderer::new);
         event.registerEntityRenderer(ModEntities.DEPTH_GOLEM.get(), com.golemcraft.golemcraftmod.client.renderer.DepthGolemRenderer::new);
+        event.registerEntityRenderer(ModEntities.EXPLORER_GOLEM.get(), com.golemcraft.golemcraftmod.client.renderer.ExplorerGolemRenderer::new);
         event.registerEntityRenderer(ModEntities.SONIC_BOOM_PROJECTILE.get(), net.minecraft.client.renderer.entity.NoopRenderer::new);
         event.registerEntityRenderer(ModEntities.GOLEM_FISHING_HOOK.get(), com.golemcraft.golemcraftmod.client.renderer.GolemFishingHookRenderer::new);
     }
@@ -40,6 +42,7 @@ public class ClientEvents {
         event.registerLayerDefinition(FISHERMAN_GOLEM_LAYER, com.golemcraft.golemcraftmod.client.model.BaseGolemModel::createFishermanBodyLayer);
         event.registerLayerDefinition(LUMBERJACK_GOLEM_LAYER, com.golemcraft.golemcraftmod.client.model.BaseGolemModel::createLumberjackBodyLayer);
         event.registerLayerDefinition(DEPTH_GOLEM_LAYER, com.golemcraft.golemcraftmod.client.model.DepthGolemModel::createDepthBodyLayer);
+        event.registerLayerDefinition(EXPLORER_GOLEM_LAYER, com.golemcraft.golemcraftmod.client.model.BaseGolemModel::createExplorerBodyLayer);
     }
     
     public static class ModelLayers {}

@@ -1,8 +1,10 @@
 package com.golemcraft.golemcraftmod.entity.ai;
 
-import com.golemcraft.golemcraftmod.entity.BaseGolemEntity;
-import net.minecraft.world.entity.ai.goal.Goal;
 import java.util.EnumSet;
+
+import com.golemcraft.golemcraftmod.entity.BaseGolemEntity;
+
+import net.minecraft.world.entity.ai.goal.Goal;
 
 public class StatueGoal extends Goal {
     private final BaseGolemEntity golem;
@@ -25,6 +27,8 @@ public class StatueGoal extends Goal {
     @Override
     public void start() {
         this.golem.getNavigation().stop();
+        this.golem.setTarget(null);
+        this.golem.setLastHurtByMob(null);
     }
 
     @Override
@@ -32,5 +36,11 @@ public class StatueGoal extends Goal {
         this.golem.setDeltaMovement(this.golem.getDeltaMovement().multiply(0.0D, 1.0D, 0.0D));
         this.golem.setYHeadRot(this.golem.yBodyRot);
         this.golem.setXRot(0);
+        if (this.golem.getTarget() != null) {
+            this.golem.setTarget(null);
+        }
+        if (this.golem.getLastHurtByMob() != null) {
+            this.golem.setLastHurtByMob(null);
+        }
     }
 }

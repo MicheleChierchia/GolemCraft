@@ -61,6 +61,12 @@ public class ModEntities {
                             .sized(0.5f, 1.0f)
                             .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(GolemCraft.MODID, "depth_golem"))));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<com.golemcraft.golemcraftmod.entity.ExplorerGolemEntity>> EXPLORER_GOLEM =
+            ENTITY_TYPES.register("explorer_golem", () ->
+                    EntityType.Builder.of(com.golemcraft.golemcraftmod.entity.ExplorerGolemEntity::new, MobCategory.MISC)
+                            .sized(0.5f, 1.0f)
+                            .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(GolemCraft.MODID, "explorer_golem"))));
+
     public static final DeferredHolder<EntityType<?>, EntityType<com.golemcraft.golemcraftmod.entity.projectile.SonicBoomProjectile>> SONIC_BOOM_PROJECTILE =
             ENTITY_TYPES.register("sonic_boom_projectile", () ->
                     EntityType.Builder.<com.golemcraft.golemcraftmod.entity.projectile.SonicBoomProjectile>of(com.golemcraft.golemcraftmod.entity.projectile.SonicBoomProjectile::new, MobCategory.MISC)

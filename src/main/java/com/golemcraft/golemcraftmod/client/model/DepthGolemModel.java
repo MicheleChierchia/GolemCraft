@@ -1,6 +1,7 @@
 package com.golemcraft.golemcraftmod.client.model;
 
 import com.golemcraft.golemcraftmod.client.renderer.BaseGolemRenderState;
+
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.CubeListBuilder;
