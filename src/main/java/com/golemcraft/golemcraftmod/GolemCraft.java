@@ -90,6 +90,14 @@ public class GolemCraft {
     private void addCreative(BuildCreativeModeTabContentsEvent event) {
         if (event.getTabKey() == CreativeModeTabs.SPAWN_EGGS) {
             event.accept(com.golemcraft.golemcraftmod.registry.ModBlocks.BASE_GOLEM_ITEM);
+            event.accept(com.golemcraft.golemcraftmod.registry.ModBlocks.GOLEM_MANUAL_ITEM);
+        }
+        if (event.getTabKey() == CreativeModeTabs.TOOLS_AND_UTILITIES) {
+            event.accept(com.golemcraft.golemcraftmod.registry.ModBlocks.GOLEM_COMPASS_ITEM);
+            event.accept(com.golemcraft.golemcraftmod.registry.ModBlocks.GOLEM_MANUAL_ITEM);
+        }
+        if (event.getTabKey() == CreativeModeTabs.FUNCTIONAL_BLOCKS) {
+            event.accept(com.golemcraft.golemcraftmod.registry.ModBlocks.GOLEM_BEACON_ITEM);
         }
     }
     // You can use SubscribeEvent and let the Event Bus discover methods to call

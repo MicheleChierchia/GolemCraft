@@ -21,6 +21,8 @@ public class ModBlocks {
     public static final DeferredItem<Item> FISHING_ROD_CAST_DUMMY = ITEMS.registerSimpleItem("fishing_rod_cast_dummy", Item.Properties::new);
     public static final DeferredItem<Item> GOLEM_COMPASS_ITEM = ITEMS.registerItem("golem_compass",
             com.golemcraft.golemcraftmod.item.GolemCompassItem::new);
+    public static final DeferredItem<Item> GOLEM_MANUAL_ITEM = ITEMS.registerItem("golem_manual",
+            com.golemcraft.golemcraftmod.item.GolemManualItem::new);
 
     public static final DeferredBlock<GolemBeaconBlock> GOLEM_BEACON = BLOCKS.registerBlock("golem_beacon",
             GolemBeaconBlock::new,

@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "minecraft:book",
+    "minecraft:copper_ingot"
+  ],
+  "result": {
+    "id": "golemcraft:golem_manual",
+    "count": 1
+  }
+}

@@ -1,13 +1,25 @@
 package com.golemcraft.golemcraftmod.block;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+
+import javax.annotation.Nullable;
+
 import com.golemcraft.golemcraftmod.entity.BaseGolemEntity;
 import com.golemcraft.golemcraftmod.registry.ModBlockEntities;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.inventory.SimpleContainerData;
 import net.minecraft.world.level.Level;
@@ -19,10 +31,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.SimpleContainer;
-
-import javax.annotation.Nullable;
-import java.util.*;
 
 public class GolemBeaconBlockEntity extends BlockEntity implements net.minecraft.world.MenuProvider {
 
@@ -73,7 +81,7 @@ public class GolemBeaconBlockEntity extends BlockEntity implements net.minecraft
         if (level.isClientSide()) return;
 
         be.tickCount++;
-        if (be.tickCount % 40 == 0) {
+        if (be.tickCount % 80 == 0) {
             be.updateBeacon((ServerLevel) level, pos, state, be);
         }
 
@@ -127,20 +135,19 @@ public class GolemBeaconBlockEntity extends BlockEntity implements net.minecraft
         double range = 10 + (tier * 10.0);
         int duration = (9 + (tier * 2)) * 20;
 
-        AABB area = new AABB(worldPosition).inflate(range);
+        AABB area = new AABB(worldPosition).inflate(range).expandTowards(0.0, level.getHeight(), 0.0);
         List<BaseGolemEntity> golems = level.getEntitiesOfClass(BaseGolemEntity.class, area);
 
-        applySpecificEffect(tier1Effect, tier >= 1, 0, duration, golems);
-        applySpecificEffect(tier2Effect, tier >= 2, 0, duration, golems);
-        applySpecificEffect(tier3Effect, tier >= 3, 0, duration, golems);
+        int amp1 = (tier >= 4 && secondaryEffect == tier1Effect) ? 1 : 0;
+        int amp2 = (tier >= 4 && secondaryEffect == tier2Effect) ? 1 : 0;
+        int amp3 = (tier >= 4 && secondaryEffect == tier3Effect) ? 1 : 0;
+
+        applySpecificEffect(tier1Effect, tier >= 1, amp1, duration, golems);
+        applySpecificEffect(tier2Effect, tier >= 2, amp2, duration, golems);
+        applySpecificEffect(tier3Effect, tier >= 3, amp3, duration, golems);
         
-        if (tier >= 4 && secondaryEffect != 0) {
-            int amp = 1;
-            if (secondaryEffect == tier1Effect || secondaryEffect == tier2Effect || secondaryEffect == tier3Effect) {
-                applySpecificEffect(secondaryEffect, true, 1, duration, golems);
-            } else {
-                applySpecificEffect(secondaryEffect, true, 0, duration, golems);
-            }
+        if (tier >= 4 && secondaryEffect != 0 && secondaryEffect != tier1Effect && secondaryEffect != tier2Effect && secondaryEffect != tier3Effect) {
+            applySpecificEffect(secondaryEffect, true, 0, duration, golems);
         }
     }
 
@@ -155,7 +162,10 @@ public class GolemBeaconBlockEntity extends BlockEntity implements net.minecraft
     }
 
     private void manageChargedState(ServerLevel level, int tier) {
-        if (tier < 3 || tier3Effect == 0) {
+        Holder<MobEffect> chargeEffect = com.golemcraft.golemcraftmod.registry.ModEffects.CHARGE.getDelegate();
+        int chargeId = chargeEffect != null ? net.minecraft.core.registries.BuiltInRegistries.MOB_EFFECT.getId(chargeEffect.value()) : 0;
+
+        if (tier < 3 || tier3Effect != chargeId) {
             if (!chargedGolemUUIDs.isEmpty()) {
                 for (UUID uuid : chargedGolemUUIDs) {
                     Entity entity = level.getEntity(uuid);
@@ -169,19 +179,29 @@ public class GolemBeaconBlockEntity extends BlockEntity implements net.minecraft
             return;
         }
 
-        Holder<MobEffect> chargeEffect = com.golemcraft.golemcraftmod.registry.ModEffects.CHARGE.getDelegate();
-        int chargeId = chargeEffect != null ? net.minecraft.core.registries.BuiltInRegistries.MOB_EFFECT.getId(chargeEffect.value()) : 0;
+        double range = 10 + (tier * 10.0);
+        AABB area = new AABB(worldPosition).inflate(range).expandTowards(0.0, level.getHeight(), 0.0);
+        List<BaseGolemEntity> golems = level.getEntitiesOfClass(BaseGolemEntity.class, area);
+        Set<UUID> inRange = new HashSet<>();
+        for (BaseGolemEntity golem : golems) {
+            inRange.add(golem.getUUID());
+            if (!golem.isCharged()) {
+                golem.setCharged(true);
+                chargedGolemUUIDs.add(golem.getUUID());
+                setChanged();
+            }
+        }
         
-        if (tier3Effect == chargeId) {
-            double range = 10 + (tier * 10.0);
-            AABB area = new AABB(worldPosition).inflate(range);
-            List<BaseGolemEntity> golems = level.getEntitiesOfClass(BaseGolemEntity.class, area);
-            for (BaseGolemEntity golem : golems) {
-                if (!golem.isCharged()) {
-                    golem.setCharged(true);
-                    chargedGolemUUIDs.add(golem.getUUID());
-                    setChanged();
+        Iterator<UUID> it = chargedGolemUUIDs.iterator();
+        while (it.hasNext()) {
+            UUID uuid = it.next();
+            if (!inRange.contains(uuid)) {
+                Entity entity = level.getEntity(uuid);
+                if (entity instanceof BaseGolemEntity golem) {
+                    golem.setCharged(false);
                 }
+                it.remove();
+                setChanged();
             }
         }
     }
