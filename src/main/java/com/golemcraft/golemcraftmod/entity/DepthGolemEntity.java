@@ -354,7 +354,7 @@ public class DepthGolemEntity extends BaseGolemEntity implements VibrationSystem
                         proj.shoot(d0, d1, d2, 1.5F, 1.0F);
                         golem.level().addFreshEntity(proj);
                         golem.playSound(SoundEvents.WARDEN_SONIC_BOOM, 1.0F, 1.0F);
-                        golem.sonicAttackCooldown = 60; // 3 seconds cooldown
+                        golem.sonicAttackCooldown = golem.isCharged() ? 25 : 60;
                     }
                 }
             }

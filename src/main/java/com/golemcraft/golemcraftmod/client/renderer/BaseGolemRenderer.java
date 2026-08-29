@@ -25,6 +25,7 @@ public class BaseGolemRenderer extends MobRenderer<BaseGolemEntity, BaseGolemRen
         this.itemModelResolver = context.getItemModelResolver();
         this.addLayer(new net.minecraft.client.renderer.entity.layers.ItemInHandLayer<>(this));
         this.addLayer(new BaseGolemEyesLayer(this));
+        this.addLayer(new GolemChargedLayer(this, model));
     }
 
     public BaseGolemRenderer(EntityRendererProvider.Context context) {
@@ -43,6 +44,7 @@ public class BaseGolemRenderer extends MobRenderer<BaseGolemEntity, BaseGolemRen
         state.isRummaging = entity.isRummaging();
         state.oxidationLevel = entity.getOxidationLevel();
         state.mainArm = entity.getMainArm();
+        state.isCharged = entity.isCharged();
 
         // Read custom synced attack ticks for animation (10 ticks duration)
         int ticks = entity.getAttackAnimTicks();

@@ -66,7 +66,8 @@ public class FarmerHarvestGoal extends Goal {
     @Override
     public void start() {
         this.breakTicks = 0;
-        this.golem.getNavigation().moveTo(this.targetPos.getX() + 0.5D, this.targetPos.getY(), this.targetPos.getZ() + 0.5D, 1.2D);
+        double speed = this.golem.isCharged() ? 1.4D : 1.2D;
+        this.golem.getNavigation().moveTo(this.targetPos.getX() + 0.5D, this.targetPos.getY(), this.targetPos.getZ() + 0.5D, speed);
     }
 
     @Override
@@ -76,13 +77,15 @@ public class FarmerHarvestGoal extends Goal {
         double dist = this.golem.distanceToSqr(this.targetPos.getX() + 0.5D, this.targetPos.getY(), this.targetPos.getZ() + 0.5D);
         
         if (dist > 4.0D) {
-            this.golem.getNavigation().moveTo(this.targetPos.getX() + 0.5D, this.targetPos.getY(), this.targetPos.getZ() + 0.5D, 1.2D);
+            double speed = this.golem.isCharged() ? 1.4D : 1.2D;
+            this.golem.getNavigation().moveTo(this.targetPos.getX() + 0.5D, this.targetPos.getY(), this.targetPos.getZ() + 0.5D, speed);
         } else {
             this.golem.getNavigation().stop();
             this.golem.getLookControl().setLookAt(this.targetPos.getX() + 0.5D, this.targetPos.getY(), this.targetPos.getZ() + 0.5D);
             this.breakTicks++;
             
-            if (this.breakTicks >= 15) { // 0.75 seconds to break
+            int maxBreak = this.golem.isCharged() ? 4 : 15;
+            if (this.breakTicks >= maxBreak) {
                 Level level = this.golem.level();
                 BlockState state = level.getBlockState(this.targetPos);
                 
@@ -167,7 +170,7 @@ public class FarmerHarvestGoal extends Goal {
     public void stop() {
         this.targetPos = null;
         this.breakTicks = 0;
-        this.golem.actionCooldown = 15;
+        this.golem.actionCooldown = this.golem.isCharged() ? 3 : 15;
         this.golem.getNavigation().stop();
     }
 }

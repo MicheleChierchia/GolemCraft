@@ -106,7 +106,7 @@ public class FishermanFishGoal extends Goal {
                 
                 this.golem.setFishing(false);
                 this.targetWaterPos = null;
-                this.golem.actionCooldown = 80;
+                this.golem.actionCooldown = this.golem.isCharged() ? 20 : 80;
             }
         }
     }

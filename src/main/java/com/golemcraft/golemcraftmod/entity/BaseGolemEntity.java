@@ -32,6 +32,7 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
     private static final EntityDataAccessor<Integer> OXIDATION_LEVEL = SynchedEntityData.defineId(BaseGolemEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> IS_WAXED = SynchedEntityData.defineId(BaseGolemEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> ATTACK_ANIM_TICKS = SynchedEntityData.defineId(BaseGolemEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Boolean> IS_CHARGED = SynchedEntityData.defineId(BaseGolemEntity.class, EntityDataSerializers.BOOLEAN);
     
     private final SimpleContainer inventory = new SimpleContainer(27);
     private UUID ownerUUID;
@@ -57,6 +58,7 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
         builder.define(OXIDATION_LEVEL, 0);
         builder.define(IS_WAXED, false);
         builder.define(ATTACK_ANIM_TICKS, 0);
+        builder.define(IS_CHARGED, false);
     }
 
     public void setRummaging(boolean rummaging) {
@@ -81,6 +83,27 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
 
     public void setWaxed(boolean waxed) {
         this.entityData.set(IS_WAXED, waxed);
+    }
+
+    public boolean isCharged() {
+        return this.entityData.get(IS_CHARGED);
+    }
+
+    public void setCharged(boolean charged) {
+        this.entityData.set(IS_CHARGED, charged);
+    }
+
+    @Override
+    public void thunderHit(net.minecraft.server.level.ServerLevel serverLevel, net.minecraft.world.entity.LightningBolt lightningBolt) {
+        super.thunderHit(serverLevel, lightningBolt);
+        this.setCharged(true);
+        if (this.getOxidationLevel() > 0) {
+            this.setOxidationLevel(0);
+        }
+        this.setHealth(this.getMaxHealth());
+        serverLevel.sendParticles(net.minecraft.core.particles.ColorParticleOption.create(net.minecraft.core.particles.ParticleTypes.FLASH, 0xFFFFFF), this.getX(), this.getY() + 1.0D, this.getZ(), 1, 0.0D, 0.0D, 0.0D, 0.0D);
+        serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.ELECTRIC_SPARK, this.getX(), this.getY() + 0.5D, this.getZ(), 35, 0.5D, 0.6D, 0.5D, 0.1D);
+        this.playSound(net.minecraft.sounds.SoundEvents.TRIDENT_THUNDER.value(), 2.0F, 1.1F);
     }
 
     public UUID getOwnerUUID() {
@@ -109,6 +132,7 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
         this.inventory.storeAsItemList(output.list("Inventory", net.minecraft.world.item.ItemStack.CODEC));
         output.store("Oxidation", com.mojang.serialization.Codec.INT, this.getOxidationLevel());
         output.store("Waxed", com.mojang.serialization.Codec.BOOL, this.isWaxed());
+        output.store("Charged", com.mojang.serialization.Codec.BOOL, this.isCharged());
     }
 
     @Override
@@ -119,6 +143,7 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
         input.list("Inventory", net.minecraft.world.item.ItemStack.CODEC).ifPresent(this.inventory::fromItemList);
         input.read("Oxidation", com.mojang.serialization.Codec.INT).ifPresent(this::setOxidationLevel);
         input.read("Waxed", com.mojang.serialization.Codec.BOOL).ifPresent(this::setWaxed);
+        input.read("Charged", com.mojang.serialization.Codec.BOOL).ifPresent(this::setCharged);
     }
 
     @Override
@@ -181,6 +206,12 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
         if (this.actionCooldown > 0) {
             this.actionCooldown--;
         }
+
+        if (this.isCharged() && this.level().isClientSide() && this.random.nextFloat() < 0.2F) {
+            this.level().addParticle(net.minecraft.core.particles.ParticleTypes.ELECTRIC_SPARK,
+                    this.getRandomX(0.6D), this.getRandomY(), this.getRandomZ(0.6D),
+                    0.0D, 0.03D, 0.0D);
+        }
         
         if (!this.level().isClientSide()) {
             int animTicks = this.getAttackAnimTicks();
@@ -218,14 +249,36 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
         }
     }
 
-
+    protected void copyBaseDataTo(BaseGolemEntity other, Player player) {
+        other.setPos(this.getX(), this.getY(), this.getZ());
+        other.setYRot(this.getYRot());
+        other.setXRot(this.getXRot());
+        other.setHealth(this.getHealth());
+        other.yBodyRot = this.yBodyRot;
+        if (this.hasCustomName()) {
+            other.setCustomName(this.getCustomName());
+            other.setCustomNameVisible(this.isCustomNameVisible());
+        }
+        other.setOwnerUUID(this.ownerUUID != null ? this.ownerUUID : (player != null ? player.getUUID() : null));
+        other.setLastPickupTime(this.lastPickupTime);
+        other.setCharged(this.isCharged());
+        other.setOxidationLevel(this.getOxidationLevel());
+        other.setWaxed(this.isWaxed());
+        for (int i = 0; i < this.inventory.getContainerSize(); i++) {
+            other.getInventory().setItem(i, this.inventory.getItem(i));
+        }
+    }
 
     @Override
     public void travel(net.minecraft.world.phys.Vec3 travelVector) {
         if (this.getOxidationLevel() == 3) {
             super.travel(new net.minecraft.world.phys.Vec3(0, travelVector.y, 0));
         } else {
-            super.travel(travelVector);
+            if (this.isCharged()) {
+                super.travel(travelVector.multiply(1.35D, 1.0D, 1.35D));
+            } else {
+                super.travel(travelVector);
+            }
         }
     }
 
@@ -276,6 +329,17 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
 
     @Override
     public boolean hurtServer(net.minecraft.server.level.ServerLevel level, net.minecraft.world.damagesource.DamageSource damageSource, float amount) {
+        if (damageSource.is(net.minecraft.tags.DamageTypeTags.IS_LIGHTNING)) {
+            if (!this.isCharged()) {
+                this.setCharged(true);
+            }
+            if (this.getOxidationLevel() > 0) {
+                this.setOxidationLevel(0);
+            }
+            this.setHealth(this.getMaxHealth());
+            return false;
+        }
+
         net.minecraft.world.entity.Entity attacker = damageSource.getEntity();
         if (attacker != null && this.isAlly(attacker)) {
             if (!(attacker instanceof Player)) {
@@ -397,22 +461,7 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
                 if (!this.level().isClientSide()) {
                     FlowerGolemEntity flowerGolem = ModEntities.FLOWER_GOLEM.get().create(this.level(), net.minecraft.world.entity.EntitySpawnReason.CONVERSION);
                     if (flowerGolem != null) {
-                        flowerGolem.setPos(this.getX(), this.getY(), this.getZ());
-                        flowerGolem.setYRot(this.getYRot());
-                        flowerGolem.setXRot(this.getXRot());
-                        flowerGolem.setHealth(this.getHealth());
-                        flowerGolem.yBodyRot = this.yBodyRot;
-                        if (this.hasCustomName()) {
-                            flowerGolem.setCustomName(this.getCustomName());
-                            flowerGolem.setCustomNameVisible(this.isCustomNameVisible());
-                        }
-                        
-                        flowerGolem.setOwnerUUID(this.ownerUUID);
-                        flowerGolem.setLastPickupTime(this.lastPickupTime);
-                        for (int i = 0; i < this.inventory.getContainerSize(); i++) {
-                            flowerGolem.getInventory().setItem(i, this.inventory.getItem(i));
-                        }
-                        
+                        this.copyBaseDataTo(flowerGolem, player);
                         this.level().addFreshEntity(flowerGolem);
                         
                         // Particles and sounds
@@ -433,21 +482,7 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
                 if (!this.level().isClientSide()) {
                     FarmerGolemEntity farmerGolem = ModEntities.FARMER_GOLEM.get().create(this.level(), net.minecraft.world.entity.EntitySpawnReason.CONVERSION);
                     if (farmerGolem != null) {
-                        farmerGolem.setPos(this.getX(), this.getY(), this.getZ());
-                        farmerGolem.setYRot(this.getYRot());
-                        farmerGolem.setXRot(this.getXRot());
-                        farmerGolem.setHealth(this.getHealth());
-                        farmerGolem.yBodyRot = this.yBodyRot;
-                        if (this.hasCustomName()) {
-                            farmerGolem.setCustomName(this.getCustomName());
-                            farmerGolem.setCustomNameVisible(this.isCustomNameVisible());
-                        }
-
-                        farmerGolem.setOwnerUUID(this.ownerUUID != null ? this.ownerUUID : player.getUUID());
-                        farmerGolem.setLastPickupTime(this.lastPickupTime);
-                        for (int i = 0; i < this.inventory.getContainerSize(); i++) {
-                            farmerGolem.getInventory().setItem(i, this.inventory.getItem(i));
-                        }
+                        this.copyBaseDataTo(farmerGolem, player);
 
                         // Equip the hoe directly to hand
                         ItemStack hoeStack = itemstack.copy();
@@ -475,21 +510,7 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
                 if (!this.level().isClientSide()) {
                     FishermanGolemEntity fishermanGolem = ModEntities.FISHERMAN_GOLEM.get().create(this.level(), net.minecraft.world.entity.EntitySpawnReason.CONVERSION);
                     if (fishermanGolem != null) {
-                        fishermanGolem.setPos(this.getX(), this.getY(), this.getZ());
-                        fishermanGolem.setYRot(this.getYRot());
-                        fishermanGolem.setXRot(this.getXRot());
-                        fishermanGolem.setHealth(this.getHealth());
-                        fishermanGolem.yBodyRot = this.yBodyRot;
-                        if (this.hasCustomName()) {
-                            fishermanGolem.setCustomName(this.getCustomName());
-                            fishermanGolem.setCustomNameVisible(this.isCustomNameVisible());
-                        }
-
-                        fishermanGolem.setOwnerUUID(this.ownerUUID != null ? this.ownerUUID : player.getUUID());
-                        fishermanGolem.setLastPickupTime(this.lastPickupTime);
-                        for (int i = 0; i < this.inventory.getContainerSize(); i++) {
-                            fishermanGolem.getInventory().setItem(i, this.inventory.getItem(i));
-                        }
+                        this.copyBaseDataTo(fishermanGolem, player);
 
                         // Equip the rod directly to hand
                         ItemStack rodStack = itemstack.copy();
@@ -524,21 +545,7 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
                 if (!this.level().isClientSide()) {
                     SoldierGolemEntity soldierGolem = ModEntities.SOLDIER_GOLEM.get().create(this.level(), net.minecraft.world.entity.EntitySpawnReason.CONVERSION);
                     if (soldierGolem != null) {
-                        soldierGolem.setPos(this.getX(), this.getY(), this.getZ());
-                        soldierGolem.setYRot(this.getYRot());
-                        soldierGolem.setXRot(this.getXRot());
-                        soldierGolem.setHealth(this.getHealth());
-                        soldierGolem.yBodyRot = this.yBodyRot;
-                        if (this.hasCustomName()) {
-                            soldierGolem.setCustomName(this.getCustomName());
-                            soldierGolem.setCustomNameVisible(this.isCustomNameVisible());
-                        }
-
-                        soldierGolem.setOwnerUUID(this.ownerUUID != null ? this.ownerUUID : player.getUUID());
-                        soldierGolem.setLastPickupTime(this.lastPickupTime);
-                        for (int i = 0; i < this.inventory.getContainerSize(); i++) {
-                            soldierGolem.getInventory().setItem(i, this.inventory.getItem(i));
-                        }
+                        this.copyBaseDataTo(soldierGolem, player);
 
                         // Equip weapon only to the equipment slot (not inventory), like FarmerGolem
                         ItemStack weaponStack = itemstack.copy();
@@ -566,21 +573,7 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
                 if (!this.level().isClientSide()) {
                     LumberjackGolemEntity lumberjackGolem = ModEntities.LUMBERJACK_GOLEM.get().create(this.level(), net.minecraft.world.entity.EntitySpawnReason.CONVERSION);
                     if (lumberjackGolem != null) {
-                        lumberjackGolem.setPos(this.getX(), this.getY(), this.getZ());
-                        lumberjackGolem.setYRot(this.getYRot());
-                        lumberjackGolem.setXRot(this.getXRot());
-                        lumberjackGolem.setHealth(this.getHealth());
-                        lumberjackGolem.yBodyRot = this.yBodyRot;
-                        if (this.hasCustomName()) {
-                            lumberjackGolem.setCustomName(this.getCustomName());
-                            lumberjackGolem.setCustomNameVisible(this.isCustomNameVisible());
-                        }
-
-                        lumberjackGolem.setOwnerUUID(this.ownerUUID != null ? this.ownerUUID : player.getUUID());
-                        lumberjackGolem.setLastPickupTime(this.lastPickupTime);
-                        for (int i = 0; i < this.inventory.getContainerSize(); i++) {
-                            lumberjackGolem.getInventory().setItem(i, this.inventory.getItem(i));
-                        }
+                        this.copyBaseDataTo(lumberjackGolem, player);
 
                         // Equip the axe directly to hand
                         ItemStack axeStack = itemstack.copy();
@@ -608,22 +601,7 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
                 if (!this.level().isClientSide()) {
                     com.golemcraft.golemcraftmod.entity.DepthGolemEntity depthGolem = com.golemcraft.golemcraftmod.registry.ModEntities.DEPTH_GOLEM.get().create(this.level(), net.minecraft.world.entity.EntitySpawnReason.CONVERSION);
                     if (depthGolem != null) {
-                        depthGolem.setPos(this.getX(), this.getY(), this.getZ());
-                        depthGolem.setYRot(this.getYRot());
-                        depthGolem.setXRot(this.getXRot());
-                        depthGolem.setHealth(this.getHealth());
-                        depthGolem.yBodyRot = this.yBodyRot;
-                        if (this.hasCustomName()) {
-                            depthGolem.setCustomName(this.getCustomName());
-                            depthGolem.setCustomNameVisible(this.isCustomNameVisible());
-                        }
-
-                        depthGolem.setOwnerUUID(this.getOwnerUUID() != null ? this.getOwnerUUID() : player.getUUID());
-                        depthGolem.setLastPickupTime(this.lastPickupTime);
-                        for (int i = 0; i < this.inventory.getContainerSize(); i++) {
-                            depthGolem.getInventory().setItem(i, this.inventory.getItem(i));
-                        }
-
+                        this.copyBaseDataTo(depthGolem, player);
                         this.level().addFreshEntity(depthGolem);
 
                         // Particles and sounds
@@ -644,22 +622,7 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
                 if (!this.level().isClientSide()) {
                     com.golemcraft.golemcraftmod.entity.ExplorerGolemEntity explorerGolem = com.golemcraft.golemcraftmod.registry.ModEntities.EXPLORER_GOLEM.get().create(this.level(), net.minecraft.world.entity.EntitySpawnReason.CONVERSION);
                     if (explorerGolem != null) {
-                        explorerGolem.setPos(this.getX(), this.getY(), this.getZ());
-                        explorerGolem.setYRot(this.getYRot());
-                        explorerGolem.setXRot(this.getXRot());
-                        explorerGolem.setHealth(this.getHealth());
-                        explorerGolem.yBodyRot = this.yBodyRot;
-                        if (this.hasCustomName()) {
-                            explorerGolem.setCustomName(this.getCustomName());
-                            explorerGolem.setCustomNameVisible(this.isCustomNameVisible());
-                        }
-
-                        explorerGolem.setOwnerUUID(this.getOwnerUUID() != null ? this.getOwnerUUID() : player.getUUID());
-                        explorerGolem.setLastPickupTime(this.lastPickupTime);
-                        for (int i = 0; i < this.inventory.getContainerSize(); i++) {
-                            explorerGolem.getInventory().setItem(i, this.inventory.getItem(i));
-                        }
-
+                        this.copyBaseDataTo(explorerGolem, player);
                         this.level().addFreshEntity(explorerGolem);
 
                         net.minecraft.server.level.ServerLevel serverLevel = (net.minecraft.server.level.ServerLevel) this.level();
@@ -682,21 +645,7 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
                 if (!this.level().isClientSide()) {
                     BaseGolemEntity baseGolem = ModEntities.BASE_GOLEM.get().create(this.level(), net.minecraft.world.entity.EntitySpawnReason.CONVERSION);
                     if (baseGolem != null) {
-                        baseGolem.setPos(this.getX(), this.getY(), this.getZ());
-                        baseGolem.setYRot(this.getYRot());
-                        baseGolem.setXRot(this.getXRot());
-                        baseGolem.setHealth(this.getHealth());
-                        baseGolem.yBodyRot = this.yBodyRot;
-                        if (this.hasCustomName()) {
-                            baseGolem.setCustomName(this.getCustomName());
-                            baseGolem.setCustomNameVisible(this.isCustomNameVisible());
-                        }
-
-                        baseGolem.setOwnerUUID(this.ownerUUID);
-                        baseGolem.setLastPickupTime(this.lastPickupTime);
-                        for (int i = 0; i < this.inventory.getContainerSize(); i++) {
-                            baseGolem.getInventory().setItem(i, this.inventory.getItem(i));
-                        }
+                        this.copyBaseDataTo(baseGolem, player);
                         
                         // Drop the tool it is holding (if any)
                         ItemStack mainHand = this.getItemInHand(InteractionHand.MAIN_HAND);

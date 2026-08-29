@@ -111,12 +111,14 @@ public class ChopTreeGoal extends Goal {
             this.golem.getNavigation().stop();
             this.breakTime++;
             
-            // Sync attack animation visually every 15 ticks
-            if (this.breakTime % 15 == 0) {
-                this.golem.setAttackAnimTicks(10);
+            int animInterval = this.golem.isCharged() ? 5 : 15;
+            // Sync attack animation visually
+            if (this.breakTime % animInterval == 0) {
+                this.golem.setAttackAnimTicks(this.golem.isCharged() ? 5 : 10);
             }
             
-            if (this.breakTime >= 40) { // 2 seconds to chop a block
+            int maxBreak = this.golem.isCharged() ? 12 : 40;
+            if (this.breakTime >= maxBreak) { // 0.6s if charged, 2s normally
                 chopOneLog();
                 this.breakTime = 0;
                 

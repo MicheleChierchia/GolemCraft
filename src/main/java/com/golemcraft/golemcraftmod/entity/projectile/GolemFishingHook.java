@@ -207,8 +207,12 @@ public class GolemFishingHook extends Projectile {
                 this.timeUntilHooked = Mth.nextInt(this.random, 20, 80);
             }
         } else {
-            // Speed up catching for the golem: 100 to 300 ticks (5 to 15 seconds)
-            this.timeUntilLured = Mth.nextInt(this.random, 100, 300);
+            // Speed up catching for the golem: 100 to 300 ticks (5 to 15 seconds), or 20 to 60 ticks (1 to 3 seconds) if charged!
+            if (this.golemOwner != null && this.golemOwner.isCharged()) {
+                this.timeUntilLured = Mth.nextInt(this.random, 20, 60);
+            } else {
+                this.timeUntilLured = Mth.nextInt(this.random, 100, 300);
+            }
             if (this.golemOwner != null) {
                 ItemStack rod = this.golemOwner.getItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND);
                 try {
@@ -216,7 +220,7 @@ public class GolemFishingHook extends Projectile {
                     var lure = registry.getOrThrow(net.minecraft.world.item.enchantment.Enchantments.LURE);
                     int lureLevel = rod.getEnchantmentLevel(lure);
                     this.timeUntilLured -= lureLevel * 100;
-                    if (this.timeUntilLured < 20) this.timeUntilLured = 20;
+                    if (this.timeUntilLured < 10) this.timeUntilLured = 10;
                 } catch (Exception e) {}
             }
         }

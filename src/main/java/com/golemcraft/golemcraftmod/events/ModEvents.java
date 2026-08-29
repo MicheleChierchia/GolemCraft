@@ -153,4 +153,87 @@ public class ModEvents {
             golem.startCollectingDeathDrops(player.blockPosition());
         }
     }
+
+    /**
+     * All golems have a lightning rod on their head and act as living lightning rods:
+     * When lightning strikes within 48 blocks of a sky-exposed golem, it gets attracted directly to the golem!
+     */
+    @SubscribeEvent
+    public static void onEntityJoinLevel(net.neoforged.neoforge.event.entity.EntityJoinLevelEvent event) {
+        if (event.getEntity() instanceof net.minecraft.world.entity.LightningBolt lightning && event.getLevel() instanceof ServerLevel serverLevel) {
+            net.minecraft.world.phys.Vec3 strikePos = lightning.position();
+            net.minecraft.world.phys.AABB searchBox = new net.minecraft.world.phys.AABB(
+                    strikePos.x - 48, strikePos.y - 32, strikePos.z - 48,
+                    strikePos.x + 48, strikePos.y + 32, strikePos.z + 48
+            );
+            List<com.golemcraft.golemcraftmod.entity.BaseGolemEntity> golems = serverLevel.getEntitiesOfClass(
+                    com.golemcraft.golemcraftmod.entity.BaseGolemEntity.class,
+                    searchBox,
+                    g -> g.isAlive() && serverLevel.canSeeSky(g.blockPosition())
+            );
+            if (!golems.isEmpty()) {
+                com.golemcraft.golemcraftmod.entity.BaseGolemEntity nearest = golems.stream()
+                        .min(Comparator.comparingDouble(g -> g.distanceToSqr(strikePos)))
+                        .orElse(null);
+                if (nearest != null) {
+                    lightning.setPos(nearest.getX(), nearest.getY(), nearest.getZ());
+                }
+            }
+        }
+    }
+
+    /**
+     * Remove i-frames (damage invulnerability cooldown) from mobs attacked by Soldier Golem arrows,
+     * so rapid fire / charged arrows never get blocked by invulnerability frames!
+     */
+    @SubscribeEvent
+    public static void onProjectileImpact(net.neoforged.neoforge.event.entity.ProjectileImpactEvent event) {
+        if (event.getRayTraceResult() instanceof net.minecraft.world.phys.EntityHitResult entityHit) {
+            if (entityHit.getEntity() instanceof net.minecraft.world.entity.LivingEntity livingTarget) {
+                net.minecraft.world.entity.projectile.Projectile proj = event.getProjectile();
+                if (proj.getPersistentData().getBooleanOr("GolemArrow", false) || proj.getOwner() instanceof com.golemcraft.golemcraftmod.entity.SoldierGolemEntity) {
+                    livingTarget.invulnerableTime = 0;
+                    livingTarget.hurtTime = 0;
+                }
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public static void onLivingIncomingDamage(net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent event) {
+        net.minecraft.world.damagesource.DamageSource source = event.getSource();
+        net.minecraft.world.entity.Entity direct = source.getDirectEntity();
+        net.minecraft.world.entity.Entity attacker = source.getEntity();
+
+        boolean isGolemAttack = (attacker instanceof com.golemcraft.golemcraftmod.entity.SoldierGolemEntity) ||
+                                (direct != null && direct.getPersistentData().getBooleanOr("GolemArrow", false)) ||
+                                (direct instanceof net.minecraft.world.entity.projectile.Projectile p && p.getOwner() instanceof com.golemcraft.golemcraftmod.entity.SoldierGolemEntity);
+
+        if (isGolemAttack) {
+            net.minecraft.world.entity.LivingEntity target = event.getEntity();
+            target.invulnerableTime = 0;
+            target.hurtTime = 0;
+            event.setInvulnerabilityTicks(0);
+
+            if (direct != null && direct.getPersistentData().getBooleanOr("ChargedGolemArrow", false) && target.level() instanceof ServerLevel sl) {
+                sl.sendParticles(ParticleTypes.ELECTRIC_SPARK, target.getX(), target.getY() + 0.5D, target.getZ(), 15, 0.3D, 0.3D, 0.3D, 0.08D);
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public static void onLivingDamagePost(net.neoforged.neoforge.event.entity.living.LivingDamageEvent.Post event) {
+        net.minecraft.world.damagesource.DamageSource source = event.getSource();
+        net.minecraft.world.entity.Entity direct = source.getDirectEntity();
+        net.minecraft.world.entity.Entity attacker = source.getEntity();
+
+        boolean isGolemAttack = (attacker instanceof com.golemcraft.golemcraftmod.entity.SoldierGolemEntity) ||
+                                (direct != null && direct.getPersistentData().getBooleanOr("GolemArrow", false)) ||
+                                (direct instanceof net.minecraft.world.entity.projectile.Projectile p && p.getOwner() instanceof com.golemcraft.golemcraftmod.entity.SoldierGolemEntity);
+
+        if (isGolemAttack) {
+            event.getEntity().invulnerableTime = 0;
+            event.getEntity().hurtTime = 0;
+        }
+    }
 }

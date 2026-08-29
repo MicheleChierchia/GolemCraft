@@ -213,6 +213,7 @@ public class SoldierGolemEntity extends BaseGolemEntity implements RangedAttackM
             syncWeaponToHand();
             // Swap combat goal based on current weapon
             updateAttackGoals();
+            this.bowGoal.setMinAttackInterval(this.isCharged() ? 15 : 40);
             
             // "Taunt" continuo: forza il nostro bersaglio a combattere contro di noi
             forceTargetAggro();
@@ -443,6 +444,12 @@ public class SoldierGolemEntity extends BaseGolemEntity implements RangedAttackM
         boolean success = super.doHurtTarget(level, target);
 
         if (success) {
+            if (this.isCharged() && target instanceof LivingEntity livingTarget) {
+                level.sendParticles(ParticleTypes.ELECTRIC_SPARK, target.getX(), target.getY() + 0.5D, target.getZ(), 15, 0.3D, 0.3D, 0.3D, 0.05D);
+                this.playSound(SoundEvents.LIGHTNING_BOLT_IMPACT, 0.5F, 1.8F);
+                livingTarget.hurtServer(level, level.damageSources().lightningBolt(), 4.0F);
+            }
+
             // Force the attacked mob to target the golem back
             if (target instanceof Mob mobTarget) {
                 mobTarget.setTarget(this);
@@ -464,27 +471,64 @@ public class SoldierGolemEntity extends BaseGolemEntity implements RangedAttackM
 
     // ── Ranged Attacks ────────────────────────────────────────────────────────
 
+    public ItemStack getAndConsumeArrow() {
+        ItemStack offhand = this.getItemInHand(InteractionHand.OFF_HAND);
+        if (isArrow(offhand)) {
+            ItemStack single = offhand.split(1);
+            if (offhand.isEmpty()) this.setItemInHand(InteractionHand.OFF_HAND, ItemStack.EMPTY);
+            return single;
+        }
+        net.minecraft.world.SimpleContainer inv = this.getInventory();
+        for (int i = 0; i < inv.getContainerSize(); i++) {
+            ItemStack stack = inv.getItem(i);
+            if (isArrow(stack)) {
+                ItemStack single = stack.split(1);
+                if (stack.isEmpty()) inv.setItem(i, ItemStack.EMPTY);
+                return single;
+            }
+        }
+        return new ItemStack(Items.ARROW);
+    }
+
     @Override
     public void performRangedAttack(LivingEntity target, float pullProgress) {
         setAttackAnimTicks(10);
         
-        GolemFakePlayerHelper.executeAsPlayer(this, player -> {
-            net.minecraft.world.item.ItemStack weapon = player.getItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND);
-            if (weapon.getItem() instanceof net.minecraft.world.item.BowItem bowItem) {
-                int timeLeft = 72000 - (int)(pullProgress * 20.0f);
-                
-                double dx = target.getX() - player.getX();
-                double dy = target.getY(0.3333333333333333D) - player.getEyeY();
-                double dz = target.getZ() - player.getZ();
-                double horizDist = Math.sqrt(dx * dx + dz * dz);
-                dy += horizDist * 0.20000000298023224D;
-                
-                player.setXRot((float)(-(net.minecraft.util.Mth.atan2(dy, horizDist) * (180F / (float)Math.PI))));
-                player.setYRot((float)(net.minecraft.util.Mth.atan2(dz, dx) * (180F / (float)Math.PI)) - 90.0F);
-                
-                bowItem.releaseUsing(weapon, player.level(), player, timeLeft);
-            }
-        });
+        ItemStack bow = this.getItemInHand(InteractionHand.MAIN_HAND);
+        if (bow.isEmpty() || !bow.is(Items.BOW)) return;
+        
+        ItemStack arrowItem = getAndConsumeArrow();
+        
+        net.minecraft.world.entity.projectile.arrow.AbstractArrow arrow =
+                net.minecraft.world.entity.projectile.ProjectileUtil.getMobArrow(this, arrowItem, pullProgress, bow);
+        
+        double dx = target.getX() - this.getX();
+        double dy = target.getY(0.3333333333333333D) - arrow.getY();
+        double dz = target.getZ() - this.getZ();
+        double dist = Math.sqrt(dx * dx + dz * dz);
+        
+        float velocity = this.isCharged() ? 2.0F : 1.6F;
+        float inaccuracy = this.isCharged() ? 0.5F : 1.0F;
+        arrow.shoot(dx, dy + dist * 0.20000000298023224D, dz, velocity, inaccuracy);
+        
+        arrow.getPersistentData().putBoolean("GolemArrow", true);
+        arrow.setOwner(this);
+        
+        if (this.isCharged()) {
+            arrow.getPersistentData().putBoolean("ChargedGolemArrow", true);
+            arrow.setBaseDamage(3.5D);
+            arrow.setCritArrow(true);
+        }
+        
+        this.playSound(net.minecraft.sounds.SoundEvents.ARROW_SHOOT, 1.0F, 1.0F / (this.getRandom().nextFloat() * 0.4F + 0.8F));
+        this.level().addFreshEntity(arrow);
+        
+        if (bow.isDamageableItem() && this.level() instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+            bow.hurtAndBreak(1, serverLevel, null, item -> {
+                this.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+                this.playSound(net.minecraft.sounds.SoundEvents.ITEM_BREAK.value(), 1.0F, 1.0F);
+            });
+        }
     }
 
     @Override
@@ -511,6 +555,16 @@ public class SoldierGolemEntity extends BaseGolemEntity implements RangedAttackM
     public void shootCrossbowProjectile(LivingEntity target, ItemStack crossbow,
                                          Projectile projectile, float angle) {
         consumeArrowForCrossbow(); // Consuma la freccia vera!
+
+        projectile.getPersistentData().putBoolean("GolemArrow", true);
+        projectile.setOwner(this);
+        if (this.isCharged()) {
+            projectile.getPersistentData().putBoolean("ChargedGolemArrow", true);
+            if (projectile instanceof net.minecraft.world.entity.projectile.arrow.AbstractArrow arrow) {
+                arrow.setBaseDamage(3.5D);
+                arrow.setCritArrow(true);
+            }
+        }
 
         double dx = target.getX() - this.getX();
         double dy = target.getY(0.3333333333333333D) - projectile.getY();
