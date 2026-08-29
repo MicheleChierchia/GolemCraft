@@ -115,50 +115,28 @@ public class ModEvents {
     }
 
     /**
-     * When a player dies, if they have a nearby ExplorerGolem, put the golem into waiting (dormant) state.
+     * When a player dies or drops items on death, trigger nearby ExplorerGolem to collect the drops.
      */
     @SubscribeEvent
     public static void onPlayerDeath(LivingDeathEvent event) {
         if (!(event.getEntity() instanceof Player player)) return;
-        Level level = player.level();
-        if (level.isClientSide()) return;
-
-        // Find the closest Explorer Golem owned by this player within 64 blocks
-        List<ExplorerGolemEntity> golems = level.getEntitiesOfClass(
-                ExplorerGolemEntity.class,
-                player.getBoundingBox().inflate(64),
-                g -> player.getUUID().equals(g.getOwnerUUID()) && !g.isWaiting()
-        );
-        if (golems.isEmpty()) return;
-
-        ExplorerGolemEntity golem = golems.stream()
-                .min(Comparator.comparingDouble(g -> g.distanceToSqr(player)))
-                .orElse(null);
-        if (golem == null) return;
-
-        golem.setWaiting(true);
-        if (level instanceof ServerLevel serverLevel) {
-            serverLevel.sendParticles(ParticleTypes.SOUL,
-                    golem.getX(), golem.getY() + 0.5D, golem.getZ(),
-                    20, 0.3D, 0.3D, 0.3D, 0.02D);
-        }
+        if (player.level().isClientSide()) return;
+        triggerExplorerGolemCollection(player);
     }
 
-    /**
-     * When a player drops items on death, if they have a nearby ExplorerGolem, transfer
-     * the death drops into the golem's inventory and ensure the golem is in waiting state.
-     */
     @SubscribeEvent
-    public static void onPlayerDropItems(LivingDropsEvent event) {
+    public static void onPlayerDrops(LivingDropsEvent event) {
         if (!(event.getEntity() instanceof Player player)) return;
-        Level level = player.level();
-        if (level.isClientSide()) return;
+        if (player.level().isClientSide()) return;
+        triggerExplorerGolemCollection(player);
+    }
 
-        // Find the closest Explorer Golem owned by this player within 64 blocks
+    private static void triggerExplorerGolemCollection(Player player) {
+        Level level = player.level();
         List<ExplorerGolemEntity> golems = level.getEntitiesOfClass(
                 ExplorerGolemEntity.class,
-                player.getBoundingBox().inflate(64),
-                g -> player.getUUID().equals(g.getOwnerUUID())
+                player.getBoundingBox().inflate(48),
+                g -> (g.getOwnerUUID() == null || player.getUUID().equals(g.getOwnerUUID())) && !g.isWaiting()
         );
         if (golems.isEmpty()) return;
 
@@ -167,50 +145,12 @@ public class ModEvents {
                 .orElse(null);
         if (golem == null) return;
 
-        SimpleContainer inv = golem.getInventory();
-        Iterator<ItemEntity> iter = event.getDrops().iterator();
-        while (iter.hasNext()) {
-            ItemEntity itemEntity = iter.next();
-            ItemStack stack = itemEntity.getItem().copy();
-            if (addToInventory(inv, stack)) {
-                iter.remove();
-            }
+        if (golem.getOwnerUUID() == null) {
+            golem.setOwnerUUID(player.getUUID());
         }
 
-        golem.setWaiting(true);
-
-        // Visual feedback at golem position
-        ServerLevel serverLevel = (ServerLevel) level;
-        serverLevel.sendParticles(ParticleTypes.SOUL,
-                golem.getX(), golem.getY() + 0.5D, golem.getZ(),
-                20, 0.3D, 0.3D, 0.3D, 0.02D);
-    }
-
-    /**
-     * Tries to add a stack to a SimpleContainer.
-     * @return true if the entire stack was stored (or merged).
-     */
-    private static boolean addToInventory(SimpleContainer container, ItemStack stack) {
-        // Try merge into existing stacks first
-        for (int i = 0; i < container.getContainerSize(); i++) {
-            ItemStack existing = container.getItem(i);
-            if (!existing.isEmpty()
-                    && ItemStack.isSameItemSameComponents(existing, stack)
-                    && existing.getCount() < existing.getMaxStackSize()) {
-                int space = existing.getMaxStackSize() - existing.getCount();
-                int add = Math.min(space, stack.getCount());
-                existing.grow(add);
-                stack.shrink(add);
-                if (stack.isEmpty()) return true;
-            }
+        if (!golem.isCollectingDrops()) {
+            golem.startCollectingDeathDrops(player.blockPosition());
         }
-        // Then try empty slots
-        for (int i = 0; i < container.getContainerSize(); i++) {
-            if (container.getItem(i).isEmpty()) {
-                container.setItem(i, stack.copy());
-                return true;
-            }
-        }
-        return false;
     }
 }

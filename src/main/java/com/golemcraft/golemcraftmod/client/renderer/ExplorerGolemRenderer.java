@@ -18,7 +18,7 @@ public class ExplorerGolemRenderer extends BaseGolemRenderer {
         super(context,
               new com.golemcraft.golemcraftmod.client.model.BaseGolemModel(
                   context.bakeLayer(com.golemcraft.golemcraftmod.events.ClientEvents.EXPLORER_GOLEM_LAYER)));
-        this.addLayer(new FlowerGolemEyesLayer(this));
+        this.addLayer(new ExplorerGolemEyesLayer(this));
     }
 
     @Override
@@ -28,6 +28,7 @@ public class ExplorerGolemRenderer extends BaseGolemRenderer {
         state.isExplorerGolem = true;
         if (entity instanceof ExplorerGolemEntity explorer) {
             state.isWaiting = explorer.isWaiting();
+            state.isGuarding = explorer.isStaying();
         }
     }
 

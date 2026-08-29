@@ -443,7 +443,7 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
                             farmerGolem.setCustomNameVisible(this.isCustomNameVisible());
                         }
 
-                        farmerGolem.setOwnerUUID(this.ownerUUID);
+                        farmerGolem.setOwnerUUID(this.ownerUUID != null ? this.ownerUUID : player.getUUID());
                         farmerGolem.setLastPickupTime(this.lastPickupTime);
                         for (int i = 0; i < this.inventory.getContainerSize(); i++) {
                             farmerGolem.getInventory().setItem(i, this.inventory.getItem(i));
@@ -485,7 +485,7 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
                             fishermanGolem.setCustomNameVisible(this.isCustomNameVisible());
                         }
 
-                        fishermanGolem.setOwnerUUID(this.ownerUUID);
+                        fishermanGolem.setOwnerUUID(this.ownerUUID != null ? this.ownerUUID : player.getUUID());
                         fishermanGolem.setLastPickupTime(this.lastPickupTime);
                         for (int i = 0; i < this.inventory.getContainerSize(); i++) {
                             fishermanGolem.getInventory().setItem(i, this.inventory.getItem(i));
@@ -534,7 +534,7 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
                             soldierGolem.setCustomNameVisible(this.isCustomNameVisible());
                         }
 
-                        soldierGolem.setOwnerUUID(this.ownerUUID);
+                        soldierGolem.setOwnerUUID(this.ownerUUID != null ? this.ownerUUID : player.getUUID());
                         soldierGolem.setLastPickupTime(this.lastPickupTime);
                         for (int i = 0; i < this.inventory.getContainerSize(); i++) {
                             soldierGolem.getInventory().setItem(i, this.inventory.getItem(i));
@@ -576,7 +576,7 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
                             lumberjackGolem.setCustomNameVisible(this.isCustomNameVisible());
                         }
 
-                        lumberjackGolem.setOwnerUUID(this.ownerUUID);
+                        lumberjackGolem.setOwnerUUID(this.ownerUUID != null ? this.ownerUUID : player.getUUID());
                         lumberjackGolem.setLastPickupTime(this.lastPickupTime);
                         for (int i = 0; i < this.inventory.getContainerSize(); i++) {
                             lumberjackGolem.getInventory().setItem(i, this.inventory.getItem(i));
@@ -618,7 +618,7 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
                             depthGolem.setCustomNameVisible(this.isCustomNameVisible());
                         }
 
-                        depthGolem.setOwnerUUID(this.getOwnerUUID());
+                        depthGolem.setOwnerUUID(this.getOwnerUUID() != null ? this.getOwnerUUID() : player.getUUID());
                         depthGolem.setLastPickupTime(this.lastPickupTime);
                         for (int i = 0; i < this.inventory.getContainerSize(); i++) {
                             depthGolem.getInventory().setItem(i, this.inventory.getItem(i));
@@ -654,7 +654,7 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
                             explorerGolem.setCustomNameVisible(this.isCustomNameVisible());
                         }
 
-                        explorerGolem.setOwnerUUID(this.getOwnerUUID());
+                        explorerGolem.setOwnerUUID(this.getOwnerUUID() != null ? this.getOwnerUUID() : player.getUUID());
                         explorerGolem.setLastPickupTime(this.lastPickupTime);
                         for (int i = 0; i < this.inventory.getContainerSize(); i++) {
                             explorerGolem.getInventory().setItem(i, this.inventory.getItem(i));

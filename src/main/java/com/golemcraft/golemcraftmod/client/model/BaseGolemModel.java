@@ -199,14 +199,12 @@ public class BaseGolemModel extends EntityModel<BaseGolemRenderState> implements
         // Legs with 3D boot layer (texOffs 0,54 for right boot and 24,54 for left boot)
         partdefinition.addOrReplaceChild("right_leg", CubeListBuilder.create()
                 .texOffs(0, 27).addBox(-2.0F, 0.0F, -2.0F, 4.0F, 5.0F, 4.0F)
-                .texOffs(0, 54).addBox(-2.25F, 2.0F, -2.5F, 4.5F, 3.0F, 5.0F), // Stivale destro
-                PartPose.offset(-2.0F, 19.0F, 0.0F));
+                .texOffs(0, 54).addBox(-2.2F, 1.9F, -2.2F, 4.2F, 3.2F, 4.4F), // Stivale destro (0.1F oltre la suola)
 
         partdefinition.addOrReplaceChild("left_leg", CubeListBuilder.create()
                 .texOffs(16, 27).addBox(-2.0F, 0.0F, -2.0F, 4.0F, 5.0F, 4.0F)
-                .texOffs(24, 54).addBox(-2.25F, 2.0F, -2.5F, 4.5F, 3.0F, 5.0F), // Stivale sinistro
+                .texOffs(24, 54).addBox(-2.0F, 1.9F, -2.2F, 4.2F, 3.2F, 4.4F), // Stivale sinistro (0.1F oltre la suola)
                 PartPose.offset(2.0F, 19.0F, 0.0F));
-
         return LayerDefinition.create(meshdefinition, 64, 64);
     }
 
@@ -218,21 +216,30 @@ public class BaseGolemModel extends EntityModel<BaseGolemRenderState> implements
             this.head.yRot = state.yRot * ((float)Math.PI / 180F);
             this.head.xRot = state.xRot * ((float)Math.PI / 180F);
             this.head.zRot = 0.0F;
-            this.leftLeg.xRot = -1.4F;
+            this.rightLeg.xRot = -1.5F;
+            this.leftLeg.xRot = -1.5F;
+            this.rightLeg.yRot = 0.0F;
+            this.leftLeg.yRot = 0.0F;
+            this.rightLeg.zRot = 0.0F;
+            this.leftLeg.zRot = 0.0F;
             this.rightArm.xRot = 0.0F;
             this.leftArm.xRot = 0.0F;
+            this.rightArm.yRot = 0.0F;
+            this.leftArm.yRot = 0.0F;
             this.rightArm.zRot = 0.0F;
             this.leftArm.zRot = 0.0F;
             this.body.xRot = 0.0F;
+            this.body.yRot = 0.0F;
+            this.body.zRot = 0.0F;
             
-            this.head.y = 13.0F + 5.0F;
-            this.body.y = 13.0F + 5.0F;
-            this.rightArm.y = 13.0F + 5.0F;
-            this.leftArm.y = 13.0F + 5.0F;
+            this.head.y = 18.0F;
+            this.body.y = 18.0F;
+            this.rightArm.y = 18.0F;
+            this.leftArm.y = 18.0F;
             this.rightLeg.y = 22.0F;
             this.leftLeg.y = 22.0F;
-            this.rightLeg.z = -3.0F;
-            this.leftLeg.z = -3.0F;
+            this.rightLeg.z = -1.5F;
+            this.leftLeg.z = -1.5F;
             return;
         }
         
