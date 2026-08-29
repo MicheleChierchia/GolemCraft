@@ -94,4 +94,14 @@ public class GolemBeaconRenderer implements BlockEntityRenderer<GolemBeaconBlock
     public int getViewDistance() {
         return 256;
     }
+
+    @Override
+    public boolean shouldRender(GolemBeaconBlockEntity be, Vec3 cameraPos) {
+        return Vec3.atCenterOf(be.getBlockPos()).multiply(1.0, 0.0, 1.0).closerThan(cameraPos.multiply(1.0, 0.0, 1.0), (double)this.getViewDistance());
+    }
+
+    @Override
+    public net.minecraft.world.phys.AABB getRenderBoundingBox(GolemBeaconBlockEntity blockEntity) {
+        return net.minecraft.world.phys.AABB.INFINITE;
+    }
 }

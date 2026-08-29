@@ -105,7 +105,14 @@ public class GolemBeaconBlock extends BaseEntityBlock {
                                                Player player, BlockHitResult hit) {
         if (!level.isClientSide() && player instanceof ServerPlayer sp
                 && level.getBlockEntity(pos) instanceof GolemBeaconBlockEntity be) {
-            sp.openMenu(be, buf -> buf.writeBlockPos(pos));
+            sp.openMenu(be, buf -> {
+                buf.writeBlockPos(pos);
+                buf.writeInt(be.getTier1Effect());
+                buf.writeInt(be.getTier2Effect());
+                buf.writeInt(be.getTier3Effect());
+                buf.writeInt(be.getSecondaryEffect());
+                buf.writeInt(be.getLevels());
+            });
         }
         return level.isClientSide() ? InteractionResult.SUCCESS : InteractionResult.SUCCESS_SERVER;
     }

@@ -10,209 +10,80 @@
   "elements": [
     {
       "__comment": "Glass shell",
-      "from": [
-        0,
-        0,
-        0
-      ],
-      "to": [
-        16,
-        16,
-        16
-      ],
+      "from": [0, 0, 0],
+      "to": [16, 16, 16],
       "faces": {
-        "down": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#glass"
-        },
-        "up": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#glass"
-        },
-        "north": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#glass"
-        },
-        "south": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#glass"
-        },
-        "west": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#glass"
-        },
-        "east": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#glass"
-        }
+        "down":  { "uv": [0, 0, 16, 16], "texture": "#glass" },
+        "up":    { "uv": [0, 0, 16, 16], "texture": "#glass" },
+        "north": { "uv": [0, 0, 16, 16], "texture": "#glass" },
+        "south": { "uv": [0, 0, 16, 16], "texture": "#glass" },
+        "west":  { "uv": [0, 0, 16, 16], "texture": "#glass" },
+        "east":  { "uv": [0, 0, 16, 16], "texture": "#glass" }
       }
     },
     {
       "__comment": "Copper base",
-      "from": [
-        2,
-        0.1,
-        2
-      ],
-      "to": [
-        14,
-        3,
-        14
-      ],
+      "from": [2, 0.1, 2],
+      "to": [14, 3, 14],
       "faces": {
-        "down": {
-          "uv": [
-            2,
-            2,
-            14,
-            14
-          ],
-          "texture": "#obsidian"
-        },
-        "up": {
-          "uv": [
-            2,
-            2,
-            14,
-            14
-          ],
-          "texture": "#obsidian"
-        },
-        "north": {
-          "uv": [
-            2,
-            13,
-            14,
-            16
-          ],
-          "texture": "#obsidian"
-        },
-        "south": {
-          "uv": [
-            2,
-            13,
-            14,
-            16
-          ],
-          "texture": "#obsidian"
-        },
-        "west": {
-          "uv": [
-            2,
-            13,
-            14,
-            16
-          ],
-          "texture": "#obsidian"
-        },
-        "east": {
-          "uv": [
-            2,
-            13,
-            14,
-            16
-          ],
-          "texture": "#obsidian"
-        }
+        "down":  { "uv": [2, 2, 14, 14], "texture": "#obsidian" },
+        "up":    { "uv": [2, 2, 14, 14], "texture": "#obsidian" },
+        "north": { "uv": [2, 13, 14, 16], "texture": "#obsidian" },
+        "south": { "uv": [2, 13, 14, 16], "texture": "#obsidian" },
+        "west":  { "uv": [2, 13, 14, 16], "texture": "#obsidian" },
+        "east":  { "uv": [2, 13, 14, 16], "texture": "#obsidian" }
       }
     },
     {
-      "__comment": "Inner beacon core",
-      "from": [
-        3,
-        3,
-        3
-      ],
-      "to": [
-        13,
-        14,
-        13
-      ],
+      "__comment": "Copper Golem Head",
+      "from": [4, 3, 4],
+      "to": [12, 9, 12],
       "faces": {
-        "down": {
-          "uv": [
-            3,
-            3,
-            13,
-            13
-          ],
-          "texture": "#beacon"
-        },
-        "up": {
-          "uv": [
-            3,
-            3,
-            13,
-            13
-          ],
-          "texture": "#beacon"
-        },
-        "north": {
-          "uv": [
-            3,
-            2,
-            13,
-            13
-          ],
-          "texture": "#beacon"
-        },
-        "south": {
-          "uv": [
-            3,
-            2,
-            13,
-            13
-          ],
-          "texture": "#beacon"
-        },
-        "west": {
-          "uv": [
-            3,
-            2,
-            13,
-            13
-          ],
-          "texture": "#beacon"
-        },
-        "east": {
-          "uv": [
-            3,
-            2,
-            13,
-            13
-          ],
-          "texture": "#beacon"
-        }
+        "north": { "uv": [0, 0, 8, 6], "texture": "#beacon" },
+        "south": { "uv": [8, 0, 16, 6], "texture": "#beacon" },
+        "west":  { "uv": [0, 6, 8, 12], "texture": "#beacon" },
+        "east":  { "uv": [8, 6, 16, 12], "texture": "#beacon" },
+        "up":    { "uv": [0, 12, 8, 16], "texture": "#beacon" },
+        "down":  { "uv": [0, 12, 8, 16], "texture": "#beacon" }
+      }
+    },
+    {
+      "__comment": "Copper Golem Nose",
+      "from": [7, 4, 2.5],
+      "to": [9, 7, 4],
+      "faces": {
+        "north": { "uv": [8, 12, 10, 15], "texture": "#beacon" },
+        "south": { "uv": [8, 12, 10, 15], "texture": "#beacon" },
+        "west":  { "uv": [10, 12, 11.5, 15], "texture": "#beacon" },
+        "east":  { "uv": [10, 12, 11.5, 15], "texture": "#beacon" },
+        "up":    { "uv": [8, 15, 10, 16], "texture": "#beacon" },
+        "down":  { "uv": [8, 15, 10, 16], "texture": "#beacon" }
+      }
+    },
+    {
+      "__comment": "Lightning Rod Base",
+      "from": [7, 9, 7],
+      "to": [9, 12, 9],
+      "faces": {
+        "north": { "uv": [12, 12, 14, 15], "texture": "#beacon" },
+        "south": { "uv": [12, 12, 14, 15], "texture": "#beacon" },
+        "west":  { "uv": [12, 12, 14, 15], "texture": "#beacon" },
+        "east":  { "uv": [12, 12, 14, 15], "texture": "#beacon" },
+        "up":    { "uv": [12, 15, 14, 16], "texture": "#beacon" },
+        "down":  { "uv": [12, 15, 14, 16], "texture": "#beacon" }
+      }
+    },
+    {
+      "__comment": "Lightning Rod Tip",
+      "from": [6.5, 12, 6.5],
+      "to": [9.5, 14.5, 9.5],
+      "faces": {
+        "north": { "uv": [14, 12, 16, 14.5], "texture": "#beacon" },
+        "south": { "uv": [14, 12, 16, 14.5], "texture": "#beacon" },
+        "west":  { "uv": [14, 12, 16, 14.5], "texture": "#beacon" },
+        "east":  { "uv": [14, 12, 16, 14.5], "texture": "#beacon" },
+        "up":    { "uv": [14, 14.5, 16, 16], "texture": "#beacon" },
+        "down":  { "uv": [14, 14.5, 16, 16], "texture": "#beacon" }
       }
     }
   ]

@@ -16,5 +16,9 @@
   "entity.golemcraft.explorer_golem.returned_items": "Il Golem Esploratore ti restituisce i tuoi oggetti.",
   "entity.golemcraft.explorer_golem.compass_linked": "Bussola collegata al Golem Esploratore!",
   "item.golemcraft.golem_compass": "Bussola del Golem",
-  "item.golemcraft.golem_compass.tooltip": "Punta verso il Golem Esploratore collegato"
+  "item.golemcraft.golem_compass.tooltip": "Punta verso il Golem Esploratore collegato",
+  "effect.golemcraft.charge": "Carica",
+  "effect.golemcraft.oxidation_immunity": "Immunità all'Ossidazione",
+  "block.golemcraft.golem_beacon": "Faro dei Golem",
+  "item.golemcraft.golem_beacon": "Faro dei Golem"
 }

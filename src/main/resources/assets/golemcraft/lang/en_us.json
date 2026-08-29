@@ -16,5 +16,9 @@
   "entity.golemcraft.explorer_golem.returned_items": "The Explorer Golem returns your items.",
   "entity.golemcraft.explorer_golem.compass_linked": "Compass linked to the Explorer Golem!",
   "item.golemcraft.golem_compass": "Golem Compass",
-  "item.golemcraft.golem_compass.tooltip": "Points towards the linked Explorer Golem"
+  "item.golemcraft.golem_compass.tooltip": "Points towards the linked Explorer Golem",
+  "effect.golemcraft.charge": "Charge",
+  "effect.golemcraft.oxidation_immunity": "Oxidation Immunity",
+  "block.golemcraft.golem_beacon": "Golem Beacon",
+  "item.golemcraft.golem_beacon": "Golem Beacon"
 }

@@ -74,6 +74,9 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
     }
 
     public void setOxidationLevel(int level) {
+        if (level > this.getOxidationLevel() && this.hasEffect(com.golemcraft.golemcraftmod.registry.ModEffects.OXIDATION_IMMUNITY)) {
+            return;
+        }
         this.entityData.set(OXIDATION_LEVEL, net.minecraft.util.Mth.clamp(level, 0, 3));
     }
 
@@ -230,7 +233,7 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
                 if (this.getLastHurtByMob() != null) {
                     this.setLastHurtByMob(null);
                 }
-            } else if (!this.isWaxed() && this.random.nextFloat() < 0.0005F) { // Very slow oxidation for testing
+            } else if (!this.isWaxed() && !this.hasEffect(com.golemcraft.golemcraftmod.registry.ModEffects.OXIDATION_IMMUNITY) && this.random.nextFloat() < 0.0005F) { // Very slow oxidation for testing
                 this.setOxidationLevel(this.getOxidationLevel() + 1);
             }
 

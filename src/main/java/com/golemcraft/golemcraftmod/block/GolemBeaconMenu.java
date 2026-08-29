@@ -20,6 +20,7 @@ import javax.annotation.Nullable;
 public class GolemBeaconMenu extends AbstractContainerMenu {
 
     private final SimpleContainerData syncedData = new SimpleContainerData(5);
+    private final net.minecraft.world.inventory.ContainerData beaconData;
     private final BlockPos bePos;
     private final Container paymentSlot;
 
@@ -47,7 +48,8 @@ public class GolemBeaconMenu extends AbstractContainerMenu {
         this.bePos = be.getBlockPos();
         this.blockEntity = be;
         this.paymentSlot = be.getPaymentSlot();
-        this.addDataSlots(be.containerData);
+        this.beaconData = be.containerData;
+        this.addDataSlots(this.beaconData);
         this.setupSlots(inv);
     }
 
@@ -56,7 +58,18 @@ public class GolemBeaconMenu extends AbstractContainerMenu {
         this.bePos = data.readBlockPos();
         this.blockEntity = null;
         this.paymentSlot = new SimpleContainer(1);
-        this.addDataSlots(syncedData);
+        int t1 = data.readInt();
+        int t2 = data.readInt();
+        int t3 = data.readInt();
+        int sec = data.readInt();
+        int lvl = data.readInt();
+        this.syncedData.set(0, t1);
+        this.syncedData.set(1, t2);
+        this.syncedData.set(2, t3);
+        this.syncedData.set(3, sec);
+        this.syncedData.set(4, lvl);
+        this.beaconData = this.syncedData;
+        this.addDataSlots(this.beaconData);
         this.setupSlots(inv);
     }
     
@@ -74,11 +87,11 @@ public class GolemBeaconMenu extends AbstractContainerMenu {
         }
     }
 
-    public int getTier1Effect() { return syncedData.get(0); }
-    public int getTier2Effect() { return syncedData.get(1); }
-    public int getTier3Effect() { return syncedData.get(2); }
-    public int getSecondaryEffect() { return syncedData.get(3); }
-    public int getLevels() { return syncedData.get(4); }
+    public int getTier1Effect() { return beaconData.get(0); }
+    public int getTier2Effect() { return beaconData.get(1); }
+    public int getTier3Effect() { return beaconData.get(2); }
+    public int getSecondaryEffect() { return beaconData.get(3); }
+    public int getLevels() { return beaconData.get(4); }
     public BlockPos getBeaconPos() { return bePos; }
     public boolean hasPayment() { return !this.paymentSlot.getItem(0).isEmpty(); }
 

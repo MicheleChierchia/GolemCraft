@@ -1,0 +1,6 @@
+{
+  "model": {
+    "type": "minecraft:model",
+    "model": "golemcraft:block/golem_beacon"
+  }
+}

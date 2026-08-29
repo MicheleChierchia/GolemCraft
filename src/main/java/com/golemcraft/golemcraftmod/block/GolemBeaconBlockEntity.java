@@ -63,6 +63,12 @@ public class GolemBeaconBlockEntity extends BlockEntity implements net.minecraft
 
     public SimpleContainer getPaymentSlot() { return paymentSlot; }
 
+    public int getTier1Effect() { return tier1Effect; }
+    public int getTier2Effect() { return tier2Effect; }
+    public int getTier3Effect() { return tier3Effect; }
+    public int getSecondaryEffect() { return secondaryEffect; }
+    public int getLevels() { return levels; }
+
     public static void tick(Level level, BlockPos pos, BlockState state, GolemBeaconBlockEntity be) {
         if (level.isClientSide()) return;
 
