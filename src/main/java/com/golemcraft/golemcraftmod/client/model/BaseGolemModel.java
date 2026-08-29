@@ -199,7 +199,8 @@ public class BaseGolemModel extends EntityModel<BaseGolemRenderState> implements
         // Legs with 3D boot layer (texOffs 0,54 for right boot and 24,54 for left boot)
         partdefinition.addOrReplaceChild("right_leg", CubeListBuilder.create()
                 .texOffs(0, 27).addBox(-2.0F, 0.0F, -2.0F, 4.0F, 5.0F, 4.0F)
-                .texOffs(0, 54).addBox(-2.2F, 1.9F, -2.2F, 4.2F, 3.2F, 4.4F), // Stivale destro (0.1F oltre la suola)
+                .texOffs(0, 54).addBox(-2.2F, 1.9F, -2.2F, 4.2F, 3.2F, 4.4F),
+                PartPose.offset(-2.0F, 19.0F, 0.0F)); // Stivale destro (0.1F oltre la suola)
 
         partdefinition.addOrReplaceChild("left_leg", CubeListBuilder.create()
                 .texOffs(16, 27).addBox(-2.0F, 0.0F, -2.0F, 4.0F, 5.0F, 4.0F)
