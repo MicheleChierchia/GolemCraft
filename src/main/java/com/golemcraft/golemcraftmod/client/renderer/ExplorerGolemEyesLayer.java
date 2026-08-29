@@ -9,10 +9,10 @@ import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.resources.Identifier;
 
 public class ExplorerGolemEyesLayer extends EyesLayer<BaseGolemRenderState, BaseGolemModel> {
-    // When STAYING (fermo): Base Golem white eyes
-    private static final RenderType STAY_EYES = RenderTypes.eyes(Identifier.fromNamespaceAndPath(GolemCraft.MODID, "textures/entity/base_golem_eyes.png"));
-    // When FOLLOWING (segue): Explorer/Flower yellow eyes (the ones it already has)
-    private static final RenderType FOLLOW_EYES = RenderTypes.eyes(Identifier.fromNamespaceAndPath(GolemCraft.MODID, "textures/entity/flower_golem_eyes.png"));
+    // When FOLLOWING (segue): Base Golem cyan/white eyes
+    private static final RenderType FOLLOW_EYES = RenderTypes.eyes(Identifier.fromNamespaceAndPath(GolemCraft.MODID, "textures/entity/base_golem_eyes.png"));
+    // When STAYING (fermo): Explorer/Flower yellow eyes
+    private static final RenderType STAY_EYES = RenderTypes.eyes(Identifier.fromNamespaceAndPath(GolemCraft.MODID, "textures/entity/flower_golem_eyes.png"));
 
     private BaseGolemRenderState currentState;
 
@@ -22,7 +22,7 @@ public class ExplorerGolemEyesLayer extends EyesLayer<BaseGolemRenderState, Base
 
     @Override
     public RenderType renderType() {
-        if (currentState != null && currentState.isGuarding) {
+        if (currentState != null && (currentState.isGuarding || currentState.isWaiting)) {
             return STAY_EYES;
         }
         return FOLLOW_EYES;
@@ -31,10 +31,8 @@ public class ExplorerGolemEyesLayer extends EyesLayer<BaseGolemRenderState, Base
     @Override
     public void submit(com.mojang.blaze3d.vertex.PoseStack poseStack, net.minecraft.client.renderer.SubmitNodeCollector submitNodeCollector, int packedLight, BaseGolemRenderState state, float limbSwing, float limbSwingAmount) {
         this.currentState = state;
-        // Do not render glowing eyes when dormant/waiting or fully oxidized
-        if (state.oxidationLevel < 3 && !state.isWaiting) {
+        if (state.oxidationLevel < 3) {
             super.submit(poseStack, submitNodeCollector, packedLight, state, limbSwing, limbSwingAmount);
         }
     }
 }
-
