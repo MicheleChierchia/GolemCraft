@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "oxidation=0": { "model": "golemcraft:block/golem_beacon" },
+    "oxidation=1": { "model": "golemcraft:block/golem_beacon_exposed" },
+    "oxidation=2": { "model": "golemcraft:block/golem_beacon_weathered" },
+    "oxidation=3": { "model": "golemcraft:block/golem_beacon_oxidized" }
+  }
+}

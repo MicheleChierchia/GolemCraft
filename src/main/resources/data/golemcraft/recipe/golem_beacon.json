@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "G": "minecraft:glass",
+    "C": "minecraft:copper_block",
+    "S": "minecraft:nether_star"
+  },
+  "pattern": [
+    "GGG",
+    "GSG",
+    "CCC"
+  ],
+  "result": {
+    "id": "golemcraft:golem_beacon",
+    "count": 1
+  }
+}

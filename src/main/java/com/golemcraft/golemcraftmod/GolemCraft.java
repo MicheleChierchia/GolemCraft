@@ -69,6 +69,8 @@ public class GolemCraft {
         // Register our mod's ModConfigSpec so that FML can create and load the config file for us
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
         ModBlocks.register(modEventBus);
+        com.golemcraft.golemcraftmod.registry.ModBlockEntities.register(modEventBus);
+        com.golemcraft.golemcraftmod.registry.ModEffects.register(modEventBus);
         com.golemcraft.golemcraftmod.registry.ModEntities.register(modEventBus);
     }
 

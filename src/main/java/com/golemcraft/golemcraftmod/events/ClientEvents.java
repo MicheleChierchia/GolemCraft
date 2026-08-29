@@ -31,6 +31,7 @@ public class ClientEvents {
         event.registerEntityRenderer(ModEntities.LUMBERJACK_GOLEM.get(), com.golemcraft.golemcraftmod.client.renderer.LumberjackGolemRenderer::new);
         event.registerEntityRenderer(ModEntities.DEPTH_GOLEM.get(), com.golemcraft.golemcraftmod.client.renderer.DepthGolemRenderer::new);
         event.registerEntityRenderer(ModEntities.EXPLORER_GOLEM.get(), com.golemcraft.golemcraftmod.client.renderer.ExplorerGolemRenderer::new);
+        event.registerBlockEntityRenderer(com.golemcraft.golemcraftmod.registry.ModBlockEntities.GOLEM_BEACON.get(), com.golemcraft.golemcraftmod.client.renderer.GolemBeaconRenderer::new);
         event.registerEntityRenderer(ModEntities.SONIC_BOOM_PROJECTILE.get(), net.minecraft.client.renderer.entity.NoopRenderer::new);
         event.registerEntityRenderer(ModEntities.GOLEM_FISHING_HOOK.get(), com.golemcraft.golemcraftmod.client.renderer.GolemFishingHookRenderer::new);
     }
@@ -46,4 +47,11 @@ public class ClientEvents {
     }
     
     public static class ModelLayers {}
+
+
+    @SubscribeEvent
+    public static void registerScreens(net.neoforged.neoforge.client.event.RegisterMenuScreensEvent event) {
+        event.register(com.golemcraft.golemcraftmod.registry.ModBlockEntities.GOLEM_BEACON_MENU.get(), com.golemcraft.golemcraftmod.client.screen.GolemBeaconScreen::new);
+    }
+
 }
