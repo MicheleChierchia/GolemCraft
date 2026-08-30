@@ -1,31 +1,26 @@
 package com.golemcraft.golemcraftmod.events;
 
+import java.util.Comparator;
+import java.util.List;
+
 import com.golemcraft.golemcraftmod.GolemCraft;
 import com.golemcraft.golemcraftmod.entity.ExplorerGolemEntity;
 import com.golemcraft.golemcraftmod.registry.ModEntities;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.HoneycombItem;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.WeatheringCopper;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDropsEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
-
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
 
 @EventBusSubscriber(modid = GolemCraft.MODID)
 public class ModEvents {
@@ -94,22 +89,22 @@ public class ModEvents {
     public static void onPlayerDeath(LivingDeathEvent event) {
         if (!(event.getEntity() instanceof Player player)) return;
         if (player.level().isClientSide()) return;
-        triggerExplorerGolemCollection(player, null);
+        triggerExplorerGolemCollection(player);
     }
 
     @SubscribeEvent
     public static void onPlayerDrops(LivingDropsEvent event) {
         if (!(event.getEntity() instanceof Player player)) return;
         if (player.level().isClientSide()) return;
-        triggerExplorerGolemCollection(player, event.getDrops());
+        triggerExplorerGolemCollection(player);
     }
 
-    private static void triggerExplorerGolemCollection(Player player, java.util.Collection<ItemEntity> drops) {
+    private static void triggerExplorerGolemCollection(Player player) {
         Level level = player.level();
         List<ExplorerGolemEntity> golems = level.getEntitiesOfClass(
                 ExplorerGolemEntity.class,
-                player.getBoundingBox().inflate(128.0D),
-                g -> (g.getOwnerUUID() == null || player.getUUID().equals(g.getOwnerUUID())) && g.getOxidationLevel() < 3
+                player.getBoundingBox().inflate(48),
+                g -> (g.getOwnerUUID() == null || player.getUUID().equals(g.getOwnerUUID())) && !g.isWaiting()
         );
         if (golems.isEmpty()) return;
 
@@ -122,7 +117,9 @@ public class ModEvents {
             golem.setOwnerUUID(player.getUUID());
         }
 
-        golem.collectDropsFromDeath(player.blockPosition(), drops);
+        if (!golem.isCollectingDrops()) {
+            golem.startCollectingDeathDrops(player.blockPosition());
+        }
     }
 
     /**
