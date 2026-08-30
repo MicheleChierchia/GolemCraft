@@ -89,22 +89,22 @@ public class ModEvents {
     public static void onPlayerDeath(LivingDeathEvent event) {
         if (!(event.getEntity() instanceof Player player)) return;
         if (player.level().isClientSide()) return;
-        triggerExplorerGolemCollection(player);
+        triggerExplorerGolemCollection(player, null);
     }
 
     @SubscribeEvent
     public static void onPlayerDrops(LivingDropsEvent event) {
         if (!(event.getEntity() instanceof Player player)) return;
         if (player.level().isClientSide()) return;
-        triggerExplorerGolemCollection(player);
+        triggerExplorerGolemCollection(player, event.getDrops());
     }
 
-    private static void triggerExplorerGolemCollection(Player player) {
+    private static void triggerExplorerGolemCollection(Player player, java.util.Collection<ItemEntity> drops) {
         Level level = player.level();
         List<ExplorerGolemEntity> golems = level.getEntitiesOfClass(
                 ExplorerGolemEntity.class,
-                player.getBoundingBox().inflate(48),
-                g -> (g.getOwnerUUID() == null || player.getUUID().equals(g.getOwnerUUID())) && !g.isWaiting()
+                player.getBoundingBox().inflate(128.0D),
+                g -> (g.getOwnerUUID() == null || player.getUUID().equals(g.getOwnerUUID())) && g.getOxidationLevel() < 3
         );
         if (golems.isEmpty()) return;
 
@@ -117,9 +117,7 @@ public class ModEvents {
             golem.setOwnerUUID(player.getUUID());
         }
 
-        if (!golem.isCollectingDrops()) {
-            golem.startCollectingDeathDrops(player.blockPosition());
-        }
+        golem.collectDropsFromDeath(player.blockPosition(), drops);
     }
 
     /**
