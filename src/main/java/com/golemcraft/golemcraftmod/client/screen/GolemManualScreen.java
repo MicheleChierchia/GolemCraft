@@ -37,10 +37,10 @@ public class GolemManualScreen extends Screen {
     // Category Tabs: (NameKey, TargetPage, IconItem)
     private static final CategoryTab[] TABS = new CategoryTab[] {
         new CategoryTab("book.golemcraft.tab.basics", 0, new ItemStack(ModBlocks.BASE_GOLEM_ITEM.get())),
-        new CategoryTab("book.golemcraft.tab.professions", 4, new ItemStack(Items.IRON_HOE)),
-        new CategoryTab("book.golemcraft.tab.beacon", 11, new ItemStack(ModBlocks.GOLEM_BEACON_ITEM.get())),
-        new CategoryTab("book.golemcraft.tab.recipes", 13, new ItemStack(Blocks.CRAFTING_TABLE)),
-        new CategoryTab("book.golemcraft.tab.automation", 16, new ItemStack(ModBlocks.GOLEM_COMPASS_ITEM.get()))
+        new CategoryTab("book.golemcraft.tab.professions", 5, new ItemStack(Items.IRON_HOE)),
+        new CategoryTab("book.golemcraft.tab.beacon", 12, new ItemStack(ModBlocks.GOLEM_BEACON_ITEM.get())),
+        new CategoryTab("book.golemcraft.tab.recipes", 14, new ItemStack(Blocks.CRAFTING_TABLE)),
+        new CategoryTab("book.golemcraft.tab.extra", 16, new ItemStack(Items.BRUSH))
     };
 
     private static int dummyEntityIdCounter = -10000;
@@ -58,67 +58,72 @@ public class GolemManualScreen extends Screen {
                 "book.golemcraft.page1.title", "book.golemcraft.page1.subtitle", "book.golemcraft.page1.content",
                 "entity.base", ModEntities.BASE_GOLEM.get(), ItemStack.EMPTY, 0, false, null, null, ItemStack.EMPTY, "book.golemcraft.badge.guide"));
 
-        // 1: Il Base Golem
+        // 1: Il Base Golem (Mani libere, nessun lingotto)
         pages.add(new ManualPage(PageType.ENTITY, 0,
                 "book.golemcraft.page2.title", "book.golemcraft.page2.subtitle", "book.golemcraft.page2.content",
-                "entity.base_clean", ModEntities.BASE_GOLEM.get(), new ItemStack(Items.COPPER_INGOT), 0, false, null, null, ItemStack.EMPTY, "book.golemcraft.badge.companion"));
+                "entity.base_clean", ModEntities.BASE_GOLEM.get(), ItemStack.EMPTY, 0, false, null, null, ItemStack.EMPTY, "book.golemcraft.badge.companion"));
 
         // 2: Ossidazione & Cera
         pages.add(new ManualPage(PageType.ENTITY, 0,
                 "book.golemcraft.page3.title", "book.golemcraft.page3.subtitle", "book.golemcraft.page3.content",
                 "entity.base_weathered", ModEntities.BASE_GOLEM.get(), new ItemStack(Items.HONEYCOMB), 2, false, null, null, ItemStack.EMPTY, "book.golemcraft.badge.maintenance"));
 
-        // 3: Statue & Sovraccarico
+        // 3: Statue di Rame (Stato Statua, Ossidazione 3)
         pages.add(new ManualPage(PageType.ENTITY, 0,
                 "book.golemcraft.page4.title", "book.golemcraft.page4.subtitle", "book.golemcraft.page4.content",
+                "entity.base_statue", ModEntities.BASE_GOLEM.get(), ItemStack.EMPTY, 3, false, null, null, ItemStack.EMPTY, "book.golemcraft.badge.statue"));
+
+        // 4: Sovraccarico Elettrico (Supercharged con fulmini)
+        pages.add(new ManualPage(PageType.ENTITY, 0,
+                "book.golemcraft.page5_supercharge.title", "book.golemcraft.page5_supercharge.subtitle", "book.golemcraft.page5_supercharge.content",
                 "entity.base_charged", ModEntities.BASE_GOLEM.get(), ItemStack.EMPTY, 0, true, null, null, ItemStack.EMPTY, "book.golemcraft.badge.electric"));
 
-        // 4: Golem Fiorista
+        // 5: Golem Fiorista
         pages.add(new ManualPage(PageType.ENTITY, 1,
                 "book.golemcraft.page5.title", "book.golemcraft.page5.subtitle", "book.golemcraft.page5.content",
                 "entity.flower", ModEntities.FLOWER_GOLEM.get(), new ItemStack(Blocks.POPPY), 0, false, null, null, ItemStack.EMPTY, "book.golemcraft.badge.gardener"));
 
-        // 5: Golem Contadino
+        // 6: Golem Contadino
         pages.add(new ManualPage(PageType.ENTITY, 1,
                 "book.golemcraft.page6.title", "book.golemcraft.page6.subtitle", "book.golemcraft.page6.content",
                 "entity.farmer", ModEntities.FARMER_GOLEM.get(), new ItemStack(Items.IRON_HOE), 0, false, null, null, ItemStack.EMPTY, "book.golemcraft.badge.farmer"));
 
-        // 6: Golem Taglialegna
+        // 7: Golem Taglialegna
         pages.add(new ManualPage(PageType.ENTITY, 1,
                 "book.golemcraft.page7.title", "book.golemcraft.page7.subtitle", "book.golemcraft.page7.content",
                 "entity.lumberjack", ModEntities.LUMBERJACK_GOLEM.get(), new ItemStack(Items.IRON_AXE), 0, false, null, null, ItemStack.EMPTY, "book.golemcraft.badge.lumberjack"));
 
-        // 7: Golem Pescatore
+        // 8: Golem Pescatore
         pages.add(new ManualPage(PageType.ENTITY, 1,
                 "book.golemcraft.page8.title", "book.golemcraft.page8.subtitle", "book.golemcraft.page8.content",
                 "entity.fisherman", ModEntities.FISHERMAN_GOLEM.get(), new ItemStack(Items.FISHING_ROD), 0, false, null, null, ItemStack.EMPTY, "book.golemcraft.badge.fisherman"));
 
-        // 8: Golem Soldato
+        // 9: Golem Soldato
         pages.add(new ManualPage(PageType.ENTITY, 1,
                 "book.golemcraft.page9.title", "book.golemcraft.page9.subtitle", "book.golemcraft.page9.content",
                 "entity.soldier", ModEntities.SOLDIER_GOLEM.get(), new ItemStack(Items.IRON_SWORD), 0, false, null, null, ItemStack.EMPTY, "book.golemcraft.badge.soldier"));
 
-        // 9: Golem degli Abissi
+        // 10: Golem degli Abissi
         pages.add(new ManualPage(PageType.ENTITY, 1,
                 "book.golemcraft.page10.title", "book.golemcraft.page10.subtitle", "book.golemcraft.page10.content",
                 "entity.depth", ModEntities.DEPTH_GOLEM.get(), new ItemStack(Items.ECHO_SHARD), 0, false, null, null, ItemStack.EMPTY, "book.golemcraft.badge.warden"));
 
-        // 10: Golem Esploratore
+        // 11: Golem Esploratore
         pages.add(new ManualPage(PageType.ENTITY, 1,
                 "book.golemcraft.page11.title", "book.golemcraft.page11.subtitle", "book.golemcraft.page11.content",
                 "entity.explorer", ModEntities.EXPLORER_GOLEM.get(), new ItemStack(Items.RECOVERY_COMPASS), 0, false, null, null, ItemStack.EMPTY, "book.golemcraft.badge.explorer"));
 
-        // 11: Il Faro dei Golem
+        // 12: Il Faro dei Golem (Grande anteprima 3D)
         pages.add(new ManualPage(PageType.BLOCK_ITEM, 2,
                 "book.golemcraft.page12.title", "book.golemcraft.page12.subtitle", "book.golemcraft.page12.content",
                 null, null, ItemStack.EMPTY, 0, false, new ItemStack(ModBlocks.GOLEM_BEACON_ITEM.get()), null, ItemStack.EMPTY, "book.golemcraft.badge.beacon"));
 
-        // 12: Poteri del Faro
+        // 13: Poteri del Faro (Grande blocco di rame)
         pages.add(new ManualPage(PageType.BLOCK_ITEM, 2,
                 "book.golemcraft.page13.title", "book.golemcraft.page13.subtitle", "book.golemcraft.page13.content",
                 null, null, ItemStack.EMPTY, 0, false, new ItemStack(Items.COPPER_BLOCK.weathering().unaffected()), null, ItemStack.EMPTY, "book.golemcraft.badge.powers"));
 
-        // 13: Crafting Faro dei Golem
+        // 14: Crafting Faro dei Golem
         ItemStack[] beaconGrid = new ItemStack[] {
                 new ItemStack(Blocks.GLASS), new ItemStack(Blocks.GLASS), new ItemStack(Blocks.GLASS),
                 new ItemStack(Blocks.GLASS), new ItemStack(Items.NETHER_STAR), new ItemStack(Blocks.GLASS),
@@ -128,7 +133,7 @@ public class GolemManualScreen extends Screen {
                 "book.golemcraft.page14.title", "book.golemcraft.page14.subtitle", "book.golemcraft.page14.content",
                 null, null, ItemStack.EMPTY, 0, false, null, beaconGrid, new ItemStack(ModBlocks.GOLEM_BEACON_ITEM.get()), "book.golemcraft.badge.crafting"));
 
-        // 14: Crafting Manuale dei Golem
+        // 15: Crafting Manuale dei Golem
         ItemStack[] manualGrid = new ItemStack[] {
                 ItemStack.EMPTY, ItemStack.EMPTY, ItemStack.EMPTY,
                 new ItemStack(Items.BOOK), new ItemStack(Items.COPPER_INGOT), ItemStack.EMPTY,
@@ -138,22 +143,7 @@ public class GolemManualScreen extends Screen {
                 "book.golemcraft.page15.title", "book.golemcraft.page15.subtitle", "book.golemcraft.page15.content",
                 null, null, ItemStack.EMPTY, 0, false, null, manualGrid, new ItemStack(ModBlocks.GOLEM_MANUAL_ITEM.get()), "book.golemcraft.badge.crafting"));
 
-        // 15: Crafting Bussola dei Golem
-        ItemStack[] compassGrid = new ItemStack[] {
-                new ItemStack(Items.COPPER_INGOT), new ItemStack(Items.COPPER_INGOT), new ItemStack(Items.COPPER_INGOT),
-                new ItemStack(Items.COPPER_INGOT), new ItemStack(Items.COMPASS), new ItemStack(Items.COPPER_INGOT),
-                new ItemStack(Items.COPPER_INGOT), new ItemStack(Items.COPPER_INGOT), new ItemStack(Items.COPPER_INGOT)
-        };
-        pages.add(new ManualPage(PageType.CRAFTING, 3,
-                "book.golemcraft.page16.title", "book.golemcraft.page16.subtitle", "book.golemcraft.page16.content",
-                null, null, ItemStack.EMPTY, 0, false, null, compassGrid, new ItemStack(ModBlocks.GOLEM_COMPASS_ITEM.get()), "book.golemcraft.badge.crafting"));
-
-        // 16: Bussola & Deposito Casse
-        pages.add(new ManualPage(PageType.BLOCK_ITEM, 4,
-                "book.golemcraft.page17.title", "book.golemcraft.page17.subtitle", "book.golemcraft.page17.content",
-                null, null, ItemStack.EMPTY, 0, false, new ItemStack(Blocks.CHEST), null, ItemStack.EMPTY, "book.golemcraft.badge.automation"));
-
-        // 17: Il Pennello & Consigli
+        // 16: Il Pennello & Reset (Grande anteprima Pennello)
         pages.add(new ManualPage(PageType.BLOCK_ITEM, 4,
                 "book.golemcraft.page18.title", "book.golemcraft.page18.subtitle", "book.golemcraft.page18.content",
                 null, null, ItemStack.EMPTY, 0, false, new ItemStack(Items.BRUSH), null, ItemStack.EMPTY, "book.golemcraft.badge.reset"));
@@ -300,7 +290,7 @@ public class GolemManualScreen extends Screen {
 
         } else if (currentPageObj.type == PageType.BLOCK_ITEM) {
             // Draw Pedestal
-            graphics.blit(RenderPipelines.GUI_TEXTURED, GUI_TEXTURE, leftPageCenter - 28, top + 115, 100.0F, 200.0F, 56, 22, 512, 512);
+            graphics.blit(RenderPipelines.GUI_TEXTURED, GUI_TEXTURE, leftPageCenter - 28, top + 120, 100.0F, 200.0F, 56, 22, 512, 512);
 
             // Badge
             if (currentPageObj.badgeKey != null) {
@@ -308,12 +298,19 @@ public class GolemManualScreen extends Screen {
                 graphics.centeredText(this.font, badge, leftPageCenter, top + 16, 0xFF7A3D00);
             }
 
-            // 3D Item / Block rendered in slot area
+            // Large 3D Item / Block rendered above pedestal (3x scale)
             if (currentPageObj.displayItem != null && !currentPageObj.displayItem.isEmpty()) {
-                graphics.item(currentPageObj.displayItem, leftPageCenter - 8, top + 65);
-                graphics.itemDecorations(this.font, currentPageObj.displayItem, leftPageCenter - 8, top + 65);
+                float scale = 3.0F;
+                float renderX = (float) leftPageCenter - (16.0F * scale) / 2.0F;
+                float renderY = (float) top + 55.0F;
 
-                if (mouseX >= leftPageCenter - 16 && mouseX < leftPageCenter + 16 && mouseY >= top + 55 && mouseY < top + 95) {
+                graphics.pose().pushMatrix();
+                graphics.pose().translate(renderX, renderY);
+                graphics.pose().scale(scale, scale);
+                graphics.item(currentPageObj.displayItem, 0, 0);
+                graphics.pose().popMatrix();
+
+                if (mouseX >= renderX && mouseX < renderX + 16.0F * scale && mouseY >= renderY && mouseY < renderY + 16.0F * scale) {
                     hoveredTooltipStack = currentPageObj.displayItem;
                 }
             }

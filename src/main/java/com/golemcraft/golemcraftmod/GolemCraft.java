@@ -43,11 +43,6 @@ public class GolemCraft {
     public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(MODID);
     // Create a Deferred Register to hold Items which will all be registered under the "examplemod" namespace
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(MODID);
-    // Create a Deferred Register to hold CreativeModeTabs which will all be registered under the "examplemod" namespace
-    public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
-
-    // The constructor for the mod class is the first code that is run when your mod is loaded.
-    // FML will recognize some parameter types like IEventBus or ModContainer and pass them in automatically.
     public GolemCraft(IEventBus modEventBus, ModContainer modContainer) {
         // Register the commonSetup method for modloading
         modEventBus.addListener(this::commonSetup);
@@ -56,8 +51,6 @@ public class GolemCraft {
         BLOCKS.register(modEventBus);
         // Register the Deferred Register to the mod event bus so items get registered
         ITEMS.register(modEventBus);
-        // Register the Deferred Register to the mod event bus so tabs get registered
-        CREATIVE_MODE_TABS.register(modEventBus);
         
         modEventBus.addListener(this::addCreative);
 
@@ -72,6 +65,7 @@ public class GolemCraft {
         com.golemcraft.golemcraftmod.registry.ModBlockEntities.register(modEventBus);
         com.golemcraft.golemcraftmod.registry.ModEffects.register(modEventBus);
         com.golemcraft.golemcraftmod.registry.ModEntities.register(modEventBus);
+        com.golemcraft.golemcraftmod.registry.ModCreativeTabs.register(modEventBus);
     }
 
     private void commonSetup(FMLCommonSetupEvent event) {

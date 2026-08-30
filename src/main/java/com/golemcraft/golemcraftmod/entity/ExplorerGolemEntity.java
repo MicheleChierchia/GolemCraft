@@ -38,6 +38,7 @@ import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
@@ -172,10 +173,13 @@ public class ExplorerGolemEntity extends BaseGolemEntity {
                         1, 0.0D, 0.02D, 0.0D, 0.01D);
             }
 
-            // Check if owner is back and alive nearby
+            // Check if owner is back and alive nearby - wake up and resume following without dumping items
             Player owner = getOwnerPlayer();
             if (owner != null && owner.isAlive() && this.distanceToSqr(owner) < 25.0D) {
-                returnItemsToOwner(owner);
+                this.setWaiting(false);
+                this.setStaying(false);
+                this.setStayPos(null);
+                this.playSound(SoundEvents.EXPERIENCE_ORB_PICKUP, 1.0F, 1.0F);
             }
             return;
         }
@@ -304,43 +308,73 @@ public class ExplorerGolemEntity extends BaseGolemEntity {
         return true;
     }
 
+    public void collectDropsFromDeath(BlockPos deathPos, java.util.Collection<ItemEntity> drops) {
+        this.deathPos = deathPos;
+        this.setCollectingDrops(false);
+        this.setStaying(true);
+        this.setStayPos(deathPos);
+
+        // Move directly to the death spot
+        this.teleportTo(deathPos.getX() + 0.5D, deathPos.getY(), deathPos.getZ() + 0.5D);
+        this.getNavigation().stop();
+
+        // Collect player's death drops directly into internal 27-slot inventory
+        if (drops != null) {
+            java.util.Iterator<ItemEntity> it = drops.iterator();
+            while (it.hasNext()) {
+                ItemEntity itemEntity = it.next();
+                if (itemEntity != null && itemEntity.isAlive()) {
+                    ItemStack stack = itemEntity.getItem();
+                    if (!stack.isEmpty()) {
+                        ItemStack remainder = this.getInventory().addItem(stack.copy());
+                        if (remainder.isEmpty()) {
+                            itemEntity.discard();
+                            it.remove();
+                        } else {
+                            itemEntity.setItem(remainder);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Set waiting state at death location
+        this.setWaiting(true);
+
+        if (this.level() instanceof ServerLevel sl) {
+            sl.sendParticles(ParticleTypes.SOUL,
+                    this.getX(), this.getY() + 0.5D, this.getZ(),
+                    25, 0.3D, 0.3D, 0.3D, 0.02D);
+        }
+
+        updateLinkedCompasses();
+    }
+
     public void startCollectingDeathDrops(BlockPos deathPos) {
         this.deathPos = deathPos;
-        this.collectTimeout = 400; // 20 seconds maximum
+        this.collectTimeout = 600; // 30 seconds maximum
         this.setCollectingDrops(true);
         this.setStaying(false);
         this.setWaiting(false);
+
+        if (this.distanceToSqr(Vec3.atCenterOf(deathPos)) > 256.0D) {
+            this.teleportTo(deathPos.getX() + 0.5D, deathPos.getY(), deathPos.getZ() + 0.5D);
+        }
     }
 
     public void finishCollectingDrops() {
         this.setCollectingDrops(false);
         this.setWaiting(true);
+        this.setStaying(true);
+        if (this.deathPos != null) {
+            this.setStayPos(this.deathPos);
+        }
         if (this.level() instanceof ServerLevel sl) {
             sl.sendParticles(ParticleTypes.SOUL,
                     this.getX(), this.getY() + 0.5D, this.getZ(),
                     20, 0.3D, 0.3D, 0.3D, 0.02D);
         }
-    }
-
-    private void returnItemsToOwner(Player owner) {
-        SimpleContainer inv = getInventory();
-        boolean returnedAny = false;
-        for (int i = 0; i < inv.getContainerSize(); i++) {
-            ItemStack stack = inv.getItem(i);
-            if (stack.isEmpty()) continue;
-            if (owner.getInventory().add(stack.copy())) {
-                inv.setItem(i, ItemStack.EMPTY);
-            } else {
-                owner.drop(stack.copy(), false);
-                inv.setItem(i, ItemStack.EMPTY);
-            }
-            returnedAny = true;
-        }
-        setWaiting(false);
-        if (returnedAny) {
-            owner.sendSystemMessage(Component.translatable("entity.golemcraft.explorer_golem.returned_items"));
-        }
-        this.playSound(SoundEvents.BEACON_ACTIVATE, 1.0F, 1.2F);
+        updateLinkedCompasses();
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -351,11 +385,20 @@ public class ExplorerGolemEntity extends BaseGolemEntity {
     protected InteractionResult mobInteract(Player player, InteractionHand hand) {
         ItemStack itemstack = player.getItemInHand(hand);
 
-        // 1. If waiting, only owner can wake up and get items back
+        // 1. If waiting, allow Shift+Right Click to open inventory, or regular Right-Click to wake up & resume following
         if (isWaiting()) {
+            if (player.isSecondaryUseActive()) {
+                return super.mobInteract(player, hand);
+            }
             if (this.getOwnerUUID() != null && this.getOwnerUUID().equals(player.getUUID())) {
                 if (!this.level().isClientSide()) {
-                    returnItemsToOwner(player);
+                    this.setWaiting(false);
+                    this.setStaying(false);
+                    this.setStayPos(null);
+                    this.playSound(SoundEvents.EXPERIENCE_ORB_PICKUP, 1.0F, 1.0F);
+                    if (this.level() instanceof ServerLevel sl) {
+                        sl.sendParticles(ParticleTypes.HEART, this.getX(), this.getY() + 1.0D, this.getZ(), 5, 0.3D, 0.3D, 0.3D, 0.0D);
+                    }
                 }
                 return InteractionResult.SUCCESS;
             }
@@ -460,13 +503,13 @@ public class ExplorerGolemEntity extends BaseGolemEntity {
     @Override
     public boolean hurtServer(ServerLevel level, net.minecraft.world.damagesource.DamageSource damageSource, float amount) {
         if (isWaiting()) {
-            // Allow owner with pickaxe to pick up the golem
             net.minecraft.world.entity.Entity attacker = damageSource.getEntity();
             if (attacker instanceof Player player
                     && player.getUUID().equals(this.getOwnerUUID())
                     && player.getItemInHand(InteractionHand.MAIN_HAND).is(net.minecraft.tags.ItemTags.PICKAXES)) {
-                // Return items first, then pick up
-                returnItemsToOwner(player);
+                this.setWaiting(false);
+                this.setStaying(false);
+                this.setStayPos(null);
             }
             return false; // otherwise immune
         }
@@ -513,6 +556,7 @@ public class ExplorerGolemEntity extends BaseGolemEntity {
         private final ExplorerGolemEntity golem;
         private final double speed;
         private ItemEntity targetItem;
+        private int noItemTicks = 0;
 
         public CollectDeathDropsGoal(ExplorerGolemEntity golem, double speed) {
             this.golem = golem;
@@ -522,10 +566,7 @@ public class ExplorerGolemEntity extends BaseGolemEntity {
 
         @Override
         public boolean canUse() {
-            if (!golem.isCollectingDrops() || golem.isWaiting() || golem.getOxidationLevel() == 3) {
-                return false;
-            }
-            return true;
+            return golem.isCollectingDrops() && !golem.isWaiting() && golem.getOxidationLevel() < 3;
         }
 
         @Override
@@ -536,6 +577,7 @@ public class ExplorerGolemEntity extends BaseGolemEntity {
         @Override
         public void start() {
             targetItem = null;
+            noItemTicks = 0;
         }
 
         @Override
@@ -553,34 +595,42 @@ public class ExplorerGolemEntity extends BaseGolemEntity {
                 return;
             }
 
-            if (targetItem == null || !targetItem.isAlive() || targetItem.hasPickUpDelay()) {
+            if (targetItem == null || !targetItem.isAlive()) {
                 targetItem = findNearestDrop();
                 if (targetItem == null) {
-                    // No items left in the area
-                    golem.finishCollectingDrops();
-                    return;
+                    if (golem.deathPos != null && golem.distanceToSqr(Vec3.atCenterOf(golem.deathPos)) > 9.0D) {
+                        golem.getNavigation().moveTo(golem.deathPos.getX() + 0.5D, golem.deathPos.getY(), golem.deathPos.getZ() + 0.5D, speed);
+                    } else {
+                        noItemTicks++;
+                        if (noItemTicks > 40) {
+                            golem.finishCollectingDrops();
+                            return;
+                        }
+                    }
+                } else {
+                    noItemTicks = 0;
+                    golem.getNavigation().moveTo(targetItem, speed);
                 }
-                golem.getNavigation().moveTo(targetItem, speed);
             }
 
             if (targetItem != null && targetItem.isAlive()) {
                 golem.getLookControl().setLookAt(targetItem, 30.0F, 30.0F);
 
-                if (golem.distanceToSqr(targetItem) < 4.0D) {
+                if (golem.distanceToSqr(targetItem) < 9.0D) {
                     ItemStack stack = targetItem.getItem();
-                    ItemStack remainder = golem.getInventory().addItem(stack);
-
-                    if (remainder.isEmpty()) {
-                        targetItem.discard();
-                        golem.setLastPickupTime(golem.level().getGameTime());
-                    } else {
-                        targetItem.setItem(remainder);
-                        if (stack.getCount() != remainder.getCount()) {
+                    if (!stack.isEmpty()) {
+                        ItemStack remainder = golem.getInventory().addItem(stack.copy());
+                        if (remainder.isEmpty()) {
+                            targetItem.discard();
                             golem.setLastPickupTime(golem.level().getGameTime());
+                        } else {
+                            targetItem.setItem(remainder);
+                            if (stack.getCount() != remainder.getCount()) {
+                                golem.setLastPickupTime(golem.level().getGameTime());
+                            }
                         }
+                        golem.playSound(SoundEvents.ITEM_PICKUP, 0.5F, (golem.getRandom().nextFloat() - golem.getRandom().nextFloat()) * 0.2F + 1.0F);
                     }
-
-                    golem.playSound(SoundEvents.ITEM_PICKUP, 0.5F, (golem.getRandom().nextFloat() - golem.getRandom().nextFloat()) * 0.2F + 1.0F);
                     targetItem = null;
                 } else if (golem.getNavigation().isDone()) {
                     golem.getNavigation().moveTo(targetItem, speed);
@@ -590,11 +640,11 @@ public class ExplorerGolemEntity extends BaseGolemEntity {
 
         private ItemEntity findNearestDrop() {
             BlockPos center = golem.deathPos != null ? golem.deathPos : golem.blockPosition();
-            AABB box = new AABB(center).inflate(24.0D, 12.0D, 24.0D);
-            List<ItemEntity> items = golem.level().getEntitiesOfClass(ItemEntity.class, box, item -> item.isAlive() && !item.hasPickUpDelay());
+            AABB box = new AABB(center).inflate(32.0D, 16.0D, 32.0D);
+            List<ItemEntity> items = golem.level().getEntitiesOfClass(ItemEntity.class, box, ItemEntity::isAlive);
             if (items.isEmpty()) return null;
 
-            return items.stream().min(java.util.Comparator.comparingDouble(golem::distanceToSqr)).orElse(null);
+            return items.stream().min(Comparator.comparingDouble(golem::distanceToSqr)).orElse(null);
         }
     }
 

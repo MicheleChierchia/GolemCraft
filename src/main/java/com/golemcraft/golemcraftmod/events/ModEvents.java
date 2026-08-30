@@ -47,20 +47,8 @@ public class ModEvents {
                 return;
             }
 
-            Integer oxidation = null;
-            boolean waxed = false;
-
+            // Il Base Golem si crea SOLO con 1 Blocco di Ferro e una Zucca Intagliata
             if (belowState.is(Blocks.IRON_BLOCK)) {
-                oxidation = 0;
-                waxed = false;
-            } else {
-                oxidation = getOxidationFromBlock(belowState);
-                if (oxidation != null) {
-                    waxed = isWaxedCopperBlock(belowState);
-                }
-            }
-
-            if (oxidation != null) {
                 // Destroy blocks
                 level.destroyBlock(pos, false);
                 level.destroyBlock(belowPos, false);
@@ -68,8 +56,8 @@ public class ModEvents {
                 // Spawn Base Golem
                 com.golemcraft.golemcraftmod.entity.BaseGolemEntity golem = ModEntities.BASE_GOLEM.get().create(level, EntitySpawnReason.EVENT);
                 if (golem != null) {
-                    golem.setOxidationLevel(oxidation);
-                    golem.setWaxed(waxed);
+                    golem.setOxidationLevel(0);
+                    golem.setWaxed(false);
                     if (event.getEntity() instanceof Player player) {
                         golem.setOwnerUUID(player.getUUID());
                         golem.setYRot(player.getYRot() + 180.0F);
@@ -99,21 +87,6 @@ public class ModEvents {
         return xArms || zArms;
     }
 
-    private static Integer getOxidationFromBlock(BlockState state) {
-        if (state.getBlock() instanceof WeatheringCopper copper) {
-            return copper.getAge().ordinal();
-        }
-        Block unwaxed = HoneycombItem.WAX_OFF_BY_BLOCK.get().get(state.getBlock());
-        if (unwaxed instanceof WeatheringCopper copper) {
-            return copper.getAge().ordinal();
-        }
-        return null;
-    }
-
-    private static boolean isWaxedCopperBlock(BlockState state) {
-        return HoneycombItem.WAX_OFF_BY_BLOCK.get().containsKey(state.getBlock());
-    }
-
     /**
      * When a player dies or drops items on death, trigger nearby ExplorerGolem to collect the drops.
      */
@@ -121,22 +94,22 @@ public class ModEvents {
     public static void onPlayerDeath(LivingDeathEvent event) {
         if (!(event.getEntity() instanceof Player player)) return;
         if (player.level().isClientSide()) return;
-        triggerExplorerGolemCollection(player);
+        triggerExplorerGolemCollection(player, null);
     }
 
     @SubscribeEvent
     public static void onPlayerDrops(LivingDropsEvent event) {
         if (!(event.getEntity() instanceof Player player)) return;
         if (player.level().isClientSide()) return;
-        triggerExplorerGolemCollection(player);
+        triggerExplorerGolemCollection(player, event.getDrops());
     }
 
-    private static void triggerExplorerGolemCollection(Player player) {
+    private static void triggerExplorerGolemCollection(Player player, java.util.Collection<ItemEntity> drops) {
         Level level = player.level();
         List<ExplorerGolemEntity> golems = level.getEntitiesOfClass(
                 ExplorerGolemEntity.class,
-                player.getBoundingBox().inflate(48),
-                g -> (g.getOwnerUUID() == null || player.getUUID().equals(g.getOwnerUUID())) && !g.isWaiting()
+                player.getBoundingBox().inflate(128.0D),
+                g -> (g.getOwnerUUID() == null || player.getUUID().equals(g.getOwnerUUID())) && g.getOxidationLevel() < 3
         );
         if (golems.isEmpty()) return;
 
@@ -149,9 +122,7 @@ public class ModEvents {
             golem.setOwnerUUID(player.getUUID());
         }
 
-        if (!golem.isCollectingDrops()) {
-            golem.startCollectingDeathDrops(player.blockPosition());
-        }
+        golem.collectDropsFromDeath(player.blockPosition(), drops);
     }
 
     /**
