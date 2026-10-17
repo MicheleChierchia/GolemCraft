@@ -16,7 +16,7 @@ NeoForge Minecraft mod **GolemCraft** (mod id `golemcraft`): custom golem entiti
 
 ## Gotchas (would bite you otherwise)
 
-- `gradle.properties` pins `org.gradle.java.home` to a **machine-specific path** (`/home/miky/.gradle/jdks/...`). On any other machine, override or remove it; the foojay resolver can auto-provision the Java 25 toolchain.
+- La toolchain è **Java 25**, ma il JVM che gira Gradle può essere qualsiasi (>= 21): `settings.gradle` applica `foojay-resolver-convention`, che scarica e cachia il JDK 25 mancante. Nessun `org.gradle.java.home` è impostato — non aggiungerne di macchina-specifici (rompono CI).
 - The `runTestCheck` task in `build.gradle` references `com.golemcraft.golemcraftmod.TestCheck`, which **does not exist** — running it fails. Likewise `entity/ListenerTest.java`, `RendererTest.java`, `VibrationTest.java` are real experiment classes, not tests; there is no unit-test suite.
 - Mod metadata (`neoforge.mods.toml`) is generated from `src/main/templates/META-INF/` by the `generateModMetadata` task with `${...}` property expansion. To add a new mod property: add it to `gradle.properties` **and** to the `replaceProperties` map in `build.gradle`, or the build errors on the missing property.
 - Despite the `data` run config, **no datagen providers are implemented yet** and `src/generated/resources` doesn't exist. Most assets are hand-written JSON under `src/main/resources/assets/golemcraft/` (including modern `items/` item definitions, not just `models/item/`).
