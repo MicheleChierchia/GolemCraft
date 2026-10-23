@@ -237,12 +237,7 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
                 this.setOxidationLevel(this.getOxidationLevel() + 1);
             }
 
-            if (!(this instanceof com.golemcraft.golemcraftmod.entity.FarmerGolemEntity)
-                    && !(this instanceof com.golemcraft.golemcraftmod.entity.SoldierGolemEntity)
-                    && !(this instanceof com.golemcraft.golemcraftmod.entity.FishermanGolemEntity)
-                    && !(this instanceof com.golemcraft.golemcraftmod.entity.LumberjackGolemEntity)
-                    && !(this instanceof com.golemcraft.golemcraftmod.entity.DepthGolemEntity)
-                    && !(this instanceof com.golemcraft.golemcraftmod.entity.ExplorerGolemEntity)) {
+            if (this.shouldSyncSlot0ToMainHand()) {
                 ItemStack slot0 = this.inventory.getItem(0);
                 ItemStack hand = this.getItemInHand(InteractionHand.MAIN_HAND);
                 if (!ItemStack.isSameItemSameComponents(slot0, hand) || slot0.getCount() != hand.getCount()) {
@@ -250,6 +245,15 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
                 }
             }
         }
+    }
+
+    protected boolean shouldSyncSlot0ToMainHand() {
+        return !(this instanceof com.golemcraft.golemcraftmod.entity.FarmerGolemEntity)
+                && !(this instanceof com.golemcraft.golemcraftmod.entity.SoldierGolemEntity)
+                && !(this instanceof com.golemcraft.golemcraftmod.entity.FishermanGolemEntity)
+                && !(this instanceof com.golemcraft.golemcraftmod.entity.LumberjackGolemEntity)
+                && !(this instanceof com.golemcraft.golemcraftmod.entity.DepthGolemEntity)
+                && !(this instanceof com.golemcraft.golemcraftmod.entity.ExplorerGolemEntity);
     }
 
     protected void copyBaseDataTo(BaseGolemEntity other, Player player) {
@@ -351,15 +355,7 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
         }
         
         if (this.getOxidationLevel() == 3) {
-            if (damageSource.getEntity() instanceof Player player && player.getItemInHand(InteractionHand.MAIN_HAND).is(net.minecraft.tags.ItemTags.PICKAXES)) {
-                // Drop as item
-                net.minecraft.world.item.Item dropItem = com.golemcraft.golemcraftmod.registry.ModBlocks.BASE_GOLEM_ITEM.get();
-                if (dropItem != net.minecraft.world.item.Items.AIR) {
-                    this.spawnAtLocation(level, dropItem);
-                }
-                this.discard();
-            }
-            return false; // Statue is immune to other damage and acts like a block
+            return false; // Statue is intangible and immune to all damage
         }
         return super.hurtServer(level, damageSource, amount);
     }

@@ -5,16 +5,21 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.ChestBlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.EnumSet;
-import java.util.Optional;
+import java.util.List;
 
 public class DepositInChestGoal extends Goal {
     private final BaseGolemEntity golem;
     private BlockPos targetChestPos;
     private int depositTicks;
+    private int searchCooldown = 0;
 
     public DepositInChestGoal(BaseGolemEntity golem) {
         this.golem = golem;
@@ -24,6 +29,10 @@ public class DepositInChestGoal extends Goal {
     @Override
     public boolean canUse() {
         if (this.golem.actionCooldown > 0) return false;
+        if (this.searchCooldown > 0) {
+            this.searchCooldown--;
+            return false;
+        }
         if (this.golem instanceof com.golemcraft.golemcraftmod.entity.LumberjackGolemEntity lumberjack && lumberjack.isChopping()) {
             return false;
         }
@@ -37,22 +46,36 @@ public class DepositInChestGoal extends Goal {
             return false;
         }
 
-
-        // Search for nearest chest within 10 blocks
+        // Search for nearest container within 10 blocks
         BlockPos currentPos = this.golem.blockPosition();
-        Optional<BlockPos> nearestChest = BlockPos.betweenClosedStream(
-                currentPos.offset(-10, -3, -10),
-                currentPos.offset(10, 3, 10)
-        ).map(BlockPos::immutable)
-         .filter(pos -> this.golem.level().getBlockEntity(pos) instanceof ChestBlockEntity)
-         .filter(pos -> this.golem.getNavigation().createPath(pos, 1) != null || this.golem.getNavigation().createPath(pos.above(), 1) != null)
-         .min(java.util.Comparator.comparingDouble(pos -> currentPos.distSqr(pos)));
+        List<BlockPos> candidateContainers = new ArrayList<>();
 
-        if (nearestChest.isPresent()) {
-            this.targetChestPos = nearestChest.get();
-            return true;
+        for (BlockPos pos : BlockPos.betweenClosed(currentPos.offset(-10, -3, -10), currentPos.offset(10, 3, 10))) {
+            BlockEntity be = this.golem.level().getBlockEntity(pos);
+            if (be instanceof Container) {
+                candidateContainers.add(pos.immutable());
+            }
         }
 
+        if (candidateContainers.isEmpty()) {
+            this.searchCooldown = 40;
+            return false;
+        }
+
+        candidateContainers.sort(Comparator.comparingDouble(currentPos::distSqr));
+
+        for (BlockPos pos : candidateContainers) {
+            net.minecraft.world.level.pathfinder.Path path = this.golem.getNavigation().createPath(pos, 1);
+            if (path == null) {
+                path = this.golem.getNavigation().createPath(pos.above(), 1);
+            }
+            if (path != null && path.canReach()) {
+                this.targetChestPos = pos;
+                return true;
+            }
+        }
+
+        this.searchCooldown = 30;
         return false;
     }
 
@@ -69,10 +92,11 @@ public class DepositInChestGoal extends Goal {
                 this.golem.getNavigation().stop();
                 this.golem.getLookControl().setLookAt(this.targetChestPos.getX() + 0.5D, this.targetChestPos.getY() + 0.5D, this.targetChestPos.getZ() + 0.5D);
 
+                Container container = getContainerAt(this.targetChestPos);
+
                 if (this.depositTicks == 0) {
                     this.golem.setAttackAnimTicks(10);
-                    BlockEntity blockEntity = this.golem.level().getBlockEntity(this.targetChestPos);
-                    if (blockEntity instanceof Container container) {
+                    if (container != null) {
                         container.startOpen(this.golem);
                     }
                     this.golem.setRummaging(true);
@@ -81,34 +105,29 @@ public class DepositInChestGoal extends Goal {
                 this.depositTicks++;
 
                 if (this.depositTicks >= 30) {
-                    // Deposit item
-                    BlockEntity blockEntity = this.golem.level().getBlockEntity(this.targetChestPos);
-                    if (blockEntity instanceof Container container) {
+                    // Deposit items
+                    if (container != null) {
+                        boolean modified = false;
                         for (int i = 0; i < this.golem.getInventory().getContainerSize(); i++) {
                             ItemStack stack = this.golem.getInventory().getItem(i);
-                            if (!stack.isEmpty()) {
-                                if (this.golem instanceof com.golemcraft.golemcraftmod.entity.FarmerGolemEntity && stack.getItem() instanceof net.minecraft.world.item.HoeItem) {
-                                    continue; // Keep hoes!
-                                }
-                                if (this.golem instanceof com.golemcraft.golemcraftmod.entity.FishermanGolemEntity && stack.getItem() instanceof net.minecraft.world.item.FishingRodItem) {
-                                    continue; // Keep fishing rods!
-                                }
-                                if (this.golem instanceof com.golemcraft.golemcraftmod.entity.LumberjackGolemEntity && stack.getItem() instanceof net.minecraft.world.item.AxeItem) {
-                                    continue; // Keep axes!
-                                }
+                            if (!stack.isEmpty() && !shouldKeepItem(stack)) {
                                 ItemStack remainder = insertItem(container, stack.copy());
                                 this.golem.getInventory().setItem(i, remainder);
+                                modified = true;
                             }
                         }
-                    }
-                    if (blockEntity instanceof Container container) {
+                        if (modified) {
+                            container.setChanged();
+                        }
                         container.stopOpen(this.golem);
                     }
                     this.golem.setRummaging(false);
                     this.targetChestPos = null; // Done
                     this.golem.actionCooldown = 15;
-                    if (!(this.golem instanceof com.golemcraft.golemcraftmod.entity.FarmerGolemEntity) && !(this.golem instanceof com.golemcraft.golemcraftmod.entity.FishermanGolemEntity) && !(this.golem instanceof com.golemcraft.golemcraftmod.entity.LumberjackGolemEntity)) {
-                        this.golem.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, this.golem.getInventory().getItem(0).copy()); // Update visual item
+                    if (!(this.golem instanceof com.golemcraft.golemcraftmod.entity.FarmerGolemEntity)
+                            && !(this.golem instanceof com.golemcraft.golemcraftmod.entity.FishermanGolemEntity)
+                            && !(this.golem instanceof com.golemcraft.golemcraftmod.entity.LumberjackGolemEntity)) {
+                        this.golem.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, this.golem.getInventory().getItem(0).copy());
                     }
                 }
             } else {
@@ -119,7 +138,20 @@ public class DepositInChestGoal extends Goal {
             }
         }
     }
-    
+
+    private Container getContainerAt(BlockPos pos) {
+        Level level = this.golem.level();
+        BlockState state = level.getBlockState(pos);
+        if (state.getBlock() instanceof ChestBlock chestBlock) {
+            return ChestBlock.getContainer(chestBlock, state, level, pos, true);
+        }
+        BlockEntity be = level.getBlockEntity(pos);
+        if (be instanceof Container container) {
+            return container;
+        }
+        return null;
+    }
+
     private void moveToChest() {
         net.minecraft.world.level.pathfinder.Path path = this.golem.getNavigation().createPath(this.targetChestPos, 1);
         if (path == null) {
@@ -150,19 +182,31 @@ public class DepositInChestGoal extends Goal {
         return stack; // Return remainder if no space
     }
 
+    private boolean shouldKeepItem(ItemStack stack) {
+        if (this.golem instanceof com.golemcraft.golemcraftmod.entity.FarmerGolemEntity) {
+            if (stack.getItem() instanceof net.minecraft.world.item.HoeItem) return true;
+            if (stack.getItem() instanceof net.minecraft.world.item.BlockItem bi) {
+                net.minecraft.world.level.block.Block b = bi.getBlock();
+                if (b instanceof net.minecraft.world.level.block.CropBlock || b instanceof net.minecraft.world.level.block.StemBlock) {
+                    return true;
+                }
+            }
+            if (stack.is(net.minecraft.tags.ItemTags.VILLAGER_PLANTABLE_SEEDS)) return true;
+        }
+        if (this.golem instanceof com.golemcraft.golemcraftmod.entity.FishermanGolemEntity) {
+            if (stack.getItem() instanceof net.minecraft.world.item.FishingRodItem) return true;
+        }
+        if (this.golem instanceof com.golemcraft.golemcraftmod.entity.LumberjackGolemEntity) {
+            if (stack.getItem() instanceof net.minecraft.world.item.AxeItem) return true;
+            if (stack.is(net.minecraft.tags.ItemTags.SAPLINGS)) return true;
+        }
+        return false;
+    }
+
     private boolean hasItemsToDeposit() {
         for (int i = 0; i < this.golem.getInventory().getContainerSize(); i++) {
             ItemStack stack = this.golem.getInventory().getItem(i);
-            if (!stack.isEmpty()) {
-                if (this.golem instanceof com.golemcraft.golemcraftmod.entity.FarmerGolemEntity && stack.getItem() instanceof net.minecraft.world.item.HoeItem) {
-                    continue;
-                }
-                if (this.golem instanceof com.golemcraft.golemcraftmod.entity.FishermanGolemEntity && stack.getItem() instanceof net.minecraft.world.item.FishingRodItem) {
-                    continue;
-                }
-                if (this.golem instanceof com.golemcraft.golemcraftmod.entity.LumberjackGolemEntity && stack.getItem() instanceof net.minecraft.world.item.AxeItem) {
-                    continue;
-                }
+            if (!stack.isEmpty() && !shouldKeepItem(stack)) {
                 return true;
             }
         }

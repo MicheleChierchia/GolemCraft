@@ -47,7 +47,10 @@ public class FarmerHarvestGoal extends Goal {
             }
         }
 
-        if (validCrops.isEmpty()) return false;
+        if (validCrops.isEmpty()) {
+            this.scanCooldown = 20;
+            return false;
+        }
 
         validCrops.sort(java.util.Comparator.comparingDouble(currentPos::distSqr));
 
@@ -59,7 +62,7 @@ public class FarmerHarvestGoal extends Goal {
             }
         }
 
-        this.scanCooldown = 10;
+        this.scanCooldown = 20;
         return false;
     }
 

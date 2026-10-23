@@ -11,6 +11,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Optional;
 
 public class PlantSaplingGoal extends Goal {
@@ -19,6 +20,7 @@ public class PlantSaplingGoal extends Goal {
     private BlockPos targetPos;
     private int plantTicks;
     private boolean isGiant;
+    private int scanCooldown = 0;
 
     public PlantSaplingGoal(LumberjackGolemEntity golem, double speed) {
         this.golem = golem;
@@ -29,6 +31,10 @@ public class PlantSaplingGoal extends Goal {
     @Override
     public boolean canUse() {
         if (golem.isChopping()) return false;
+        if (this.scanCooldown > 0) {
+            this.scanCooldown--;
+            return false;
+        }
 
         // Check if we have a sapling
         int index = getSaplingIndex();
@@ -47,7 +53,7 @@ public class PlantSaplingGoal extends Goal {
 
         // Find a dirt/grass block with air above it
         BlockPos currentPos = this.golem.blockPosition();
-        Optional<BlockPos> nearestPlantSpot = BlockPos.betweenClosedStream(
+        List<BlockPos> candidates = BlockPos.betweenClosedStream(
                 currentPos.offset(-8, -2, -8),
                 currentPos.offset(8, 2, 8)
         ).map(BlockPos::immutable)
@@ -90,14 +96,24 @@ public class PlantSaplingGoal extends Goal {
              }
              return true;
          })
-         .filter(pos -> this.golem.getNavigation().createPath(pos, 1) != null)
-         .min(java.util.Comparator.comparingDouble(pos -> currentPos.distSqr(pos)));
+         .toList();
 
-        if (nearestPlantSpot.isPresent()) {
-            this.targetPos = nearestPlantSpot.get();
-            return true;
+        if (candidates.isEmpty()) {
+            this.scanCooldown = 30;
+            return false;
         }
 
+        java.util.List<BlockPos> sortedCandidates = new java.util.ArrayList<>(candidates);
+        sortedCandidates.sort(java.util.Comparator.comparingDouble(currentPos::distSqr));
+
+        for (BlockPos pos : sortedCandidates) {
+            if (this.golem.getNavigation().createPath(pos, 1) != null) {
+                this.targetPos = pos;
+                return true;
+            }
+        }
+
+        this.scanCooldown = 30;
         return false;
     }
 

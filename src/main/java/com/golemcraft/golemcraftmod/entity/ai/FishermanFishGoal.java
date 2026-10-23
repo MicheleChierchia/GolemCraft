@@ -28,6 +28,7 @@ public class FishermanFishGoal extends Goal {
     private BlockPos targetWaterPos;
     private GolemFishingHook fishingHook;
     private int waitBeforeCasting;
+    private int scanCooldown = 0;
 
     public FishermanFishGoal(FishermanGolemEntity golem) {
         this.golem = golem;
@@ -43,6 +44,10 @@ public class FishermanFishGoal extends Goal {
     public boolean canUse() {
         if (this.golem.actionCooldown > 0) return false;
         if (this.golem.getOxidationLevel() == 3) return false;
+        if (this.scanCooldown > 0) {
+            this.scanCooldown--;
+            return false;
+        }
         if (isInventoryFull()) return false;
 
         ItemStack handItem = this.golem.getItemInHand(InteractionHand.MAIN_HAND);
@@ -232,6 +237,7 @@ public class FishermanFishGoal extends Goal {
             this.targetWaterPos = nearestWater.get();
             return true;
         }
+        this.scanCooldown = 40;
         return false;
     }
 

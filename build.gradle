@@ -189,8 +189,3 @@ idea {
     }
 }
 
-
-tasks.register('runTestCheck', JavaExec) {
-    mainClass = 'com.golemcraft.golemcraftmod.TestCheck'
-    classpath = sourceSets.main.runtimeClasspath
-}

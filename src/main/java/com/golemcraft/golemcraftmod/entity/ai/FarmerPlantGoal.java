@@ -49,10 +49,13 @@ public class FarmerPlantGoal extends Goal {
             }
         }
         
-        if (validBlocks.isEmpty()) return false;
-        
+        if (validBlocks.isEmpty()) {
+            this.scanCooldown = 20;
+            return false;
+        }
+
         validBlocks.sort(java.util.Comparator.comparingDouble(currentPos::distSqr));
-        
+
         for (BlockPos pos : validBlocks) {
             net.minecraft.world.level.pathfinder.Path path = this.golem.getNavigation().createPath(pos, 1);
             if (path != null && path.canReach()) {
@@ -61,7 +64,7 @@ public class FarmerPlantGoal extends Goal {
             }
         }
 
-        this.scanCooldown = 10;
+        this.scanCooldown = 20;
         return false;
     }
 

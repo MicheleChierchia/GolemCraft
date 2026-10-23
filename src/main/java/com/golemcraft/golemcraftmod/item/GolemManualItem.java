@@ -22,10 +22,16 @@ public class GolemManualItem extends Item {
     @Override
     public InteractionResult use(Level level, Player player, InteractionHand hand) {
         if (level.isClientSide()) {
-            com.golemcraft.golemcraftmod.GolemCraftClient.openManualScreen();
+            ClientHandler.openScreen();
         }
         player.playSound(SoundEvents.BOOK_PAGE_TURN, 1.0F, 1.0F);
         return InteractionResult.SUCCESS;
+    }
+
+    private static class ClientHandler {
+        private static void openScreen() {
+            com.golemcraft.golemcraftmod.GolemCraftClient.openManualScreen();
+        }
     }
 
     @Override

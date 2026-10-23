@@ -253,6 +253,14 @@ public class ExplorerGolemEntity extends BaseGolemEntity {
         super.remove(reason);
     }
 
+    @Override
+    public void onRemovedFromLevel() {
+        if (this.level() instanceof ServerLevel serverLevel) {
+            removeLightBlock(serverLevel);
+        }
+        super.onRemovedFromLevel();
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
     //  Linked compasses
     // ─────────────────────────────────────────────────────────────────────────

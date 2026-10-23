@@ -36,15 +36,15 @@ public record GolemBeaconUpdatePacket(BlockPos pos, int t1, int t2, int t3, int 
         context.enqueueWork(() -> {
             if (context.player() instanceof ServerPlayer player) {
                 Level level = player.level();
-                if (level.isLoaded(packet.pos) && level.getBlockEntity(packet.pos) instanceof GolemBeaconBlockEntity be) {
-                    // Controlla se il menu è aperto o se l'utente ha inserito qualcosa (per sicurezza)
-                    if (player.containerMenu instanceof GolemBeaconMenu menu) {
+                if (level.isLoaded(packet.pos)
+                        && player.distanceToSqr(packet.pos.getX() + 0.5D, packet.pos.getY() + 0.5D, packet.pos.getZ() + 0.5D) <= 64.0D
+                        && level.getBlockEntity(packet.pos) instanceof GolemBeaconBlockEntity be) {
+                    if (player.containerMenu instanceof GolemBeaconMenu menu && menu.getBeaconPos().equals(packet.pos)) {
                         if (!menu.getSlot(0).getItem().isEmpty()) {
                             menu.getSlot(0).remove(1);
+                            be.setEffects(packet.t1, packet.t2, packet.t3, packet.sec);
                         }
                     }
-                    // Ma SALVA GLI EFFETTI a prescindere per prevenire il bug di desync (nel caso il menu si fosse già chiuso sul server)
-                    be.setEffects(packet.t1, packet.t2, packet.t3, packet.sec);
                 }
             }
         });
