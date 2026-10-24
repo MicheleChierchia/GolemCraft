@@ -2,6 +2,16 @@
 
 NeoForge Minecraft mod **GolemCraft** (mod id `golemcraft`): custom golem entities, AI goals, a Golem Beacon block/menu, Golem Manual/Compass items, custom renderers and screens. Single Gradle module, no subprojects.
 
+## Agent Protocol & Token Optimization
+
+- **Code navigation:** Do NOT read whole files or recursively scan directories to explore the architecture. Always use `codegraph_explore` to inspect signatures, symbols, classes, and AST dependencies.
+- **Contextual searches:** Use `context-mode` tools (`ctx_search`, `ctx_execute`) for targeted lookups without loading irrelevant files into context.
+- **Persistent memory:** Check `projectmem` before tackling complex bugs or architectural choices. Record stable fixes with `record_fix` and architectural decisions with `add_decision`.
+- **Code modifications:**
+  - Provide targeted micro-diffs or patches only. Never rewrite or duplicate entire existing classes.
+  - Do not add verbose/obvious comments or emojis in source code.
+- **Output:** Keep explanations strictly concise and technical; eliminate conversational preambles and pleasantries.
+
 ## Stack
 
 - Minecraft **26.2**, NeoForge **26.2.0.67**, **Java 25** toolchain (see `gradle.properties` / `build.gradle`).
