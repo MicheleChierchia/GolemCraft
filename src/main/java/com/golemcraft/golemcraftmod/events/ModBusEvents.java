@@ -19,5 +19,6 @@ public class ModBusEvents {
         event.put(ModEntities.LUMBERJACK_GOLEM.get(), com.golemcraft.golemcraftmod.entity.LumberjackGolemEntity.createAttributes().build());
         event.put(ModEntities.DEPTH_GOLEM.get(), com.golemcraft.golemcraftmod.entity.DepthGolemEntity.createAttributes().build());
         event.put(ModEntities.EXPLORER_GOLEM.get(), com.golemcraft.golemcraftmod.entity.ExplorerGolemEntity.createAttributes().build());
+        event.put(ModEntities.LEVELER_GOLEM.get(), com.golemcraft.golemcraftmod.entity.LevelerGolemEntity.createAttributes().build());
     }
 }

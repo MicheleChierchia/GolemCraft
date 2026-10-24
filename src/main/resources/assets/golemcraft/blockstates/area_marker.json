@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "lit=false": {
+      "model": "golemcraft:block/area_marker"
+    },
+    "lit=true": {
+      "model": "golemcraft:block/area_marker_lit"
+    }
+  }
+}

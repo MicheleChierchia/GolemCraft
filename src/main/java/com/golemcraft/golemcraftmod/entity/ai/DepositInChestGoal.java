@@ -110,7 +110,7 @@ public class DepositInChestGoal extends Goal {
                         boolean modified = false;
                         for (int i = 0; i < this.golem.getInventory().getContainerSize(); i++) {
                             ItemStack stack = this.golem.getInventory().getItem(i);
-                            if (!stack.isEmpty() && !shouldKeepItem(stack)) {
+                            if (!stack.isEmpty() && !shouldKeepItem(stack, i)) {
                                 ItemStack remainder = insertItem(container, stack.copy());
                                 this.golem.getInventory().setItem(i, remainder);
                                 modified = true;
@@ -126,7 +126,8 @@ public class DepositInChestGoal extends Goal {
                     this.golem.actionCooldown = 15;
                     if (!(this.golem instanceof com.golemcraft.golemcraftmod.entity.FarmerGolemEntity)
                             && !(this.golem instanceof com.golemcraft.golemcraftmod.entity.FishermanGolemEntity)
-                            && !(this.golem instanceof com.golemcraft.golemcraftmod.entity.LumberjackGolemEntity)) {
+                            && !(this.golem instanceof com.golemcraft.golemcraftmod.entity.LumberjackGolemEntity)
+                            && !(this.golem instanceof com.golemcraft.golemcraftmod.entity.LevelerGolemEntity)) {
                         this.golem.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, this.golem.getInventory().getItem(0).copy());
                     }
                 }
@@ -182,7 +183,7 @@ public class DepositInChestGoal extends Goal {
         return stack; // Return remainder if no space
     }
 
-    private boolean shouldKeepItem(ItemStack stack) {
+    private boolean shouldKeepItem(ItemStack stack, int slotIndex) {
         if (this.golem instanceof com.golemcraft.golemcraftmod.entity.FarmerGolemEntity) {
             if (stack.getItem() instanceof net.minecraft.world.item.HoeItem) return true;
             if (stack.getItem() instanceof net.minecraft.world.item.BlockItem bi) {
@@ -200,13 +201,40 @@ public class DepositInChestGoal extends Goal {
             if (stack.getItem() instanceof net.minecraft.world.item.AxeItem) return true;
             if (stack.is(net.minecraft.tags.ItemTags.SAPLINGS)) return true;
         }
+        if (this.golem instanceof com.golemcraft.golemcraftmod.entity.LevelerGolemEntity) {
+            if (stack.getItem() instanceof net.minecraft.world.item.ShovelItem || stack.is(net.minecraft.tags.ItemTags.SHOVELS)) return true;
+            if (isFillerBlock(stack)) {
+                return slotIndex == getFirstFillerSlot();
+            }
+        }
+        return false;
+    }
+
+    private int getFirstFillerSlot() {
+        for (int i = 0; i < this.golem.getInventory().getContainerSize(); i++) {
+            ItemStack stack = this.golem.getInventory().getItem(i);
+            if (!stack.isEmpty() && isFillerBlock(stack)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private boolean isFillerBlock(ItemStack stack) {
+        if (stack.getItem() instanceof net.minecraft.world.item.BlockItem bi) {
+            net.minecraft.world.level.block.Block b = bi.getBlock();
+            return b.defaultBlockState().is(net.minecraft.tags.BlockTags.DIRT) ||
+                   b.defaultBlockState().is(net.minecraft.tags.BlockTags.SAND) ||
+                   b == net.minecraft.world.level.block.Blocks.GRAVEL ||
+                   b == net.minecraft.world.level.block.Blocks.COBBLESTONE;
+        }
         return false;
     }
 
     private boolean hasItemsToDeposit() {
         for (int i = 0; i < this.golem.getInventory().getContainerSize(); i++) {
             ItemStack stack = this.golem.getInventory().getItem(i);
-            if (!stack.isEmpty() && !shouldKeepItem(stack)) {
+            if (!stack.isEmpty() && !shouldKeepItem(stack, i)) {
                 return true;
             }
         }

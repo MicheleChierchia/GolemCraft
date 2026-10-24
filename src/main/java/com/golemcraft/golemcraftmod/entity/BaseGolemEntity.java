@@ -253,7 +253,8 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
                 && !(this instanceof com.golemcraft.golemcraftmod.entity.FishermanGolemEntity)
                 && !(this instanceof com.golemcraft.golemcraftmod.entity.LumberjackGolemEntity)
                 && !(this instanceof com.golemcraft.golemcraftmod.entity.DepthGolemEntity)
-                && !(this instanceof com.golemcraft.golemcraftmod.entity.ExplorerGolemEntity);
+                && !(this instanceof com.golemcraft.golemcraftmod.entity.ExplorerGolemEntity)
+                && !(this instanceof com.golemcraft.golemcraftmod.entity.LevelerGolemEntity);
     }
 
     protected void copyBaseDataTo(BaseGolemEntity other, Player player) {
@@ -379,6 +380,15 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
 
     public SimpleContainer getInventory() {
         return inventory;
+    }
+
+    public boolean isInventoryFull() {
+        for (int i = 0; i < this.inventory.getContainerSize(); i++) {
+            if (this.inventory.getItem(i).isEmpty()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override
@@ -568,6 +578,34 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
                 return InteractionResult.SUCCESS;
             }
 
+            if ((itemstack.getItem() instanceof net.minecraft.world.item.ShovelItem || itemstack.is(net.minecraft.tags.ItemTags.SHOVELS)) && this.getOxidationLevel() == 0 && !this.isWaxed()) {
+                if (!this.level().isClientSide()) {
+                    com.golemcraft.golemcraftmod.entity.LevelerGolemEntity levelerGolem = com.golemcraft.golemcraftmod.registry.ModEntities.LEVELER_GOLEM.get().create(this.level(), net.minecraft.world.entity.EntitySpawnReason.CONVERSION);
+                    if (levelerGolem != null) {
+                        this.copyBaseDataTo(levelerGolem, player);
+
+                        // Equip the shovel directly to hand
+                        ItemStack shovelStack = itemstack.copy();
+                        shovelStack.setCount(1);
+                        levelerGolem.setItemInHand(InteractionHand.MAIN_HAND, shovelStack);
+                        levelerGolem.setDropChance(net.minecraft.world.entity.EquipmentSlot.MAINHAND, 0.0F);
+
+                        this.level().addFreshEntity(levelerGolem);
+
+                        // Particles and sounds
+                        net.minecraft.server.level.ServerLevel serverLevel = (net.minecraft.server.level.ServerLevel) this.level();
+                        serverLevel.sendParticles(ParticleTypes.HAPPY_VILLAGER, this.getX(), this.getY() + 0.5D, this.getZ(), 15, 0.2D, 0.2D, 0.2D, 0.0D);
+                        this.playSound(SoundEvents.ZOMBIE_VILLAGER_CURE, 1.0F, 1.0F);
+
+                        if (!player.getAbilities().instabuild) {
+                            itemstack.shrink(1);
+                        }
+                        this.discard();
+                    }
+                }
+                return InteractionResult.SUCCESS;
+            }
+
             if (itemstack.getItem() instanceof net.minecraft.world.item.AxeItem && this.getOxidationLevel() == 0 && !this.isWaxed()) {
                 if (!this.level().isClientSide()) {
                     LumberjackGolemEntity lumberjackGolem = ModEntities.LUMBERJACK_GOLEM.get().create(this.level(), net.minecraft.world.entity.EntitySpawnReason.CONVERSION);
@@ -686,6 +724,8 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
                                 itemstack.is(net.minecraft.world.item.Items.TRIDENT) ||
                                 itemstack.is(net.minecraft.world.item.Items.LEAD) ||
                                 itemstack.is(net.minecraft.tags.ItemTags.PICKAXES) ||
+                                itemstack.is(net.minecraft.tags.ItemTags.SHOVELS) ||
+                                itemstack.getItem() instanceof net.minecraft.world.item.ShovelItem ||
                                 itemstack.getItem() instanceof net.minecraft.world.item.FishingRodItem;
 
         // Require sneaking (Shift+Right Click) to open inventory, to completely avoid tool conflicts

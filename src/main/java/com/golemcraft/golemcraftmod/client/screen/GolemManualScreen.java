@@ -38,9 +38,9 @@ public class GolemManualScreen extends Screen {
     private static final CategoryTab[] TABS = new CategoryTab[] {
         new CategoryTab("book.golemcraft.tab.basics", 0, new ItemStack(ModBlocks.BASE_GOLEM_ITEM.get())),
         new CategoryTab("book.golemcraft.tab.professions", 4, new ItemStack(Items.IRON_HOE)),
-        new CategoryTab("book.golemcraft.tab.beacon", 11, new ItemStack(ModBlocks.GOLEM_BEACON_ITEM.get())),
-        new CategoryTab("book.golemcraft.tab.recipes", 13, new ItemStack(Blocks.CRAFTING_TABLE)),
-        new CategoryTab("book.golemcraft.tab.automation", 16, new ItemStack(ModBlocks.GOLEM_COMPASS_ITEM.get()))
+        new CategoryTab("book.golemcraft.tab.beacon", 12, new ItemStack(ModBlocks.GOLEM_BEACON_ITEM.get())),
+        new CategoryTab("book.golemcraft.tab.recipes", 14, new ItemStack(Blocks.CRAFTING_TABLE)),
+        new CategoryTab("book.golemcraft.tab.automation", 18, new ItemStack(ModBlocks.GOLEM_COMPASS_ITEM.get()))
     };
 
     private static int dummyEntityIdCounter = -10000;
@@ -108,7 +108,12 @@ public class GolemManualScreen extends Screen {
                 "book.golemcraft.page11.title", "book.golemcraft.page11.subtitle", "book.golemcraft.page11.content",
                 "entity.explorer", ModEntities.EXPLORER_GOLEM.get(), new ItemStack(Items.RECOVERY_COMPASS), 0, false, null, null, ItemStack.EMPTY, "book.golemcraft.badge.explorer"));
 
-        // 11: Il Faro dei Golem
+        // 11: Golem Spianatore
+        pages.add(new ManualPage(PageType.ENTITY, 1,
+                "book.golemcraft.page_leveler.title", "book.golemcraft.page_leveler.subtitle", "book.golemcraft.page_leveler.content",
+                "entity.leveler", ModEntities.LEVELER_GOLEM.get(), new ItemStack(Items.IRON_SHOVEL), 0, false, null, null, ItemStack.EMPTY, "book.golemcraft.badge.excavator"));
+
+        // 12: Il Faro dei Golem
         pages.add(new ManualPage(PageType.BLOCK_ITEM, 2,
                 "book.golemcraft.page12.title", "book.golemcraft.page12.subtitle", "book.golemcraft.page12.content",
                 null, null, ItemStack.EMPTY, 0, false, new ItemStack(ModBlocks.GOLEM_BEACON_ITEM.get()), null, ItemStack.EMPTY, "book.golemcraft.badge.beacon"));
@@ -138,7 +143,7 @@ public class GolemManualScreen extends Screen {
                 "book.golemcraft.page15.title", "book.golemcraft.page15.subtitle", "book.golemcraft.page15.content",
                 null, null, ItemStack.EMPTY, 0, false, null, manualGrid, new ItemStack(ModBlocks.GOLEM_MANUAL_ITEM.get()), "book.golemcraft.badge.crafting"));
 
-        // 15: Crafting Bussola dei Golem
+        // 16: Crafting Bussola dei Golem
         ItemStack[] compassGrid = new ItemStack[] {
                 new ItemStack(Items.COPPER_INGOT), new ItemStack(Items.COPPER_INGOT), new ItemStack(Items.COPPER_INGOT),
                 new ItemStack(Items.COPPER_INGOT), new ItemStack(Items.COMPASS), new ItemStack(Items.COPPER_INGOT),
@@ -148,7 +153,17 @@ public class GolemManualScreen extends Screen {
                 "book.golemcraft.page16.title", "book.golemcraft.page16.subtitle", "book.golemcraft.page16.content",
                 null, null, ItemStack.EMPTY, 0, false, null, compassGrid, new ItemStack(ModBlocks.GOLEM_COMPASS_ITEM.get()), "book.golemcraft.badge.crafting"));
 
-        // 16: Bussola & Deposito Casse
+        // 17: Crafting Marker d'Area
+        ItemStack[] markerGrid = new ItemStack[] {
+                ItemStack.EMPTY, ItemStack.EMPTY, ItemStack.EMPTY,
+                ItemStack.EMPTY, new ItemStack(Items.COPPER_INGOT), ItemStack.EMPTY,
+                ItemStack.EMPTY, new ItemStack(Items.REDSTONE_TORCH), ItemStack.EMPTY
+        };
+        pages.add(new ManualPage(PageType.CRAFTING, 3,
+                "book.golemcraft.page_marker.title", "book.golemcraft.page_marker.subtitle", "book.golemcraft.page_marker.content",
+                null, null, ItemStack.EMPTY, 0, false, null, markerGrid, new ItemStack(ModBlocks.AREA_MARKER_ITEM.get()), "book.golemcraft.badge.crafting"));
+
+        // 18: Bussola & Deposito Casse
         pages.add(new ManualPage(PageType.BLOCK_ITEM, 4,
                 "book.golemcraft.page17.title", "book.golemcraft.page17.subtitle", "book.golemcraft.page17.content",
                 null, null, ItemStack.EMPTY, 0, false, new ItemStack(Blocks.CHEST), null, ItemStack.EMPTY, "book.golemcraft.badge.automation"));

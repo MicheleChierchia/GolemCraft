@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
-    "golemcraft:golem_beacon"
+    "golemcraft:golem_beacon",
+    "golemcraft:area_marker"
   ]
 }

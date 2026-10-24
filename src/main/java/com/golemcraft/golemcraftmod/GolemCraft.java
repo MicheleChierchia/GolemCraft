@@ -67,6 +67,7 @@ public class GolemCraft {
         }
         if (event.getTabKey() == CreativeModeTabs.FUNCTIONAL_BLOCKS) {
             event.accept(com.golemcraft.golemcraftmod.registry.ModBlocks.GOLEM_BEACON_ITEM);
+            event.accept(com.golemcraft.golemcraftmod.registry.ModBlocks.AREA_MARKER_ITEM);
         }
     }
     // You can use SubscribeEvent and let the Event Bus discover methods to call

@@ -10,9 +10,11 @@ import net.minecraft.resources.Identifier;
 
 public class BaseGolemEyesLayer extends EyesLayer<BaseGolemRenderState, BaseGolemModel> {
     private static final RenderType EYES = RenderTypes.eyes(Identifier.fromNamespaceAndPath(GolemCraft.MODID, "textures/entity/base_golem_eyes.png"));
+    private final RenderLayerParent<BaseGolemRenderState, BaseGolemModel> parentRenderer;
 
     public BaseGolemEyesLayer(RenderLayerParent<BaseGolemRenderState, BaseGolemModel> renderer) {
         super(renderer);
+        this.parentRenderer = renderer;
     }
 
     @Override
@@ -23,6 +25,8 @@ public class BaseGolemEyesLayer extends EyesLayer<BaseGolemRenderState, BaseGole
     @Override
     public void submit(com.mojang.blaze3d.vertex.PoseStack poseStack, net.minecraft.client.renderer.SubmitNodeCollector submitNodeCollector, int packedLight, BaseGolemRenderState state, float limbSwing, float limbSwingAmount) {
         if (state.isDepthGolem || state.isExplorerGolem) return;
+        // Only render base cyan eyes if the golem is specifically a Base Golem (not a variant like Flower, Farmer, etc.)
+        if (this.parentRenderer.getClass() != BaseGolemRenderer.class) return;
         if (state.oxidationLevel < 3) {
             super.submit(poseStack, submitNodeCollector, packedLight, state, limbSwing, limbSwingAmount);
         }

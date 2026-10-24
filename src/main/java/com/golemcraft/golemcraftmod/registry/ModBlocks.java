@@ -35,6 +35,16 @@ public class ModBlocks {
 
     public static final DeferredItem<BlockItem> GOLEM_BEACON_ITEM = ITEMS.registerSimpleBlockItem(GOLEM_BEACON);
 
+    public static final DeferredBlock<com.golemcraft.golemcraftmod.block.AreaMarkerBlock> AREA_MARKER = BLOCKS.registerBlock("area_marker",
+            com.golemcraft.golemcraftmod.block.AreaMarkerBlock::new,
+            props -> props.mapColor(MapColor.COLOR_ORANGE)
+                    .strength(0.5F)
+                    .sound(SoundType.COPPER)
+                    .lightLevel(state -> state.getValue(com.golemcraft.golemcraftmod.block.AreaMarkerBlock.LIT) ? 14 : 0)
+                    .noOcclusion());
+
+    public static final DeferredItem<BlockItem> AREA_MARKER_ITEM = ITEMS.registerSimpleBlockItem(AREA_MARKER);
+
     public static void register(IEventBus eventBus) {
         BLOCKS.register(eventBus);
         ITEMS.register(eventBus);

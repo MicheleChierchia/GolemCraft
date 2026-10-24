@@ -24,6 +24,10 @@ public class ModBlockEntities {
             BLOCK_ENTITY_TYPES.register("golem_beacon", () ->
                     new BlockEntityType<>(GolemBeaconBlockEntity::new, ModBlocks.GOLEM_BEACON.get()));
 
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<com.golemcraft.golemcraftmod.block.AreaMarkerBlockEntity>> AREA_MARKER =
+            BLOCK_ENTITY_TYPES.register("area_marker", () ->
+                    new BlockEntityType<>(com.golemcraft.golemcraftmod.block.AreaMarkerBlockEntity::new, ModBlocks.AREA_MARKER.get()));
+
     public static final DeferredHolder<MenuType<?>, MenuType<GolemBeaconMenu>> GOLEM_BEACON_MENU =
             MENU_TYPES.register("golem_beacon", () ->
                     IMenuTypeExtension.create((windowId, inv, data) ->

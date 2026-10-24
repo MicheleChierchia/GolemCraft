@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "C": "minecraft:copper_ingot",
+    "R": "minecraft:redstone_torch"
+  },
+  "pattern": [
+    "C",
+    "R"
+  ],
+  "result": {
+    "id": "golemcraft:area_marker",
+    "count": 2
+  }
+}

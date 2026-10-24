@@ -21,6 +21,7 @@ public class ModCreativeTabs {
                         output.accept(ModBlocks.GOLEM_MANUAL_ITEM.get());
                         output.accept(ModBlocks.BASE_GOLEM_ITEM.get());
                         output.accept(ModBlocks.GOLEM_BEACON_ITEM.get());
+                        output.accept(ModBlocks.AREA_MARKER_ITEM.get());
                         output.accept(ModBlocks.GOLEM_COMPASS_ITEM.get());
                     })
                     .build());

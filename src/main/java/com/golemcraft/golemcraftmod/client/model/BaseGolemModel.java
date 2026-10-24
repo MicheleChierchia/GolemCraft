@@ -209,6 +209,44 @@ public class BaseGolemModel extends EntityModel<BaseGolemRenderState> implements
         return LayerDefinition.create(meshdefinition, 64, 64);
     }
 
+    public static LayerDefinition createLevelerBodyLayer() {
+        MeshDefinition meshdefinition = new MeshDefinition();
+        PartDefinition partdefinition = meshdefinition.getRoot();
+
+        // Testa (pelle in ottone, senza cappello)
+        partdefinition.addOrReplaceChild("head", CubeListBuilder.create()
+                .texOffs(0, 0).addBox(-4.0F, -5.0F, -5.0F, 8.0F, 5.0F, 10.0F)
+                .texOffs(37, 8).addBox(-1.0F, -9.0F, -1.0F, 2.0F, 4.0F, 2.0F)   // Parafulmine (Base)
+                .texOffs(37, 0).addBox(-2.0F, -13.0F, -2.0F, 4.0F, 4.0F, 4.0F)  // Parafulmine (Punta)
+                .texOffs(56, 0).addBox(-1.0F, -3.0F, -7.0F, 2.0F, 3.0F, 2.0F),  // Naso
+                PartPose.offset(0.0F, 13.0F, 0.0F));
+
+        partdefinition.addOrReplaceChild("body", CubeListBuilder.create()
+                .texOffs(0, 15).addBox(-4.0F, 0.0F, -3.0F, 8.0F, 6.0F, 6.0F),
+                PartPose.offset(0.0F, 13.0F, 0.0F));
+
+        partdefinition.addOrReplaceChild("right_arm", CubeListBuilder.create()
+                .texOffs(36, 16).addBox(-1.5F, 0.0F, -2.0F, 3.0F, 10.0F, 4.0F),
+                PartPose.offset(-5.5F, 13.0F, 0.0F));
+
+        partdefinition.addOrReplaceChild("left_arm", CubeListBuilder.create()
+                .texOffs(50, 16).addBox(-1.5F, 0.0F, -2.0F, 3.0F, 10.0F, 4.0F),
+                PartPose.offset(5.5F, 13.0F, 0.0F));
+
+        // Gambe con stivali da lavoro 3D
+        partdefinition.addOrReplaceChild("right_leg", CubeListBuilder.create()
+                .texOffs(0, 27).addBox(-2.0F, 0.0F, -2.0F, 4.0F, 5.0F, 4.0F)
+                .texOffs(0, 54).addBox(-2.2F, 1.9F, -2.2F, 4.2F, 3.2F, 4.4F), // Stivale destro
+                PartPose.offset(-2.0F, 19.0F, 0.0F));
+
+        partdefinition.addOrReplaceChild("left_leg", CubeListBuilder.create()
+                .texOffs(16, 27).addBox(-2.0F, 0.0F, -2.0F, 4.0F, 5.0F, 4.0F)
+                .texOffs(24, 54).addBox(-2.0F, 1.9F, -2.2F, 4.2F, 3.2F, 4.4F), // Stivale sinistro
+                PartPose.offset(2.0F, 19.0F, 0.0F));
+
+        return LayerDefinition.create(meshdefinition, 64, 64);
+    }
+
     @Override
     public void setupAnim(BaseGolemRenderState state) {
         super.setupAnim(state);
