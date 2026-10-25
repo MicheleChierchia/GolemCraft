@@ -674,6 +674,26 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
                 }
                 return InteractionResult.SUCCESS;
             }
+
+            if (itemstack.is(net.minecraft.world.item.Items.TOTEM_OF_UNDYING) && this.getOxidationLevel() == 0 && !this.isWaxed()) {
+                if (!this.level().isClientSide()) {
+                    com.golemcraft.golemcraftmod.entity.TotemGolemEntity totemGolem = com.golemcraft.golemcraftmod.registry.ModEntities.TOTEM_GOLEM.get().create(this.level(), net.minecraft.world.entity.EntitySpawnReason.CONVERSION);
+                    if (totemGolem != null) {
+                        this.copyBaseDataTo(totemGolem, player);
+                        this.level().addFreshEntity(totemGolem);
+
+                        net.minecraft.server.level.ServerLevel serverLevel = (net.minecraft.server.level.ServerLevel) this.level();
+                        serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.TOTEM_OF_UNDYING, this.getX(), this.getY() + 0.5D, this.getZ(), 35, 0.3D, 0.3D, 0.3D, 0.1D);
+                        this.playSound(net.minecraft.sounds.SoundEvents.TOTEM_USE, 1.0F, 1.0F);
+
+                        if (!player.getAbilities().instabuild) {
+                            itemstack.shrink(1);
+                        }
+                        this.discard();
+                    }
+                }
+                return InteractionResult.SUCCESS;
+            }
         }
         
         // Revert to Base Golem with a Brush

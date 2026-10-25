@@ -89,6 +89,45 @@ public class ModEvents {
     public static void onPlayerDeath(LivingDeathEvent event) {
         if (!(event.getEntity() instanceof Player player)) return;
         if (player.level().isClientSide()) return;
+
+        // 1. Totem Golem rescue check
+        if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer
+                && !event.getSource().is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)) {
+            List<com.golemcraft.golemcraftmod.entity.TotemGolemEntity> nearbyTotems = serverPlayer.level().getEntitiesOfClass(
+                    com.golemcraft.golemcraftmod.entity.TotemGolemEntity.class,
+                    serverPlayer.getBoundingBox().inflate(16.0D),
+                    g -> g.isAlive() && serverPlayer.getUUID().equals(g.getOwnerUUID())
+            );
+
+            if (!nearbyTotems.isEmpty()) {
+                // Pick closest totem golem
+                nearbyTotems.sort(Comparator.comparingDouble(g -> g.distanceToSqr(serverPlayer)));
+                com.golemcraft.golemcraftmod.entity.TotemGolemEntity savingGolem = nearbyTotems.get(0);
+
+                // Cancel death
+                event.setCanceled(true);
+
+                // Apply vanilla Totem of Undying resuscitation & buffs
+                serverPlayer.setHealth(1.0F);
+                serverPlayer.removeAllEffects();
+                serverPlayer.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.REGENERATION, 900, 1));
+                serverPlayer.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.ABSORPTION, 100, 1));
+                serverPlayer.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.FIRE_RESISTANCE, 800, 0));
+
+                // Screen totem pop animation and sound for player
+                serverPlayer.level().broadcastEntityEvent(serverPlayer, (byte) 35);
+
+                // Vanilla totem particles at player position
+                if (serverPlayer.level() instanceof ServerLevel sl) {
+                    sl.sendParticles(ParticleTypes.TOTEM_OF_UNDYING, serverPlayer.getX(), serverPlayer.getY() + 1.0D, serverPlayer.getZ(), 60, 0.5D, 0.7D, 0.5D, 0.2D);
+                }
+
+                // Golem sacrifice & reversion
+                savingGolem.triggerTotemRescue(serverPlayer);
+                return;
+            }
+        }
+
         triggerExplorerGolemCollection(player, null);
     }
 

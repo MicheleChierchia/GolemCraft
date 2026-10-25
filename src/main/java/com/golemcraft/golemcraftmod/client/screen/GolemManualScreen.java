@@ -38,9 +38,9 @@ public class GolemManualScreen extends Screen {
     private static final CategoryTab[] TABS = new CategoryTab[] {
         new CategoryTab("book.golemcraft.tab.basics", 0, new ItemStack(ModBlocks.BASE_GOLEM_ITEM.get())),
         new CategoryTab("book.golemcraft.tab.professions", 4, new ItemStack(Items.IRON_HOE)),
-        new CategoryTab("book.golemcraft.tab.beacon", 12, new ItemStack(ModBlocks.GOLEM_BEACON_ITEM.get())),
-        new CategoryTab("book.golemcraft.tab.recipes", 14, new ItemStack(Blocks.CRAFTING_TABLE)),
-        new CategoryTab("book.golemcraft.tab.automation", 18, new ItemStack(ModBlocks.GOLEM_COMPASS_ITEM.get()))
+        new CategoryTab("book.golemcraft.tab.beacon", 13, new ItemStack(ModBlocks.GOLEM_BEACON_ITEM.get())),
+        new CategoryTab("book.golemcraft.tab.recipes", 15, new ItemStack(Blocks.CRAFTING_TABLE)),
+        new CategoryTab("book.golemcraft.tab.automation", 19, new ItemStack(ModBlocks.GOLEM_COMPASS_ITEM.get()))
     };
 
     private static int dummyEntityIdCounter = -10000;
@@ -112,6 +112,11 @@ public class GolemManualScreen extends Screen {
         pages.add(new ManualPage(PageType.ENTITY, 1,
                 "book.golemcraft.page_leveler.title", "book.golemcraft.page_leveler.subtitle", "book.golemcraft.page_leveler.content",
                 "entity.leveler", ModEntities.LEVELER_GOLEM.get(), new ItemStack(Items.IRON_SHOVEL), 0, false, null, null, ItemStack.EMPTY, "book.golemcraft.badge.excavator"));
+
+        // 12: Totem Golem
+        pages.add(new ManualPage(PageType.ENTITY, 1,
+                "book.golemcraft.page_totem.title", "book.golemcraft.page_totem.subtitle", "book.golemcraft.page_totem.content",
+                "entity.totem", ModEntities.TOTEM_GOLEM.get(), new ItemStack(Items.TOTEM_OF_UNDYING), 0, false, null, null, ItemStack.EMPTY, "book.golemcraft.badge.guardian"));
 
         // 12: Il Faro dei Golem
         pages.add(new ManualPage(PageType.BLOCK_ITEM, 2,
