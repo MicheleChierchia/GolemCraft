@@ -79,6 +79,22 @@ public class ModEntities {
                             .sized(0.5f, 1.0f)
                             .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(GolemCraft.MODID, "totem_golem"))));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<com.golemcraft.golemcraftmod.entity.BeekeeperGolemEntity>> BEEKEEPER_GOLEM =
+            ENTITY_TYPES.register("beekeeper_golem", () ->
+                    EntityType.Builder.of(com.golemcraft.golemcraftmod.entity.BeekeeperGolemEntity::new, MobCategory.MISC)
+                            .sized(0.5f, 1.0f)
+                            .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(GolemCraft.MODID, "beekeeper_golem"))));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<com.golemcraft.golemcraftmod.entity.projectile.HoneySpitProjectile>> HONEY_SPIT_PROJECTILE =
+            ENTITY_TYPES.register("honey_spit_projectile", () ->
+                    EntityType.Builder.<com.golemcraft.golemcraftmod.entity.projectile.HoneySpitProjectile>of(com.golemcraft.golemcraftmod.entity.projectile.HoneySpitProjectile::new, MobCategory.MISC)
+                            .noSave()
+                            .noSummon()
+                            .sized(0.25F, 0.25F)
+                            .clientTrackingRange(8)
+                            .updateInterval(3)
+                            .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(GolemCraft.MODID, "honey_spit_projectile"))));
+
     public static final DeferredHolder<EntityType<?>, EntityType<com.golemcraft.golemcraftmod.entity.projectile.SonicBoomProjectile>> SONIC_BOOM_PROJECTILE =
             ENTITY_TYPES.register("sonic_boom_projectile", () ->
                     EntityType.Builder.<com.golemcraft.golemcraftmod.entity.projectile.SonicBoomProjectile>of(com.golemcraft.golemcraftmod.entity.projectile.SonicBoomProjectile::new, MobCategory.MISC)

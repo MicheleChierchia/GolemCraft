@@ -127,7 +127,8 @@ public class DepositInChestGoal extends Goal {
                     if (!(this.golem instanceof com.golemcraft.golemcraftmod.entity.FarmerGolemEntity)
                             && !(this.golem instanceof com.golemcraft.golemcraftmod.entity.FishermanGolemEntity)
                             && !(this.golem instanceof com.golemcraft.golemcraftmod.entity.LumberjackGolemEntity)
-                            && !(this.golem instanceof com.golemcraft.golemcraftmod.entity.LevelerGolemEntity)) {
+                            && !(this.golem instanceof com.golemcraft.golemcraftmod.entity.LevelerGolemEntity)
+                            && !(this.golem instanceof com.golemcraft.golemcraftmod.entity.BeekeeperGolemEntity)) {
                         this.golem.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, this.golem.getInventory().getItem(0).copy());
                     }
                 }
@@ -206,6 +207,10 @@ public class DepositInChestGoal extends Goal {
             if (isFillerBlock(stack)) {
                 return slotIndex == getFirstFillerSlot();
             }
+        }
+        if (this.golem instanceof com.golemcraft.golemcraftmod.entity.BeekeeperGolemEntity) {
+            if (stack.is(net.minecraft.world.item.Items.GLASS_BOTTLE)) return true;
+            if (stack.is(net.minecraft.world.item.Items.SHEARS)) return true;
         }
         return false;
     }

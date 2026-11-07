@@ -254,7 +254,8 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
                 && !(this instanceof com.golemcraft.golemcraftmod.entity.LumberjackGolemEntity)
                 && !(this instanceof com.golemcraft.golemcraftmod.entity.DepthGolemEntity)
                 && !(this instanceof com.golemcraft.golemcraftmod.entity.ExplorerGolemEntity)
-                && !(this instanceof com.golemcraft.golemcraftmod.entity.LevelerGolemEntity);
+                && !(this instanceof com.golemcraft.golemcraftmod.entity.LevelerGolemEntity)
+                && !(this instanceof com.golemcraft.golemcraftmod.entity.BeekeeperGolemEntity);
     }
 
     protected void copyBaseDataTo(BaseGolemEntity other, Player player) {
@@ -688,6 +689,31 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
 
                         if (!player.getAbilities().instabuild) {
                             itemstack.shrink(1);
+                        }
+                        this.discard();
+                    }
+                }
+                return InteractionResult.SUCCESS;
+            }
+
+            if (itemstack.is(net.minecraft.world.item.Items.HONEY_BOTTLE) && this.getOxidationLevel() == 0 && !this.isWaxed()) {
+                if (!this.level().isClientSide()) {
+                    com.golemcraft.golemcraftmod.entity.BeekeeperGolemEntity beekeeperGolem = com.golemcraft.golemcraftmod.registry.ModEntities.BEEKEEPER_GOLEM.get().create(this.level(), net.minecraft.world.entity.EntitySpawnReason.CONVERSION);
+                    if (beekeeperGolem != null) {
+                        this.copyBaseDataTo(beekeeperGolem, player);
+                        this.level().addFreshEntity(beekeeperGolem);
+
+                        net.minecraft.server.level.ServerLevel serverLevel = (net.minecraft.server.level.ServerLevel) this.level();
+                        serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.HAPPY_VILLAGER, this.getX(), this.getY() + 0.5D, this.getZ(), 20, 0.2D, 0.2D, 0.2D, 0.0D);
+                        serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.LANDING_HONEY, this.getX(), this.getY() + 0.5D, this.getZ(), 15, 0.2D, 0.2D, 0.2D, 0.02D);
+                        this.playSound(net.minecraft.sounds.SoundEvents.ZOMBIE_VILLAGER_CURE, 1.0F, 1.0F);
+
+                        if (!player.getAbilities().instabuild) {
+                            itemstack.shrink(1);
+                            ItemStack emptyBottle = new ItemStack(net.minecraft.world.item.Items.GLASS_BOTTLE);
+                            if (!player.getInventory().add(emptyBottle)) {
+                                player.drop(emptyBottle, false);
+                            }
                         }
                         this.discard();
                     }

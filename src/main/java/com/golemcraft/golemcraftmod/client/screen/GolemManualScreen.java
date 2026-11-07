@@ -118,6 +118,11 @@ public class GolemManualScreen extends Screen {
                 "book.golemcraft.page_totem.title", "book.golemcraft.page_totem.subtitle", "book.golemcraft.page_totem.content",
                 "entity.totem", ModEntities.TOTEM_GOLEM.get(), new ItemStack(Items.TOTEM_OF_UNDYING), 0, false, null, null, ItemStack.EMPTY, "book.golemcraft.badge.guardian"));
 
+        // 13: Golem Apicoltore
+        pages.add(new ManualPage(PageType.ENTITY, 1,
+                "book.golemcraft.page_beekeeper.title", "book.golemcraft.page_beekeeper.subtitle", "book.golemcraft.page_beekeeper.content",
+                "entity.beekeeper", ModEntities.BEEKEEPER_GOLEM.get(), new ItemStack(Items.HONEY_BOTTLE), 0, false, null, null, ItemStack.EMPTY, "book.golemcraft.badge.apiarist"));
+
         // 12: Il Faro dei Golem
         pages.add(new ManualPage(PageType.BLOCK_ITEM, 2,
                 "book.golemcraft.page12.title", "book.golemcraft.page12.subtitle", "book.golemcraft.page12.content",

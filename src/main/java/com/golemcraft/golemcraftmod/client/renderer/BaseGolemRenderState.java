@@ -17,4 +17,6 @@ public class BaseGolemRenderState extends ArmedEntityRenderState {
     public boolean isWaiting;
     public boolean isExplorerGolem;
     public boolean isCharged;
+    public int honeyLevel;
+    public boolean isBeekeeperGolem;
 }
