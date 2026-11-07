@@ -99,17 +99,15 @@ public class FarmerTillGoal extends Goal {
                 BlockState state = level.getBlockState(this.targetPos);
                 
                 if ((state.is(Blocks.DIRT) || state.is(Blocks.GRASS_BLOCK) || state.is(Blocks.DIRT_PATH)) && level.getBlockState(this.targetPos.above()).isAir()) {
-                    com.golemcraft.golemcraftmod.entity.GolemFakePlayerHelper.executeAsPlayer(this.golem, player -> {
-                        ItemStack hoe = player.getItemInHand(InteractionHand.MAIN_HAND);
-                        net.minecraft.world.phys.BlockHitResult hitResult = new net.minecraft.world.phys.BlockHitResult(
-                            new net.minecraft.world.phys.Vec3(this.targetPos.getX() + 0.5, this.targetPos.getY() + 1.0, this.targetPos.getZ() + 0.5),
-                            net.minecraft.core.Direction.UP,
-                            this.targetPos,
-                            false
-                        );
-                        net.minecraft.world.item.context.UseOnContext ctx = new net.minecraft.world.item.context.UseOnContext(player, InteractionHand.MAIN_HAND, hitResult);
-                        hoe.useOn(ctx);
-                    });
+                    level.setBlock(this.targetPos, Blocks.FARMLAND.defaultBlockState(), 3);
+                    level.playSound(null, this.targetPos, net.minecraft.sounds.SoundEvents.HOE_TILL, net.minecraft.sounds.SoundSource.BLOCKS, 1.0F, 1.0F);
+                    ItemStack hoe = this.golem.getItemInHand(InteractionHand.MAIN_HAND);
+                    if (!hoe.isEmpty() && !this.golem.level().isClientSide() && this.golem.level() instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+                        hoe.hurtAndBreak(1, serverLevel, null, item -> {
+                            this.golem.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+                            this.golem.playSound(net.minecraft.sounds.SoundEvents.ITEM_BREAK.value(), 1.0F, 1.0F);
+                        });
+                    }
                 }
                 
                 this.targetPos = null;

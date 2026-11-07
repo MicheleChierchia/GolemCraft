@@ -15,7 +15,7 @@ public class FlowerGolemRenderer extends BaseGolemRenderer {
 
     public FlowerGolemRenderer(EntityRendererProvider.Context context) {
         super(context);
-        this.addLayer(new FlowerGolemEyesLayer(this));
+        this.addLayer(new GolemEyesLayer(this, Identifier.fromNamespaceAndPath(GolemCraft.MODID, "textures/entity/flower_golem_eyes.png")));
     }
 
     @Override

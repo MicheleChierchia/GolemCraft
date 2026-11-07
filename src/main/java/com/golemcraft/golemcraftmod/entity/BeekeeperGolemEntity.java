@@ -183,4 +183,9 @@ public class BeekeeperGolemEntity extends BaseGolemEntity {
         super.readAdditionalSaveData(input);
         input.read("HoneyLevel", com.mojang.serialization.Codec.INT).ifPresent(this::setHoneyLevel);
     }
+
+    @Override
+    public boolean shouldKeepItem(ItemStack stack, int slotIndex) {
+        return stack.is(net.minecraft.world.item.Items.GLASS_BOTTLE) || stack.is(net.minecraft.world.item.Items.SHEARS);
+    }
 }

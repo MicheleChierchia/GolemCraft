@@ -14,7 +14,7 @@ public class LumberjackGolemRenderer extends BaseGolemRenderer {
 
     public LumberjackGolemRenderer(EntityRendererProvider.Context context) {
         super(context, com.golemcraft.golemcraftmod.events.ClientEvents.LUMBERJACK_GOLEM_LAYER);
-        this.addLayer(new FlowerGolemEyesLayer(this));
+        this.addLayer(new GolemEyesLayer(this, Identifier.fromNamespaceAndPath(GolemCraft.MODID, "textures/entity/flower_golem_eyes.png")));
     }
 
     @Override

@@ -103,4 +103,10 @@ public class LumberjackGolemEntity extends BaseGolemEntity {
         ItemStack hand = this.getItemInHand(InteractionHand.MAIN_HAND);
         return !hand.isEmpty() && hand.getItem() instanceof AxeItem;
     }
+
+    @Override
+    public boolean shouldKeepItem(ItemStack stack, int slotIndex) {
+        if (stack.getItem() instanceof net.minecraft.world.item.AxeItem) return true;
+        return stack.is(net.minecraft.tags.ItemTags.SAPLINGS);
+    }
 }

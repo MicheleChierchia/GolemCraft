@@ -13,7 +13,7 @@ public class TotemGolemRenderer extends BaseGolemRenderer {
         super(context,
               new com.golemcraft.golemcraftmod.client.model.BaseGolemModel(
                   context.bakeLayer(com.golemcraft.golemcraftmod.events.ClientEvents.TOTEM_GOLEM_LAYER)));
-        this.addLayer(new TotemGolemEyesLayer(this));
+        this.addLayer(new GolemEyesLayer(this, Identifier.fromNamespaceAndPath(GolemCraft.MODID, "textures/entity/totem_golem_eyes.png"), state -> true));
     }
 
     @Override

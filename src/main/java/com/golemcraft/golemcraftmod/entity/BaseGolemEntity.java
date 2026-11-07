@@ -1,6 +1,7 @@
 package com.golemcraft.golemcraftmod.entity;
 
 import java.util.UUID;
+import java.util.function.Consumer;
 
 import com.golemcraft.golemcraftmod.registry.ModEntities;
 
@@ -247,7 +248,11 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
         }
     }
 
-    protected boolean shouldSyncSlot0ToMainHand() {
+    public boolean shouldKeepItem(ItemStack stack, int slotIndex) {
+        return false;
+    }
+
+    public boolean shouldSyncSlot0ToMainHand() {
         return !(this instanceof com.golemcraft.golemcraftmod.entity.FarmerGolemEntity)
                 && !(this instanceof com.golemcraft.golemcraftmod.entity.SoldierGolemEntity)
                 && !(this instanceof com.golemcraft.golemcraftmod.entity.FishermanGolemEntity)
@@ -276,6 +281,44 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
         for (int i = 0; i < this.inventory.getContainerSize(); i++) {
             other.getInventory().setItem(i, this.inventory.getItem(i));
         }
+    }
+
+    protected <T extends BaseGolemEntity> InteractionResult convertTo(
+            EntityType<T> targetType, Player player, ItemStack itemstack,
+            net.minecraft.sounds.SoundEvent sound, net.minecraft.core.particles.ParticleOptions particle,
+            int particleCount, boolean equipHand, Consumer<T> extraAction) {
+        if (!this.level().isClientSide()) {
+            T newGolem = targetType.create(this.level(), net.minecraft.world.entity.EntitySpawnReason.CONVERSION);
+            if (newGolem != null) {
+                this.copyBaseDataTo(newGolem, player);
+
+                if (equipHand) {
+                    ItemStack handStack = itemstack.copy();
+                    handStack.setCount(1);
+                    newGolem.setItemInHand(InteractionHand.MAIN_HAND, handStack);
+                    newGolem.setDropChance(net.minecraft.world.entity.EquipmentSlot.MAINHAND, 0.0F);
+                }
+
+                if (extraAction != null) {
+                    extraAction.accept(newGolem);
+                }
+
+                this.level().addFreshEntity(newGolem);
+
+                if (this.level() instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+                    serverLevel.sendParticles(particle, this.getX(), this.getY() + 0.5D, this.getZ(), particleCount, 0.2D, 0.2D, 0.2D, 0.0D);
+                }
+                if (sound != null) {
+                    this.playSound(sound, 1.0F, 1.0F);
+                }
+
+                if (!player.getAbilities().instabuild) {
+                    itemstack.shrink(1);
+                }
+                this.discard();
+            }
+        }
+        return InteractionResult.SUCCESS;
     }
 
     @Override
@@ -466,82 +509,19 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
         }
 
         // Transform logic
-        if (this.getType() == com.golemcraft.golemcraftmod.registry.ModEntities.BASE_GOLEM.get()) {
-            if (itemstack.is(net.minecraft.tags.ItemTags.create(net.minecraft.resources.Identifier.withDefaultNamespace("small_flowers"))) || itemstack.is(net.minecraft.tags.ItemTags.create(net.minecraft.resources.Identifier.withDefaultNamespace("flowers"))) || (itemstack.getItem() instanceof net.minecraft.world.item.BlockItem bi && (bi.getBlock() instanceof net.minecraft.world.level.block.FlowerBlock || bi.getBlock() instanceof net.minecraft.world.level.block.TallFlowerBlock))) {
-                if (!this.level().isClientSide()) {
-                    FlowerGolemEntity flowerGolem = ModEntities.FLOWER_GOLEM.get().create(this.level(), net.minecraft.world.entity.EntitySpawnReason.CONVERSION);
-                    if (flowerGolem != null) {
-                        this.copyBaseDataTo(flowerGolem, player);
-                        this.level().addFreshEntity(flowerGolem);
-                        
-                        // Particles and sounds
-                        net.minecraft.server.level.ServerLevel serverLevel = (net.minecraft.server.level.ServerLevel) this.level();
-                        serverLevel.sendParticles(ParticleTypes.HAPPY_VILLAGER, this.getX(), this.getY() + 0.5D, this.getZ(), 15, 0.2D, 0.2D, 0.2D, 0.0D);
-                        this.playSound(SoundEvents.ZOMBIE_VILLAGER_CURE, 1.0F, 1.0F);
-                        
-                        if (!player.getAbilities().instabuild) {
-                            itemstack.shrink(1);
-                        }
-                        this.discard();
-                    }
-                }
-                return InteractionResult.SUCCESS;
+        if (this.getType() == ModEntities.BASE_GOLEM.get()) {
+            if (itemstack.is(net.minecraft.tags.ItemTags.create(net.minecraft.resources.Identifier.withDefaultNamespace("small_flowers")))
+                    || itemstack.is(net.minecraft.tags.ItemTags.create(net.minecraft.resources.Identifier.withDefaultNamespace("flowers")))
+                    || (itemstack.getItem() instanceof net.minecraft.world.item.BlockItem bi && (bi.getBlock() instanceof net.minecraft.world.level.block.FlowerBlock || bi.getBlock() instanceof net.minecraft.world.level.block.TallFlowerBlock))) {
+                return convertTo(ModEntities.FLOWER_GOLEM.get(), player, itemstack, SoundEvents.ZOMBIE_VILLAGER_CURE, ParticleTypes.HAPPY_VILLAGER, 15, false, null);
             }
 
             if (itemstack.getItem() instanceof net.minecraft.world.item.HoeItem) {
-                if (!this.level().isClientSide()) {
-                    FarmerGolemEntity farmerGolem = ModEntities.FARMER_GOLEM.get().create(this.level(), net.minecraft.world.entity.EntitySpawnReason.CONVERSION);
-                    if (farmerGolem != null) {
-                        this.copyBaseDataTo(farmerGolem, player);
-
-                        // Equip the hoe directly to hand
-                        ItemStack hoeStack = itemstack.copy();
-                        hoeStack.setCount(1);
-                        farmerGolem.setItemInHand(InteractionHand.MAIN_HAND, hoeStack);
-                        farmerGolem.setDropChance(net.minecraft.world.entity.EquipmentSlot.MAINHAND, 0.0F);
-
-                        this.level().addFreshEntity(farmerGolem);
-
-                        // Particles and sounds
-                        net.minecraft.server.level.ServerLevel serverLevel = (net.minecraft.server.level.ServerLevel) this.level();
-                        serverLevel.sendParticles(ParticleTypes.HAPPY_VILLAGER, this.getX(), this.getY() + 0.5D, this.getZ(), 15, 0.2D, 0.2D, 0.2D, 0.0D);
-                        this.playSound(SoundEvents.ZOMBIE_VILLAGER_CURE, 1.0F, 1.0F);
-
-                        if (!player.getAbilities().instabuild) {
-                            itemstack.shrink(1);
-                        }
-                        this.discard();
-                    }
-                }
-                return InteractionResult.SUCCESS;
+                return convertTo(ModEntities.FARMER_GOLEM.get(), player, itemstack, SoundEvents.ZOMBIE_VILLAGER_CURE, ParticleTypes.HAPPY_VILLAGER, 15, true, null);
             }
 
             if (itemstack.getItem() instanceof net.minecraft.world.item.FishingRodItem) {
-                if (!this.level().isClientSide()) {
-                    FishermanGolemEntity fishermanGolem = ModEntities.FISHERMAN_GOLEM.get().create(this.level(), net.minecraft.world.entity.EntitySpawnReason.CONVERSION);
-                    if (fishermanGolem != null) {
-                        this.copyBaseDataTo(fishermanGolem, player);
-
-                        // Equip the rod directly to hand
-                        ItemStack rodStack = itemstack.copy();
-                        rodStack.setCount(1);
-                        fishermanGolem.setItemInHand(InteractionHand.MAIN_HAND, rodStack);
-                        fishermanGolem.setDropChance(net.minecraft.world.entity.EquipmentSlot.MAINHAND, 0.0F);
-
-                        this.level().addFreshEntity(fishermanGolem);
-
-                        // Particles and sounds
-                        net.minecraft.server.level.ServerLevel serverLevel = (net.minecraft.server.level.ServerLevel) this.level();
-                        serverLevel.sendParticles(ParticleTypes.HAPPY_VILLAGER, this.getX(), this.getY() + 0.5D, this.getZ(), 15, 0.2D, 0.2D, 0.2D, 0.0D);
-                        this.playSound(SoundEvents.ZOMBIE_VILLAGER_CURE, 1.0F, 1.0F);
-
-                        if (!player.getAbilities().instabuild) {
-                            itemstack.shrink(1);
-                        }
-                        this.discard();
-                    }
-                }
-                return InteractionResult.SUCCESS;
+                return convertTo(ModEntities.FISHERMAN_GOLEM.get(), player, itemstack, SoundEvents.ZOMBIE_VILLAGER_CURE, ParticleTypes.HAPPY_VILLAGER, 15, true, null);
             }
 
             String itemName = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(itemstack.getItem()).getPath();
@@ -552,173 +532,41 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
                                itemstack.is(net.minecraft.world.item.Items.TRIDENT);
 
             if (isWeapon) {
-                if (!this.level().isClientSide()) {
-                    SoldierGolemEntity soldierGolem = ModEntities.SOLDIER_GOLEM.get().create(this.level(), net.minecraft.world.entity.EntitySpawnReason.CONVERSION);
-                    if (soldierGolem != null) {
-                        this.copyBaseDataTo(soldierGolem, player);
-
-                        // Equip weapon only to the equipment slot (not inventory), like FarmerGolem
-                        ItemStack weaponStack = itemstack.copy();
-                        weaponStack.setCount(1);
-                        soldierGolem.setItemInHand(InteractionHand.MAIN_HAND, weaponStack);
-                        soldierGolem.setDropChance(net.minecraft.world.entity.EquipmentSlot.MAINHAND, 0.0F);
-
-                        this.level().addFreshEntity(soldierGolem);
-
-                        // Particles and sounds
-                        net.minecraft.server.level.ServerLevel serverLevel = (net.minecraft.server.level.ServerLevel) this.level();
-                        serverLevel.sendParticles(ParticleTypes.HAPPY_VILLAGER, this.getX(), this.getY() + 0.5D, this.getZ(), 15, 0.2D, 0.2D, 0.2D, 0.0D);
-                        this.playSound(SoundEvents.ZOMBIE_VILLAGER_CURE, 1.0F, 1.0F);
-
-                        if (!player.getAbilities().instabuild) {
-                            itemstack.shrink(1);
-                        }
-                        this.discard();
-                    }
-                }
-                return InteractionResult.SUCCESS;
+                return convertTo(ModEntities.SOLDIER_GOLEM.get(), player, itemstack, SoundEvents.ZOMBIE_VILLAGER_CURE, ParticleTypes.HAPPY_VILLAGER, 15, true, null);
             }
 
             if ((itemstack.getItem() instanceof net.minecraft.world.item.ShovelItem || itemstack.is(net.minecraft.tags.ItemTags.SHOVELS)) && this.getOxidationLevel() == 0 && !this.isWaxed()) {
-                if (!this.level().isClientSide()) {
-                    com.golemcraft.golemcraftmod.entity.LevelerGolemEntity levelerGolem = com.golemcraft.golemcraftmod.registry.ModEntities.LEVELER_GOLEM.get().create(this.level(), net.minecraft.world.entity.EntitySpawnReason.CONVERSION);
-                    if (levelerGolem != null) {
-                        this.copyBaseDataTo(levelerGolem, player);
-
-                        // Equip the shovel directly to hand
-                        ItemStack shovelStack = itemstack.copy();
-                        shovelStack.setCount(1);
-                        levelerGolem.setItemInHand(InteractionHand.MAIN_HAND, shovelStack);
-                        levelerGolem.setDropChance(net.minecraft.world.entity.EquipmentSlot.MAINHAND, 0.0F);
-
-                        this.level().addFreshEntity(levelerGolem);
-
-                        // Particles and sounds
-                        net.minecraft.server.level.ServerLevel serverLevel = (net.minecraft.server.level.ServerLevel) this.level();
-                        serverLevel.sendParticles(ParticleTypes.HAPPY_VILLAGER, this.getX(), this.getY() + 0.5D, this.getZ(), 15, 0.2D, 0.2D, 0.2D, 0.0D);
-                        this.playSound(SoundEvents.ZOMBIE_VILLAGER_CURE, 1.0F, 1.0F);
-
-                        if (!player.getAbilities().instabuild) {
-                            itemstack.shrink(1);
-                        }
-                        this.discard();
-                    }
-                }
-                return InteractionResult.SUCCESS;
+                return convertTo(ModEntities.LEVELER_GOLEM.get(), player, itemstack, SoundEvents.ZOMBIE_VILLAGER_CURE, ParticleTypes.HAPPY_VILLAGER, 15, true, null);
             }
 
             if (itemstack.getItem() instanceof net.minecraft.world.item.AxeItem && this.getOxidationLevel() == 0 && !this.isWaxed()) {
-                if (!this.level().isClientSide()) {
-                    LumberjackGolemEntity lumberjackGolem = ModEntities.LUMBERJACK_GOLEM.get().create(this.level(), net.minecraft.world.entity.EntitySpawnReason.CONVERSION);
-                    if (lumberjackGolem != null) {
-                        this.copyBaseDataTo(lumberjackGolem, player);
-
-                        // Equip the axe directly to hand
-                        ItemStack axeStack = itemstack.copy();
-                        axeStack.setCount(1);
-                        lumberjackGolem.setItemInHand(InteractionHand.MAIN_HAND, axeStack);
-                        lumberjackGolem.setDropChance(net.minecraft.world.entity.EquipmentSlot.MAINHAND, 0.0F);
-
-                        this.level().addFreshEntity(lumberjackGolem);
-
-                        // Particles and sounds
-                        net.minecraft.server.level.ServerLevel serverLevel = (net.minecraft.server.level.ServerLevel) this.level();
-                        serverLevel.sendParticles(ParticleTypes.HAPPY_VILLAGER, this.getX(), this.getY() + 0.5D, this.getZ(), 15, 0.2D, 0.2D, 0.2D, 0.0D);
-                        this.playSound(SoundEvents.ZOMBIE_VILLAGER_CURE, 1.0F, 1.0F);
-
-                        if (!player.getAbilities().instabuild) {
-                            itemstack.shrink(1);
-                        }
-                        this.discard();
-                    }
-                }
-                return InteractionResult.SUCCESS;
+                return convertTo(ModEntities.LUMBERJACK_GOLEM.get(), player, itemstack, SoundEvents.ZOMBIE_VILLAGER_CURE, ParticleTypes.HAPPY_VILLAGER, 15, true, null);
             }
 
             if (itemstack.is(net.minecraft.world.item.Items.ECHO_SHARD) && this.getOxidationLevel() == 0 && !this.isWaxed()) {
-                if (!this.level().isClientSide()) {
-                    com.golemcraft.golemcraftmod.entity.DepthGolemEntity depthGolem = com.golemcraft.golemcraftmod.registry.ModEntities.DEPTH_GOLEM.get().create(this.level(), net.minecraft.world.entity.EntitySpawnReason.CONVERSION);
-                    if (depthGolem != null) {
-                        this.copyBaseDataTo(depthGolem, player);
-                        this.level().addFreshEntity(depthGolem);
-
-                        // Particles and sounds
-                        net.minecraft.server.level.ServerLevel serverLevel = (net.minecraft.server.level.ServerLevel) this.level();
-                        serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.SCULK_SOUL, this.getX(), this.getY() + 0.5D, this.getZ(), 15, 0.2D, 0.2D, 0.2D, 0.0D);
-                        this.playSound(net.minecraft.sounds.SoundEvents.WARDEN_HEARTBEAT, 1.0F, 1.0F);
-
-                        if (!player.getAbilities().instabuild) {
-                            itemstack.shrink(1);
-                        }
-                        this.discard();
-                    }
-                }
-                return InteractionResult.SUCCESS;
+                return convertTo(ModEntities.DEPTH_GOLEM.get(), player, itemstack, SoundEvents.WARDEN_HEARTBEAT, ParticleTypes.SCULK_SOUL, 15, false, null);
             }
 
             if (itemstack.is(net.minecraft.world.item.Items.RECOVERY_COMPASS) && this.getOxidationLevel() == 0 && !this.isWaxed()) {
-                if (!this.level().isClientSide()) {
-                    com.golemcraft.golemcraftmod.entity.ExplorerGolemEntity explorerGolem = com.golemcraft.golemcraftmod.registry.ModEntities.EXPLORER_GOLEM.get().create(this.level(), net.minecraft.world.entity.EntitySpawnReason.CONVERSION);
-                    if (explorerGolem != null) {
-                        this.copyBaseDataTo(explorerGolem, player);
-                        this.level().addFreshEntity(explorerGolem);
-
-                        net.minecraft.server.level.ServerLevel serverLevel = (net.minecraft.server.level.ServerLevel) this.level();
-                        serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.SOUL_FIRE_FLAME, this.getX(), this.getY() + 0.5D, this.getZ(), 15, 0.2D, 0.2D, 0.2D, 0.0D);
-                        this.playSound(net.minecraft.sounds.SoundEvents.BEACON_ACTIVATE, 1.0F, 1.2F);
-
-                        if (!player.getAbilities().instabuild) {
-                            itemstack.shrink(1);
-                        }
-                        this.discard();
-                    }
-                }
-                return InteractionResult.SUCCESS;
+                return convertTo(ModEntities.EXPLORER_GOLEM.get(), player, itemstack, SoundEvents.BEACON_ACTIVATE, ParticleTypes.SOUL_FIRE_FLAME, 15, false, null);
             }
 
             if (itemstack.is(net.minecraft.world.item.Items.TOTEM_OF_UNDYING) && this.getOxidationLevel() == 0 && !this.isWaxed()) {
-                if (!this.level().isClientSide()) {
-                    com.golemcraft.golemcraftmod.entity.TotemGolemEntity totemGolem = com.golemcraft.golemcraftmod.registry.ModEntities.TOTEM_GOLEM.get().create(this.level(), net.minecraft.world.entity.EntitySpawnReason.CONVERSION);
-                    if (totemGolem != null) {
-                        this.copyBaseDataTo(totemGolem, player);
-                        this.level().addFreshEntity(totemGolem);
-
-                        net.minecraft.server.level.ServerLevel serverLevel = (net.minecraft.server.level.ServerLevel) this.level();
-                        serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.TOTEM_OF_UNDYING, this.getX(), this.getY() + 0.5D, this.getZ(), 35, 0.3D, 0.3D, 0.3D, 0.1D);
-                        this.playSound(net.minecraft.sounds.SoundEvents.TOTEM_USE, 1.0F, 1.0F);
-
-                        if (!player.getAbilities().instabuild) {
-                            itemstack.shrink(1);
-                        }
-                        this.discard();
-                    }
-                }
-                return InteractionResult.SUCCESS;
+                return convertTo(ModEntities.TOTEM_GOLEM.get(), player, itemstack, SoundEvents.TOTEM_USE, ParticleTypes.TOTEM_OF_UNDYING, 35, false, null);
             }
 
             if (itemstack.is(net.minecraft.world.item.Items.HONEY_BOTTLE) && this.getOxidationLevel() == 0 && !this.isWaxed()) {
-                if (!this.level().isClientSide()) {
-                    com.golemcraft.golemcraftmod.entity.BeekeeperGolemEntity beekeeperGolem = com.golemcraft.golemcraftmod.registry.ModEntities.BEEKEEPER_GOLEM.get().create(this.level(), net.minecraft.world.entity.EntitySpawnReason.CONVERSION);
-                    if (beekeeperGolem != null) {
-                        this.copyBaseDataTo(beekeeperGolem, player);
-                        this.level().addFreshEntity(beekeeperGolem);
-
-                        net.minecraft.server.level.ServerLevel serverLevel = (net.minecraft.server.level.ServerLevel) this.level();
-                        serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.HAPPY_VILLAGER, this.getX(), this.getY() + 0.5D, this.getZ(), 20, 0.2D, 0.2D, 0.2D, 0.0D);
-                        serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.LANDING_HONEY, this.getX(), this.getY() + 0.5D, this.getZ(), 15, 0.2D, 0.2D, 0.2D, 0.02D);
-                        this.playSound(net.minecraft.sounds.SoundEvents.ZOMBIE_VILLAGER_CURE, 1.0F, 1.0F);
-
-                        if (!player.getAbilities().instabuild) {
-                            itemstack.shrink(1);
-                            ItemStack emptyBottle = new ItemStack(net.minecraft.world.item.Items.GLASS_BOTTLE);
-                            if (!player.getInventory().add(emptyBottle)) {
-                                player.drop(emptyBottle, false);
-                            }
-                        }
-                        this.discard();
+                return convertTo(ModEntities.BEEKEEPER_GOLEM.get(), player, itemstack, SoundEvents.ZOMBIE_VILLAGER_CURE, ParticleTypes.HAPPY_VILLAGER, 20, false, golem -> {
+                    if (this.level() instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+                        serverLevel.sendParticles(ParticleTypes.LANDING_HONEY, this.getX(), this.getY() + 0.5D, this.getZ(), 15, 0.2D, 0.2D, 0.2D, 0.02D);
                     }
-                }
-                return InteractionResult.SUCCESS;
+                    if (!player.getAbilities().instabuild) {
+                        ItemStack emptyBottle = new ItemStack(net.minecraft.world.item.Items.GLASS_BOTTLE);
+                        if (!player.getInventory().add(emptyBottle)) {
+                            player.drop(emptyBottle, false);
+                        }
+                    }
+                });
             }
         }
         

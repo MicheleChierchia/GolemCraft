@@ -1,6 +1,7 @@
 package com.golemcraft.golemcraftmod.entity;
 
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.level.Level;
@@ -45,8 +46,13 @@ public class FishermanGolemEntity extends BaseGolemEntity {
     @Override
     protected void registerGoals() {
         super.registerGoals();
-        this.goalSelector.addGoal(1, new com.golemcraft.golemcraftmod.entity.ai.EquipFishingRodGoal(this));
+        this.goalSelector.addGoal(1, new com.golemcraft.golemcraftmod.entity.ai.EquipToolGoal(this, stack -> stack.getItem() instanceof net.minecraft.world.item.FishingRodItem));
         this.goalSelector.addGoal(2, new com.golemcraft.golemcraftmod.entity.ai.DepositInChestGoal(this));
         this.goalSelector.addGoal(3, new com.golemcraft.golemcraftmod.entity.ai.FishermanFishGoal(this));
+    }
+
+    @Override
+    public boolean shouldKeepItem(ItemStack stack, int slotIndex) {
+        return stack.getItem() instanceof net.minecraft.world.item.FishingRodItem;
     }
 }

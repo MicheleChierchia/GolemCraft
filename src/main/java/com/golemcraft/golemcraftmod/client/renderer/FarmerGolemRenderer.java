@@ -14,7 +14,7 @@ public class FarmerGolemRenderer extends BaseGolemRenderer {
 
     public FarmerGolemRenderer(EntityRendererProvider.Context context) {
         super(context, com.golemcraft.golemcraftmod.events.ClientEvents.FARMER_GOLEM_LAYER);
-        this.addLayer(new FlowerGolemEyesLayer(this));
+        this.addLayer(new GolemEyesLayer(this, Identifier.fromNamespaceAndPath(GolemCraft.MODID, "textures/entity/flower_golem_eyes.png")));
     }
 
     @Override

@@ -16,7 +16,7 @@ public class LevelerGolemRenderer extends BaseGolemRenderer {
 
     public LevelerGolemRenderer(EntityRendererProvider.Context context) {
         super(context, ClientEvents.LEVELER_GOLEM_LAYER);
-        this.addLayer(new FlowerGolemEyesLayer(this));
+        this.addLayer(new GolemEyesLayer(this, Identifier.fromNamespaceAndPath(GolemCraft.MODID, "textures/entity/flower_golem_eyes.png")));
     }
 
     @Override

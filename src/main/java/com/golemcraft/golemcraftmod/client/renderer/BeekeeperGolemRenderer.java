@@ -16,7 +16,7 @@ public class BeekeeperGolemRenderer extends BaseGolemRenderer {
 
     public BeekeeperGolemRenderer(EntityRendererProvider.Context context) {
         super(context, com.golemcraft.golemcraftmod.events.ClientEvents.BEEKEEPER_GOLEM_LAYER);
-        this.addLayer(new BeekeeperGolemEyesLayer(this));
+        this.addLayer(new GolemEyesLayer(this, Identifier.fromNamespaceAndPath(GolemCraft.MODID, "textures/entity/beekeeper_golem_eyes.png")));
         this.addLayer(new BeekeeperHoneyLayer(this, this.getModel()));
     }
 

@@ -71,7 +71,7 @@ public class LevelerGolemEntity extends BaseGolemEntity {
     }
 
     @Override
-    protected boolean shouldSyncSlot0ToMainHand() {
+    public boolean shouldSyncSlot0ToMainHand() {
         return false;
     }
 
@@ -81,5 +81,35 @@ public class LevelerGolemEntity extends BaseGolemEntity {
         if (!this.level().isClientSide() && this.tickCount % 20 == 0) {
             syncShovelToHand();
         }
+    }
+
+    public static boolean isFillerBlock(ItemStack stack) {
+        if (stack.getItem() instanceof net.minecraft.world.item.BlockItem bi) {
+            net.minecraft.world.level.block.Block b = bi.getBlock();
+            return b.defaultBlockState().is(net.minecraft.tags.BlockTags.DIRT) ||
+                   b.defaultBlockState().is(net.minecraft.tags.BlockTags.SAND) ||
+                   b == net.minecraft.world.level.block.Blocks.GRAVEL ||
+                   b == net.minecraft.world.level.block.Blocks.COBBLESTONE;
+        }
+        return false;
+    }
+
+    private int getFirstFillerSlot() {
+        for (int i = 0; i < this.getInventory().getContainerSize(); i++) {
+            ItemStack stack = this.getInventory().getItem(i);
+            if (!stack.isEmpty() && isFillerBlock(stack)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    @Override
+    public boolean shouldKeepItem(ItemStack stack, int slotIndex) {
+        if (stack.getItem() instanceof ShovelItem || stack.is(net.minecraft.tags.ItemTags.SHOVELS)) return true;
+        if (isFillerBlock(stack)) {
+            return slotIndex == getFirstFillerSlot();
+        }
+        return false;
     }
 }

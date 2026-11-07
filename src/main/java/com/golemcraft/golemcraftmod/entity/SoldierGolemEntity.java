@@ -172,7 +172,7 @@ public class SoldierGolemEntity extends BaseGolemEntity implements RangedAttackM
         this.goalSelector.addGoal(1, new ReturnToGuardPositionGoal(this, 1.0D));
         this.goalSelector.addGoal(2, new FollowOwnerGoal(this, 1.4D, 10.0F, 3.0F));
         // Priority 3: combat goal — added dynamically by updateAttackGoals()
-        this.goalSelector.addGoal(4, new com.golemcraft.golemcraftmod.entity.ai.EquipWeaponGoal(this));
+        this.goalSelector.addGoal(4, new com.golemcraft.golemcraftmod.entity.ai.EquipToolGoal(this, SoldierGolemEntity::isWeapon));
         this.goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 1.0D) {
             @Override
             public boolean canUse() {
