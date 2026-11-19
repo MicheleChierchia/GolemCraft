@@ -14,7 +14,7 @@ public class BaseGolemRenderer extends MobRenderer<BaseGolemEntity, BaseGolemRen
         Identifier.fromNamespaceAndPath(GolemCraft.MODID, "textures/entity/weathered_base_golem.png"),
         Identifier.fromNamespaceAndPath(GolemCraft.MODID, "textures/entity/oxidized_base_golem.png")
     };
-    private final net.minecraft.client.renderer.item.ItemModelResolver itemModelResolver;
+    protected final net.minecraft.client.renderer.item.ItemModelResolver itemModelResolver;
 
     public BaseGolemRenderer(EntityRendererProvider.Context context, net.minecraft.client.model.geom.ModelLayerLocation layer) {
         this(context, new BaseGolemModel(context.bakeLayer(layer)));

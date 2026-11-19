@@ -38,9 +38,9 @@ public class GolemManualScreen extends Screen {
     private static final CategoryTab[] TABS = new CategoryTab[] {
         new CategoryTab("book.golemcraft.tab.basics", 0, new ItemStack(ModBlocks.BASE_GOLEM_ITEM.get())),
         new CategoryTab("book.golemcraft.tab.professions", 4, new ItemStack(Items.IRON_HOE)),
-        new CategoryTab("book.golemcraft.tab.beacon", 13, new ItemStack(ModBlocks.GOLEM_BEACON_ITEM.get())),
-        new CategoryTab("book.golemcraft.tab.recipes", 15, new ItemStack(Blocks.CRAFTING_TABLE)),
-        new CategoryTab("book.golemcraft.tab.automation", 19, new ItemStack(ModBlocks.GOLEM_COMPASS_ITEM.get()))
+        new CategoryTab("book.golemcraft.tab.beacon", 15, new ItemStack(ModBlocks.GOLEM_BEACON_ITEM.get())),
+        new CategoryTab("book.golemcraft.tab.recipes", 17, new ItemStack(Blocks.CRAFTING_TABLE)),
+        new CategoryTab("book.golemcraft.tab.automation", 21, new ItemStack(ModBlocks.GOLEM_COMPASS_ITEM.get()))
     };
 
     private static int dummyEntityIdCounter = -10000;
@@ -122,6 +122,11 @@ public class GolemManualScreen extends Screen {
         pages.add(new ManualPage(PageType.ENTITY, 1,
                 "book.golemcraft.page_beekeeper.title", "book.golemcraft.page_beekeeper.subtitle", "book.golemcraft.page_beekeeper.content",
                 "entity.beekeeper", ModEntities.BEEKEEPER_GOLEM.get(), new ItemStack(Items.HONEY_BOTTLE), 0, false, null, null, ItemStack.EMPTY, "book.golemcraft.badge.apiarist"));
+
+        // 14: Golem Alchimista
+        pages.add(new ManualPage(PageType.ENTITY, 1,
+                "book.golemcraft.page_alchemist.title", "book.golemcraft.page_alchemist.subtitle", "book.golemcraft.page_alchemist.content",
+                "entity.alchemist", ModEntities.ALCHEMIST_GOLEM.get(), new ItemStack(Items.BREWING_STAND), 0, false, null, null, ItemStack.EMPTY, "book.golemcraft.badge.alchemist"));
 
         // 12: Il Faro dei Golem
         pages.add(new ManualPage(PageType.BLOCK_ITEM, 2,

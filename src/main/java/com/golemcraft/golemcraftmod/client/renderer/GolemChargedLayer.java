@@ -16,7 +16,7 @@ public class GolemChargedLayer extends EnergySwirlLayer<BaseGolemRenderState, Ba
 
     @Override
     protected boolean isPowered(BaseGolemRenderState state) {
-        return state.isCharged;
+        return state.isCharged && !state.isInvisible;
     }
 
     @Override

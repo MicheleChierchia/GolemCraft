@@ -19,4 +19,7 @@ public class BaseGolemRenderState extends ArmedEntityRenderState {
     public boolean isCharged;
     public int honeyLevel;
     public boolean isBeekeeperGolem;
+    public int alchemistPotionAction;
+    public final net.minecraft.client.renderer.item.ItemStackRenderState alchemistPotionItemState =
+            new net.minecraft.client.renderer.item.ItemStackRenderState();
 }

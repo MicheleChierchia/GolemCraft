@@ -44,6 +44,7 @@ BASE_TEXTURES = [
     "explorer_golem",
     "leveler_golem",
     "beekeeper_golem",
+    "alchemist_golem",
 ]
 
 # Pixel rows to protect fully from oxidation per golem
@@ -54,6 +55,7 @@ PROTECTED_ROWS = {
     "explorer_golem": list(range(32, 64)),  # boots base (32-36) + hat brim/backpack (40-52) + 3D boots (54-62)
     "leveler_golem": list(range(54, 64)),   # 3D boots (54-63)
     "beekeeper_golem": list(range(40, 60)), # sunflower stem/head and honey dipper
+    "alchemist_golem": list(range(36, 64)), # witch hat tiers and nose wart
 }
 # Individual pixels to protect: { "golem_name": set of (x, y) }
 def _farmer_hat_pixels():

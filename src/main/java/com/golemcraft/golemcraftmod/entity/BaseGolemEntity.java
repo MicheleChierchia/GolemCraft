@@ -356,6 +356,12 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
             if (other.getUUID().equals(this.ownerUUID)) {
                 return true;
             }
+            if (other instanceof net.minecraft.world.entity.OwnableEntity ownable) {
+                net.minecraft.world.entity.EntityReference<LivingEntity> ref = ownable.getOwnerReference();
+                if (ref != null && this.ownerUUID.equals(ref.getUUID())) {
+                    return true;
+                }
+            }
         }
         return false;
     }
@@ -567,6 +573,10 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
                         }
                     }
                 });
+            }
+
+            if (itemstack.is(net.minecraft.world.item.Items.BREWING_STAND) && this.getOxidationLevel() == 0 && !this.isWaxed()) {
+                return convertTo(ModEntities.ALCHEMIST_GOLEM.get(), player, itemstack, SoundEvents.BREWING_STAND_BREW, ParticleTypes.WITCH, 25, false, null);
             }
         }
         

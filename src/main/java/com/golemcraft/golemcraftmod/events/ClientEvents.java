@@ -23,6 +23,8 @@ public class ClientEvents {
     public static final ModelLayerLocation LEVELER_GOLEM_LAYER = new ModelLayerLocation(Identifier.fromNamespaceAndPath(GolemCraft.MODID, "leveler_golem"), "main");
     public static final ModelLayerLocation TOTEM_GOLEM_LAYER = new ModelLayerLocation(Identifier.fromNamespaceAndPath(GolemCraft.MODID, "totem_golem"), "main");
     public static final ModelLayerLocation BEEKEEPER_GOLEM_LAYER = new ModelLayerLocation(Identifier.fromNamespaceAndPath(GolemCraft.MODID, "beekeeper_golem"), "main");
+    public static final ModelLayerLocation ALCHEMIST_GOLEM_LAYER = new ModelLayerLocation(Identifier.fromNamespaceAndPath(GolemCraft.MODID, "alchemist_golem"), "main");
+    public static final ModelLayerLocation ALCHEMIST_GOLEM_ROBE_LAYER = new ModelLayerLocation(Identifier.fromNamespaceAndPath(GolemCraft.MODID, "alchemist_golem"), "robe");
 
     @SubscribeEvent
     public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
@@ -37,6 +39,7 @@ public class ClientEvents {
         event.registerEntityRenderer(ModEntities.LEVELER_GOLEM.get(), com.golemcraft.golemcraftmod.client.renderer.LevelerGolemRenderer::new);
         event.registerEntityRenderer(ModEntities.TOTEM_GOLEM.get(), com.golemcraft.golemcraftmod.client.renderer.TotemGolemRenderer::new);
         event.registerEntityRenderer(ModEntities.BEEKEEPER_GOLEM.get(), com.golemcraft.golemcraftmod.client.renderer.BeekeeperGolemRenderer::new);
+        event.registerEntityRenderer(ModEntities.ALCHEMIST_GOLEM.get(), com.golemcraft.golemcraftmod.client.renderer.AlchemistGolemRenderer::new);
         event.registerBlockEntityRenderer(com.golemcraft.golemcraftmod.registry.ModBlockEntities.GOLEM_BEACON.get(), com.golemcraft.golemcraftmod.client.renderer.GolemBeaconRenderer::new);
         event.registerEntityRenderer(ModEntities.SONIC_BOOM_PROJECTILE.get(), net.minecraft.client.renderer.entity.NoopRenderer::new);
         event.registerEntityRenderer(ModEntities.HONEY_SPIT_PROJECTILE.get(), com.golemcraft.golemcraftmod.client.renderer.HoneySpitRenderer::new);
@@ -54,6 +57,8 @@ public class ClientEvents {
         event.registerLayerDefinition(LEVELER_GOLEM_LAYER, com.golemcraft.golemcraftmod.client.model.BaseGolemModel::createLevelerBodyLayer);
         event.registerLayerDefinition(TOTEM_GOLEM_LAYER, com.golemcraft.golemcraftmod.client.model.BaseGolemModel::createBodyLayer);
         event.registerLayerDefinition(BEEKEEPER_GOLEM_LAYER, com.golemcraft.golemcraftmod.client.model.BaseGolemModel::createBeekeeperBodyLayer);
+        event.registerLayerDefinition(ALCHEMIST_GOLEM_LAYER, com.golemcraft.golemcraftmod.client.model.AlchemistGolemModel::createAlchemistBodyLayer);
+        event.registerLayerDefinition(ALCHEMIST_GOLEM_ROBE_LAYER, com.golemcraft.golemcraftmod.client.model.AlchemistGolemModel::createAlchemistRobeLayer);
     }
     
     public static class ModelLayers {}
