@@ -64,9 +64,7 @@ public class ExplorerGolemEntity extends BaseGolemEntity {
     }
 
     public static AttributeSupplier.Builder createAttributes() {
-        return PathfinderMob.createMobAttributes()
-                .add(Attributes.MAX_HEALTH, 20.0D)
-                .add(Attributes.MOVEMENT_SPEED, 0.25D)
+        return BaseGolemEntity.createAttributes()
                 .add(Attributes.ARMOR, 4.0D)
                 .add(Attributes.FOLLOW_RANGE, 32.0D)
                 .add(Attributes.STEP_HEIGHT, 1.0D);

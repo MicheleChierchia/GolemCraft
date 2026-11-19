@@ -4,8 +4,12 @@ import com.golemcraft.golemcraftmod.entity.AlchemistGolemEntity;
 import com.golemcraft.golemcraftmod.entity.BaseGolemEntity;
 import java.util.EnumSet;
 import java.util.List;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.player.Player;
@@ -14,7 +18,6 @@ import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownSplas
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.alchemy.PotionContents;
-import net.minecraft.world.item.alchemy.Potions;
 import net.minecraft.world.phys.Vec3;
 
 /**
@@ -48,6 +51,9 @@ public class AlchemistHealAllyGoal extends Goal {
         }
         if (this.cooldown > 0) {
             this.cooldown--;
+            return false;
+        }
+        if (this.findHealingPotionSlot() < 0) {
             return false;
         }
         this.target = this.findBestTarget();
@@ -109,7 +115,7 @@ public class AlchemistHealAllyGoal extends Goal {
 
     @Override
     public boolean canContinueToUse() {
-        if (golem.getOxidationLevel() == 3 || golem.isStaying() || golem.isDrinkingPotion()) {
+        if (golem.getOxidationLevel() == 3 || golem.isStaying() || golem.isDrinkingPotion() || this.findHealingPotionSlot() < 0) {
             return false;
         }
         if (target == null || !target.isAlive() || target.isRemoved()) {
@@ -185,8 +191,41 @@ public class AlchemistHealAllyGoal extends Goal {
         }
     }
 
+    private int findHealingPotionSlot() {
+        SimpleContainer inventory = golem.getInventory();
+        for (int i = 0; i < inventory.getContainerSize(); i++) {
+            if (isHealingSplashPotion(inventory.getItem(i))) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private static boolean isHealingSplashPotion(ItemStack stack) {
+        if (stack.isEmpty() || !stack.is(Items.SPLASH_POTION)) {
+            return false;
+        }
+        PotionContents contents = stack.getOrDefault(DataComponents.POTION_CONTENTS, PotionContents.EMPTY);
+        for (MobEffectInstance effect : contents.getAllEffects()) {
+            if (effect.getEffect().equals(MobEffects.INSTANT_HEALTH) || effect.getEffect().equals(MobEffects.REGENERATION)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private void throwHealingPotion() {
         if (!(golem.level() instanceof ServerLevel serverLevel) || this.target == null) {
+            return;
+        }
+
+        int slot = this.findHealingPotionSlot();
+        if (slot < 0) {
+            return;
+        }
+
+        ItemStack potionStack = golem.getInventory().removeItem(slot, 1);
+        if (potionStack.isEmpty()) {
             return;
         }
 
@@ -196,7 +235,6 @@ public class AlchemistHealAllyGoal extends Goal {
         double zd = this.target.getZ() + vel.z - golem.getZ();
         double dist = Math.sqrt(xd * xd + zd * zd);
 
-        ItemStack potionStack = PotionContents.createItemStack(Items.SPLASH_POTION, Potions.HEALING);
         Projectile.spawnProjectileUsingShoot(
                 ThrownSplashPotion::new,
                 serverLevel,

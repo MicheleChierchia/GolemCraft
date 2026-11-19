@@ -267,7 +267,8 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
         other.setPos(this.getX(), this.getY(), this.getZ());
         other.setYRot(this.getYRot());
         other.setXRot(this.getXRot());
-        other.setHealth(this.getHealth());
+        float healthRatio = this.getMaxHealth() > 0.0F ? this.getHealth() / this.getMaxHealth() : 1.0F;
+        other.setHealth(Math.min(other.getMaxHealth(), Math.max(1.0F, healthRatio * other.getMaxHealth())));
         other.yBodyRot = this.yBodyRot;
         if (this.hasCustomName()) {
             other.setCustomName(this.getCustomName());

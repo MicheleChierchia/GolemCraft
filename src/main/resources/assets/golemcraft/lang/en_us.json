@@ -127,7 +127,7 @@
   "book.golemcraft.page_beekeeper.content": "Evolution:\nGive a Honey Bottle to an unoxidized Base Golem.\n\nBehavior:\nGuards player-made beehives. Peacefully harvests honeycombs at level 5 without angering bees, depositing them into nearby chests. Accumulates up to 5 honey charges extractable with glass bottles. Shoots calming/healing honey spit at bees or sticky slowing spit at hostile threats, while letting bees pollinate on its sunflower!",
   "book.golemcraft.page_alchemist.title": "Alchemist Golem",
   "book.golemcraft.page_alchemist.subtitle": "Companion Healer",
-  "book.golemcraft.page_alchemist.content": "Evolution:\nGive a Brewing Stand to an unoxidized Base Golem.\n\nBehavior:\nFollows you as a loyal companion (right-click with empty hand to stay). Throws Splash Potions of Healing at injured allies, always prioritizing you first. When hurt, drinks a Potion of Invisibility to slip out of danger!",
+  "book.golemcraft.page_alchemist.content": "Evolution:\nGive a Brewing Stand to an unoxidized Base Golem.\n\nBehavior:\nFollows you as a loyal companion (right-click with empty hand to stay). Shift+right-click to store Splash Potions of Healing in its inventory; it throws them at injured allies, always prioritizing you first. When hurt, drinks a Potion of Invisibility to slip out of danger!",
   "book.golemcraft.page_marker.title": "Area Marker",
   "book.golemcraft.page_marker.subtitle": "Excavation Boundary",
   "book.golemcraft.page_marker.content": "Marker Crafting:\n\nMaterials:\n• 1x Copper Ingot\n• 1x Redstone Torch\n\nPlace two markers at opposite corners of the area. They connect with green particles, setting the boundaries and target Y level for the Leveler Golem.",

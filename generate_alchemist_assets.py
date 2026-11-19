@@ -68,7 +68,6 @@ def main():
             col = VIOLET_MID
         else:
             col = VIOLET_DARK
-        golem_img.putpixel((x, y), col)
         eyes_img.putpixel((x, y), col)
 
     # Witch hat palette.

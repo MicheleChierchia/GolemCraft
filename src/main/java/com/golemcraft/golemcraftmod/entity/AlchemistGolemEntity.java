@@ -1,12 +1,14 @@
 package com.golemcraft.golemcraftmod.entity;
 
 import com.golemcraft.golemcraftmod.entity.ai.AlchemistHealAllyGoal;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -15,6 +17,9 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.alchemy.PotionContents;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.storage.ValueInput;
@@ -85,7 +90,8 @@ public class AlchemistGolemEntity extends CompanionGolemEntity {
         if (hurt && this.isAlive() && this.getOxidationLevel() < 3
                 && !this.isDrinkingPotion()
                 && this.invisibilityCooldown <= 0
-                && !this.hasEffect(MobEffects.INVISIBILITY)) {
+                && !this.hasEffect(MobEffects.INVISIBILITY)
+                && this.findInvisibilityPotionSlot() >= 0) {
             this.startDrinkingInvisibility();
         }
         return hurt;
@@ -127,6 +133,10 @@ public class AlchemistGolemEntity extends CompanionGolemEntity {
             this.drinkingTicks--;
             if (this.drinkingTicks == 0) {
                 this.setPotionAction(POTION_NONE);
+                int slot = this.findInvisibilityPotionSlot();
+                if (slot < 0 || this.getInventory().removeItem(slot, 1).isEmpty()) {
+                    return;
+                }
                 this.addEffect(new MobEffectInstance(MobEffects.INVISIBILITY, INVISIBILITY_DURATION_TICKS, 0));
                 this.invisibilityCooldown = INVISIBILITY_COOLDOWN_TICKS;
                 this.gameEvent(GameEvent.DRINK);
@@ -138,6 +148,22 @@ public class AlchemistGolemEntity extends CompanionGolemEntity {
                 }
             }
         }
+    }
+
+    private int findInvisibilityPotionSlot() {
+        SimpleContainer inv = this.getInventory();
+        for (int i = 0; i < inv.getContainerSize(); i++) {
+            ItemStack stack = inv.getItem(i);
+            if (!stack.isEmpty() && stack.is(Items.POTION)) {
+                PotionContents contents = stack.getOrDefault(DataComponents.POTION_CONTENTS, PotionContents.EMPTY);
+                for (MobEffectInstance effect : contents.getAllEffects()) {
+                    if (effect.getEffect().equals(MobEffects.INVISIBILITY)) {
+                        return i;
+                    }
+                }
+            }
+        }
+        return -1;
     }
 
     @Override

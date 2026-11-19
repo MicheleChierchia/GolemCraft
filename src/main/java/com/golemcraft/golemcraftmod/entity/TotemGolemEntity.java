@@ -23,7 +23,6 @@ public class TotemGolemEntity extends CompanionGolemEntity {
 
     public static AttributeSupplier.Builder createAttributes() {
         return BaseGolemEntity.createAttributes()
-                .add(Attributes.MAX_HEALTH, 20.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.25D)
                 .add(Attributes.FOLLOW_RANGE, 24.0D);
     }
