@@ -25,6 +25,7 @@ public class ClientEvents {
     public static final ModelLayerLocation BEEKEEPER_GOLEM_LAYER = new ModelLayerLocation(Identifier.fromNamespaceAndPath(GolemCraft.MODID, "beekeeper_golem"), "main");
     public static final ModelLayerLocation ALCHEMIST_GOLEM_LAYER = new ModelLayerLocation(Identifier.fromNamespaceAndPath(GolemCraft.MODID, "alchemist_golem"), "main");
     public static final ModelLayerLocation ALCHEMIST_GOLEM_ROBE_LAYER = new ModelLayerLocation(Identifier.fromNamespaceAndPath(GolemCraft.MODID, "alchemist_golem"), "robe");
+    public static final ModelLayerLocation MARINE_GOLEM_LAYER = new ModelLayerLocation(Identifier.fromNamespaceAndPath(GolemCraft.MODID, "marine_golem"), "main");
 
     @SubscribeEvent
     public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
@@ -40,6 +41,7 @@ public class ClientEvents {
         event.registerEntityRenderer(ModEntities.TOTEM_GOLEM.get(), com.golemcraft.golemcraftmod.client.renderer.TotemGolemRenderer::new);
         event.registerEntityRenderer(ModEntities.BEEKEEPER_GOLEM.get(), com.golemcraft.golemcraftmod.client.renderer.BeekeeperGolemRenderer::new);
         event.registerEntityRenderer(ModEntities.ALCHEMIST_GOLEM.get(), com.golemcraft.golemcraftmod.client.renderer.AlchemistGolemRenderer::new);
+        event.registerEntityRenderer(ModEntities.MARINE_GOLEM.get(), com.golemcraft.golemcraftmod.client.renderer.MarineGolemRenderer::new);
         event.registerBlockEntityRenderer(com.golemcraft.golemcraftmod.registry.ModBlockEntities.GOLEM_BEACON.get(), com.golemcraft.golemcraftmod.client.renderer.GolemBeaconRenderer::new);
         event.registerEntityRenderer(ModEntities.SONIC_BOOM_PROJECTILE.get(), net.minecraft.client.renderer.entity.NoopRenderer::new);
         event.registerEntityRenderer(ModEntities.HONEY_SPIT_PROJECTILE.get(), com.golemcraft.golemcraftmod.client.renderer.HoneySpitRenderer::new);
@@ -59,6 +61,7 @@ public class ClientEvents {
         event.registerLayerDefinition(BEEKEEPER_GOLEM_LAYER, com.golemcraft.golemcraftmod.client.model.BaseGolemModel::createBeekeeperBodyLayer);
         event.registerLayerDefinition(ALCHEMIST_GOLEM_LAYER, com.golemcraft.golemcraftmod.client.model.AlchemistGolemModel::createAlchemistBodyLayer);
         event.registerLayerDefinition(ALCHEMIST_GOLEM_ROBE_LAYER, com.golemcraft.golemcraftmod.client.model.AlchemistGolemModel::createAlchemistRobeLayer);
+        event.registerLayerDefinition(MARINE_GOLEM_LAYER, com.golemcraft.golemcraftmod.client.model.BaseGolemModel::createBodyLayer);
     }
     
     public static class ModelLayers {}

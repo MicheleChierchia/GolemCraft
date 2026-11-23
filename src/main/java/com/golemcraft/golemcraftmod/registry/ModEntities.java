@@ -91,6 +91,12 @@ public class ModEntities {
                             .sized(0.5f, 1.0f)
                             .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(GolemCraft.MODID, "alchemist_golem"))));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<com.golemcraft.golemcraftmod.entity.MarineGolemEntity>> MARINE_GOLEM =
+            ENTITY_TYPES.register("marine_golem", () ->
+                    EntityType.Builder.of(com.golemcraft.golemcraftmod.entity.MarineGolemEntity::new, MobCategory.MISC)
+                            .sized(0.5f, 1.0f)
+                            .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(GolemCraft.MODID, "marine_golem"))));
+
     public static final DeferredHolder<EntityType<?>, EntityType<com.golemcraft.golemcraftmod.entity.projectile.HoneySpitProjectile>> HONEY_SPIT_PROJECTILE =
             ENTITY_TYPES.register("honey_spit_projectile", () ->
                     EntityType.Builder.<com.golemcraft.golemcraftmod.entity.projectile.HoneySpitProjectile>of(com.golemcraft.golemcraftmod.entity.projectile.HoneySpitProjectile::new, MobCategory.MISC)

@@ -23,5 +23,6 @@ public class ModBusEvents {
         event.put(ModEntities.TOTEM_GOLEM.get(), com.golemcraft.golemcraftmod.entity.TotemGolemEntity.createAttributes().build());
         event.put(ModEntities.BEEKEEPER_GOLEM.get(), com.golemcraft.golemcraftmod.entity.BaseGolemEntity.createAttributes().build());
         event.put(ModEntities.ALCHEMIST_GOLEM.get(), com.golemcraft.golemcraftmod.entity.AlchemistGolemEntity.createAttributes().build());
+        event.put(ModEntities.MARINE_GOLEM.get(), com.golemcraft.golemcraftmod.entity.MarineGolemEntity.createAttributes().build());
     }
 }

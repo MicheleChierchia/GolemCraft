@@ -39,6 +39,7 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
     private UUID ownerUUID;
     private long lastPickupTime = 0;
     public int actionCooldown = 0;
+    private net.minecraft.core.BlockPos lastLightBlockPos = null;
 
     public BaseGolemEntity(EntityType<? extends PathfinderMob> entityType, Level level) {
         super(entityType, level);
@@ -238,6 +239,14 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
                 this.setOxidationLevel(this.getOxidationLevel() + 1);
             }
 
+            if (this.emitsDynamicLight() && this.level() instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+                if (this.getOxidationLevel() < 3) {
+                    updateLightBlock(serverLevel);
+                } else {
+                    removeLightBlock(serverLevel);
+                }
+            }
+
             if (this.shouldSyncSlot0ToMainHand()) {
                 ItemStack slot0 = this.inventory.getItem(0);
                 ItemStack hand = this.getItemInHand(InteractionHand.MAIN_HAND);
@@ -246,6 +255,69 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
                 }
             }
         }
+    }
+
+    protected boolean emitsDynamicLight() {
+        return false;
+    }
+
+    private void updateLightBlock(net.minecraft.server.level.ServerLevel serverLevel) {
+        if (this.isRemoved()) return;
+        net.minecraft.core.BlockPos currentPos = this.blockPosition();
+        if (currentPos.equals(this.lastLightBlockPos)) return;
+
+        removeLightBlock(serverLevel);
+
+        net.minecraft.core.BlockPos torsoPos = net.minecraft.core.BlockPos.containing(this.getX(), this.getY() + 0.5D, this.getZ());
+        net.minecraft.core.BlockPos[] candidates = new net.minecraft.core.BlockPos[]{
+                torsoPos,
+                torsoPos.above(),
+                currentPos,
+                currentPos.above(2)
+        };
+
+        for (net.minecraft.core.BlockPos pos : candidates) {
+            net.minecraft.world.level.block.state.BlockState st = serverLevel.getBlockState(pos);
+            boolean isAir = st.isAir();
+            boolean isWaterSource = st.is(net.minecraft.world.level.block.Blocks.WATER) && st.getFluidState().isSource();
+            if (isAir || isWaterSource) {
+                net.minecraft.world.level.block.state.BlockState lightState = net.minecraft.world.level.block.Blocks.LIGHT.defaultBlockState()
+                        .setValue(net.minecraft.world.level.block.LightBlock.LEVEL, 15)
+                        .setValue(net.minecraft.world.level.block.LightBlock.WATERLOGGED, isWaterSource);
+                serverLevel.setBlock(pos, lightState, net.minecraft.world.level.block.Block.UPDATE_ALL_IMMEDIATE);
+                this.lastLightBlockPos = pos;
+                return;
+            }
+        }
+    }
+
+    private void removeLightBlock(net.minecraft.server.level.ServerLevel serverLevel) {
+        if (this.lastLightBlockPos != null) {
+            net.minecraft.world.level.block.state.BlockState state = serverLevel.getBlockState(this.lastLightBlockPos);
+            if (state.is(net.minecraft.world.level.block.Blocks.LIGHT)) {
+                net.minecraft.world.level.block.state.BlockState replacement = state.getValue(net.minecraft.world.level.block.LightBlock.WATERLOGGED)
+                        ? net.minecraft.world.level.block.Blocks.WATER.defaultBlockState()
+                        : net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
+                serverLevel.setBlock(this.lastLightBlockPos, replacement, net.minecraft.world.level.block.Block.UPDATE_ALL_IMMEDIATE);
+            }
+            this.lastLightBlockPos = null;
+        }
+    }
+
+    @Override
+    public void remove(RemovalReason reason) {
+        if (this.level() instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+            removeLightBlock(serverLevel);
+        }
+        super.remove(reason);
+    }
+
+    @Override
+    public void onRemovedFromLevel() {
+        if (this.level() instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+            removeLightBlock(serverLevel);
+        }
+        super.onRemovedFromLevel();
     }
 
     public boolean shouldKeepItem(ItemStack stack, int slotIndex) {
@@ -531,12 +603,16 @@ public class BaseGolemEntity extends PathfinderMob implements ContainerUser {
                 return convertTo(ModEntities.FISHERMAN_GOLEM.get(), player, itemstack, SoundEvents.ZOMBIE_VILLAGER_CURE, ParticleTypes.HAPPY_VILLAGER, 15, true, null);
             }
 
+            if (itemstack.is(net.minecraft.world.item.Items.TRIDENT)) {
+                return convertTo(ModEntities.MARINE_GOLEM.get(), player, itemstack,
+                        SoundEvents.CONDUIT_ACTIVATE, ParticleTypes.BUBBLE_POP, 20, true, null);
+            }
+
             String itemName = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(itemstack.getItem()).getPath();
             boolean isWeapon = itemstack.is(net.minecraft.tags.ItemTags.SWORDS) ||
                                itemName.contains("sword") ||
                                itemstack.is(net.minecraft.world.item.Items.BOW) ||
-                               itemstack.is(net.minecraft.world.item.Items.CROSSBOW) ||
-                               itemstack.is(net.minecraft.world.item.Items.TRIDENT);
+                               itemstack.is(net.minecraft.world.item.Items.CROSSBOW);
 
             if (isWeapon) {
                 return convertTo(ModEntities.SOLDIER_GOLEM.get(), player, itemstack, SoundEvents.ZOMBIE_VILLAGER_CURE, ParticleTypes.HAPPY_VILLAGER, 15, true, null);

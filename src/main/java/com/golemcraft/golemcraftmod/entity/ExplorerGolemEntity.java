@@ -29,10 +29,6 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.component.LodestoneTracker;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.LightBlock;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.AABB;
@@ -56,11 +52,15 @@ public class ExplorerGolemEntity extends BaseGolemEntity {
     private BlockPos stayPos;
     private BlockPos deathPos;
     private int collectTimeout = 0;
-    private BlockPos lastLightBlockPos = null;
     private int compassUpdateTimer = 0;
 
     public ExplorerGolemEntity(EntityType<? extends BaseGolemEntity> entityType, Level level) {
         super(entityType, level);
+    }
+
+    @Override
+    protected boolean emitsDynamicLight() {
+        return true;
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -135,12 +135,6 @@ public class ExplorerGolemEntity extends BaseGolemEntity {
     public void tick() {
         super.tick();
         if (this.level() instanceof ServerLevel serverLevel) {
-            if (this.getOxidationLevel() < 3) {
-                updateLightBlock(serverLevel);
-            } else {
-                removeLightBlock(serverLevel);
-            }
-
             if (isWaiting()) {
                 this.getNavigation().stop();
 
@@ -171,92 +165,6 @@ public class ExplorerGolemEntity extends BaseGolemEntity {
                 updateLinkedCompasses();
             }
         }
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    //  Light block management
-    // ─────────────────────────────────────────────────────────────────────────
-
-    private void updateLightBlock(ServerLevel serverLevel) {
-        BlockPos currentPos = this.blockPosition();
-        if (currentPos.equals(lastLightBlockPos)) return;
-        if (this.isRemoved()) return;
-
-        removeLightBlock(serverLevel);
-        // Find the best air block around the golem (torso -> head -> feet -> above)
-        BlockPos torsoPos = BlockPos.containing(this.getX(), this.getY() + 0.5D, this.getZ());
-        BlockPos targetPos = null;
-
-        BlockPos[] candidates = new BlockPos[]{
-                torsoPos,
-                torsoPos.above(),
-                this.blockPosition(),
-                this.blockPosition().above(2)
-        };
-
-        for (BlockPos pos : candidates) {
-            BlockState st = serverLevel.getBlockState(pos);
-            if (st.isAir() || st.is(Blocks.LIGHT)) {
-                targetPos = pos;
-                break;
-            }
-        }
-
-        if (targetPos == null) return;
-
-        if (targetPos.equals(lastLightBlockPos)) {
-            BlockState st = serverLevel.getBlockState(targetPos);
-            if (st.isAir()) {
-                serverLevel.setBlock(targetPos,
-                        Blocks.LIGHT.defaultBlockState().setValue(LightBlock.LEVEL, 15),
-                        Block.UPDATE_ALL_IMMEDIATE);
-            }
-            return;
-        }
-
-        // Place new light first
-        serverLevel.setBlock(targetPos,
-                Blocks.LIGHT.defaultBlockState().setValue(LightBlock.LEVEL, 15),
-                Block.UPDATE_ALL_IMMEDIATE);
-
-        // Then remove old light block
-        if (lastLightBlockPos != null && !lastLightBlockPos.equals(targetPos)) {
-            BlockState oldState = serverLevel.getBlockState(lastLightBlockPos);
-            if (oldState.is(Blocks.LIGHT)) {
-                serverLevel.setBlock(lastLightBlockPos,
-                        Blocks.AIR.defaultBlockState(),
-                        Block.UPDATE_ALL_IMMEDIATE);
-            }
-        }
-        lastLightBlockPos = targetPos;
-    }
-
-    private void removeLightBlock(ServerLevel serverLevel) {
-        if (lastLightBlockPos != null) {
-            BlockState state = serverLevel.getBlockState(lastLightBlockPos);
-            if (state.is(Blocks.LIGHT)) {
-                serverLevel.setBlock(lastLightBlockPos,
-                        Blocks.AIR.defaultBlockState(),
-                        Block.UPDATE_ALL_IMMEDIATE);
-            }
-            lastLightBlockPos = null;
-        }
-    }
-
-    @Override
-    public void remove(RemovalReason reason) {
-        if (this.level() instanceof ServerLevel serverLevel) {
-            removeLightBlock(serverLevel);
-        }
-        super.remove(reason);
-    }
-
-    @Override
-    public void onRemovedFromLevel() {
-        if (this.level() instanceof ServerLevel serverLevel) {
-            removeLightBlock(serverLevel);
-        }
-        super.onRemovedFromLevel();
     }
 
     // ─────────────────────────────────────────────────────────────────────────

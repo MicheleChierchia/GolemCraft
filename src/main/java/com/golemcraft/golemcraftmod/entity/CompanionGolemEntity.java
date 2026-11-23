@@ -13,8 +13,10 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.ai.goal.RandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -65,25 +67,48 @@ public abstract class CompanionGolemEntity extends BaseGolemEntity {
     }
 
     protected void registerCompanionGoals(int returnPriority, int followPriority, int strollPriority) {
+        registerCompanionGoals(returnPriority, followPriority, strollPriority, true);
+    }
+
+    protected void registerCompanionGoals(int returnPriority, int followPriority, int strollPriority, boolean avoidWater) {
         this.goalSelector.addGoal(returnPriority, new ReturnToStayPositionGoal(this, 1.1D));
         this.goalSelector.addGoal(followPriority, new FollowOwnerGoal(this, 1.35D, 7.0F, 2.5F));
-        this.goalSelector.addGoal(strollPriority, new WaterAvoidingRandomStrollGoal(this, 1.0D) {
-            @Override
-            public boolean canUse() {
-                if (CompanionGolemEntity.this.isStaying() || CompanionGolemEntity.this.getOxidationLevel() == 3) {
-                    return false;
-                }
-                return super.canUse();
-            }
+        RandomStrollGoal strollGoal = avoidWater
+                ? new WaterAvoidingRandomStrollGoal(this, 1.0D) {
+                    @Override
+                    public boolean canUse() {
+                        if (CompanionGolemEntity.this.isStaying() || CompanionGolemEntity.this.getOxidationLevel() == 3) {
+                            return false;
+                        }
+                        return super.canUse();
+                    }
 
-            @Override
-            public boolean canContinueToUse() {
-                if (CompanionGolemEntity.this.isStaying() || CompanionGolemEntity.this.getOxidationLevel() == 3) {
-                    return false;
+                    @Override
+                    public boolean canContinueToUse() {
+                        if (CompanionGolemEntity.this.isStaying() || CompanionGolemEntity.this.getOxidationLevel() == 3) {
+                            return false;
+                        }
+                        return super.canContinueToUse();
+                    }
                 }
-                return super.canContinueToUse();
-            }
-        });
+                : new RandomStrollGoal(this, 1.0D) {
+                    @Override
+                    public boolean canUse() {
+                        if (CompanionGolemEntity.this.isStaying() || CompanionGolemEntity.this.getOxidationLevel() == 3) {
+                            return false;
+                        }
+                        return super.canUse();
+                    }
+
+                    @Override
+                    public boolean canContinueToUse() {
+                        if (CompanionGolemEntity.this.isStaying() || CompanionGolemEntity.this.getOxidationLevel() == 3) {
+                            return false;
+                        }
+                        return super.canContinueToUse();
+                    }
+                };
+        this.goalSelector.addGoal(strollPriority, strollGoal);
     }
 
     @Override
@@ -150,23 +175,35 @@ public abstract class CompanionGolemEntity extends BaseGolemEntity {
         @Override
         public boolean canUse() {
             if (golem.getOxidationLevel() == 3 || !golem.isStaying() || golem.getStayPos() == null) return false;
+            LivingEntity target = golem.getTarget();
+            if (target != null && target.isAlive()) return false;
             return golem.distanceToSqr(Vec3.atBottomCenterOf(golem.getStayPos())) > 4.0D;
         }
 
         @Override
         public boolean canContinueToUse() {
             if (golem.getOxidationLevel() == 3 || !golem.isStaying() || golem.getStayPos() == null) return false;
+            LivingEntity target = golem.getTarget();
+            if (target != null && target.isAlive()) return false;
             return !golem.getNavigation().isDone() && golem.distanceToSqr(Vec3.atBottomCenterOf(golem.getStayPos())) > 1.5D;
         }
 
         @Override
         public void start() {
             if (golem.getStayPos() != null) {
-                golem.getNavigation().moveTo(
-                        golem.getStayPos().getX() + 0.5D,
-                        golem.getStayPos().getY(),
-                        golem.getStayPos().getZ() + 0.5D,
-                        speed);
+                if (golem.distanceToSqr(Vec3.atBottomCenterOf(golem.getStayPos())) > 144.0D) {
+                    golem.teleportTo(
+                            golem.getStayPos().getX() + 0.5D,
+                            golem.getStayPos().getY(),
+                            golem.getStayPos().getZ() + 0.5D);
+                    golem.getNavigation().stop();
+                } else {
+                    golem.getNavigation().moveTo(
+                            golem.getStayPos().getX() + 0.5D,
+                            golem.getStayPos().getY(),
+                            golem.getStayPos().getZ() + 0.5D,
+                            speed);
+                }
             }
         }
     }
@@ -190,6 +227,8 @@ public abstract class CompanionGolemEntity extends BaseGolemEntity {
         @Override
         public boolean canUse() {
             if (golem.getOxidationLevel() == 3 || golem.isStaying()) return false;
+            LivingEntity target = golem.getTarget();
+            if (target != null && target.isAlive()) return false;
             owner = golem.getOwnerPlayer();
             if (owner == null || !owner.isAlive() || owner.isSpectator()) return false;
             return golem.distanceToSqr(owner) >= startDistSq;
@@ -198,6 +237,8 @@ public abstract class CompanionGolemEntity extends BaseGolemEntity {
         @Override
         public boolean canContinueToUse() {
             if (golem.getOxidationLevel() == 3 || golem.isStaying()) return false;
+            LivingEntity target = golem.getTarget();
+            if (target != null && target.isAlive()) return false;
             owner = golem.getOwnerPlayer();
             if (owner == null || !owner.isAlive() || owner.isSpectator()) return false;
             return golem.distanceToSqr(owner) > stopDistSq;
@@ -242,6 +283,16 @@ public abstract class CompanionGolemEntity extends BaseGolemEntity {
             for (int i = 0; i < 10; i++) {
                 double ox = target.getX() + (rng.nextFloat() * 6.0F - 3.0F);
                 double oz = target.getZ() + (rng.nextFloat() * 6.0F - 3.0F);
+                if (golem.canBreatheUnderwater()) {
+                    BlockPos waterPos = BlockPos.containing(ox, target.getY(), oz);
+                    if (golem.level().getFluidState(waterPos).is(net.minecraft.tags.FluidTags.WATER)
+                            && golem.level().noCollision(golem, golem.getBoundingBox().move(
+                                    ox - golem.getX(), waterPos.getY() - golem.getY(), oz - golem.getZ()))) {
+                        golem.teleportTo(ox, waterPos.getY(), oz);
+                        golem.getNavigation().stop();
+                        return;
+                    }
+                }
                 BlockPos g = BlockPos.containing(ox, target.getY() + 2, oz);
                 int tries = 6;
                 while (tries-- > 0 && !golem.level().getBlockState(g).isSolid()) {

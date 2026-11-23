@@ -45,6 +45,7 @@ BASE_TEXTURES = [
     "leveler_golem",
     "beekeeper_golem",
     "alchemist_golem",
+    "marine_golem",
 ]
 
 # Pixel rows to protect fully from oxidation per golem
@@ -124,12 +125,23 @@ def _leveler_pixels():
             pts.add((x, y))
     return pts
 
+def _marine_pixels():
+    pts = set()
+    for y in range(0, 8):
+        for x in range(37, 53):
+            pts.add((x, y))
+    for ex in (11, 12, 15, 16):
+        for ey in (12, 13):
+            pts.add((ex, ey))
+    return pts
+
 PROTECTED_PIXELS = {
     "farmer_golem": _farmer_hat_pixels(),
     "soldier_golem": _soldier_helmet_pixels(),
     "lumberjack_golem": _lumberjack_pixels(),
     "explorer_golem": _explorer_pixels(),
     "leveler_golem": _leveler_pixels(),
+    "marine_golem": _marine_pixels(),
 }
 # ── helpers ────────────────────────────────────────────────────────────────────
 def rgb_to_hsv(r, g, b):

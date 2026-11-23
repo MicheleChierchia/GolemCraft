@@ -128,6 +128,11 @@ public class GolemManualScreen extends Screen {
                 "book.golemcraft.page_alchemist.title", "book.golemcraft.page_alchemist.subtitle", "book.golemcraft.page_alchemist.content",
                 "entity.alchemist", ModEntities.ALCHEMIST_GOLEM.get(), new ItemStack(Items.BREWING_STAND), 0, false, null, null, ItemStack.EMPTY, "book.golemcraft.badge.alchemist"));
 
+        // 15: Golem Marino
+        pages.add(new ManualPage(PageType.ENTITY, 1,
+                "book.golemcraft.page_marine.title", "book.golemcraft.page_marine.subtitle", "book.golemcraft.page_marine.content",
+                "entity.marine", ModEntities.MARINE_GOLEM.get(), new ItemStack(Items.TRIDENT), 0, false, null, null, ItemStack.EMPTY, "book.golemcraft.badge.marine"));
+
         // 12: Il Faro dei Golem
         pages.add(new ManualPage(PageType.BLOCK_ITEM, 2,
                 "book.golemcraft.page12.title", "book.golemcraft.page12.subtitle", "book.golemcraft.page12.content",

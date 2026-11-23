@@ -1,7 +1,8 @@
 package com.golemcraft.golemcraftmod.entity;
 
 import java.util.EnumSet;
-import java.util.List;
+
+import com.golemcraft.golemcraftmod.entity.ai.GolemCombatTargetGoals;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
@@ -25,10 +26,7 @@ import net.minecraft.world.entity.ai.goal.RangedBowAttackGoal;
 import net.minecraft.world.entity.ai.goal.RangedCrossbowAttackGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
-import net.minecraft.world.entity.ai.goal.target.TargetGoal;
-import net.minecraft.world.entity.ai.targeting.TargetingConditions;
 import net.minecraft.world.entity.monster.CrossbowAttackMob;
-import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.monster.RangedAttackMob;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
@@ -186,9 +184,9 @@ public class SoldierGolemEntity extends BaseGolemEntity implements RangedAttackM
             }
         });
 
-        this.targetSelector.addGoal(1, new OwnerHurtByTargetGoal(this));
-        this.targetSelector.addGoal(2, new OwnerHurtTargetGoal(this));
-        this.targetSelector.addGoal(3, new NearOwnerEnemyGoal(this, 20.0D)); // Range incrementato a 20.0D (era 10.0D)
+        this.targetSelector.addGoal(1, new GolemCombatTargetGoals.OwnerHurtByTargetGoal(this, this::isGuarding));
+        this.targetSelector.addGoal(2, new GolemCombatTargetGoals.OwnerHurtTargetGoal(this, this::isGuarding));
+        this.targetSelector.addGoal(3, new GolemCombatTargetGoals.NearOwnerEnemyGoal(this, 20.0D, this::isGuarding, this::getGuardPos));
         this.targetSelector.addGoal(4, new HurtByTargetGoal(this));
     }
 
@@ -766,106 +764,6 @@ public class SoldierGolemEntity extends BaseGolemEntity implements RangedAttackM
                     }
                 }
             }
-        }
-    }
-
-    // =========================================================================
-    //  Target Goals
-    // =========================================================================
-
-    static class OwnerHurtByTargetGoal extends TargetGoal {
-        private LivingEntity attackerOfOwner;
-        private int lastHurtTs;
-
-        OwnerHurtByTargetGoal(SoldierGolemEntity g) { super(g, false); }
-
-        @Override public boolean canUse() {
-            if (((SoldierGolemEntity) mob).isGuarding()) return false; // don't care if owner is hurt while guarding
-            Player owner = ((SoldierGolemEntity) mob).getOwnerPlayer();
-            if (owner == null) return false;
-            attackerOfOwner = owner.getLastHurtByMob();
-            int ts = owner.getLastHurtByMobTimestamp();
-            return ts != lastHurtTs && attackerOfOwner != null && attackerOfOwner != mob
-                    && canAttack(attackerOfOwner, TargetingConditions.DEFAULT);
-        }
-        @Override public void start() {
-            mob.setTarget(attackerOfOwner);
-            Player owner = ((SoldierGolemEntity) mob).getOwnerPlayer();
-            if (owner != null) lastHurtTs = owner.getLastHurtByMobTimestamp();
-            super.start();
-        }
-    }
-
-    static class OwnerHurtTargetGoal extends TargetGoal {
-        private LivingEntity ownerTarget;
-        private int lastHurtTs;
-
-        OwnerHurtTargetGoal(SoldierGolemEntity g) { super(g, false); }
-
-        @Override public boolean canUse() {
-            if (((SoldierGolemEntity) mob).isGuarding()) return false; // don't care about owner targets while guarding
-            Player owner = ((SoldierGolemEntity) mob).getOwnerPlayer();
-            if (owner == null) return false;
-            ownerTarget = owner.getLastHurtMob();
-            int ts = owner.getLastHurtMobTimestamp();
-            return ts != lastHurtTs && ownerTarget != null && ownerTarget != mob
-                    && canAttack(ownerTarget, TargetingConditions.DEFAULT);
-        }
-        @Override public void start() {
-            mob.setTarget(ownerTarget);
-            Player owner = ((SoldierGolemEntity) mob).getOwnerPlayer();
-            if (owner != null) lastHurtTs = owner.getLastHurtMobTimestamp();
-            super.start();
-        }
-    }
-
-    /** Proactive defense: attacks Enemy mobs that enter within {@code range} blocks of the owner. */
-    static class NearOwnerEnemyGoal extends TargetGoal {
-        private final double range;
-        private LivingEntity foundEnemy;
-
-        NearOwnerEnemyGoal(SoldierGolemEntity g, double range) {
-            super(g, false);
-            this.range = range;
-        }
-
-        @Override public boolean canUse() {
-            LivingEntity ex = mob.getTarget();
-            if (ex != null && ex.isAlive()) return false;
-            
-            SoldierGolemEntity sg = (SoldierGolemEntity) mob;
-            
-            net.minecraft.world.phys.AABB searchBox;
-            if (sg.isGuarding() && sg.getGuardPos() != null) {
-                // If guarding, protect the guard area
-                searchBox = new net.minecraft.world.phys.AABB(sg.getGuardPos()).inflate(range);
-            } else {
-                // If companion, protect owner
-                Player owner = sg.getOwnerPlayer();
-                if (owner == null) return false;
-                searchBox = owner.getBoundingBox().inflate(range);
-            }
-
-            List<Mob> enemies = mob.level().getEntitiesOfClass(
-                    Mob.class,
-                    searchBox,
-                    e -> e instanceof Enemy && e.isAlive() && !e.is(mob)
-            );
-            if (enemies.isEmpty()) return false;
-            
-            net.minecraft.world.phys.Vec3 center = sg.isGuarding() ? net.minecraft.world.phys.Vec3.atBottomCenterOf(sg.getGuardPos()) : sg.getOwnerPlayer().position();
-            
-            foundEnemy = enemies.stream()
-                    .min(java.util.Comparator.comparingDouble(e -> e.distanceToSqr(center)))
-                    .orElse(null);
-            return foundEnemy != null && canAttack(foundEnemy, TargetingConditions.DEFAULT);
-        }
-
-        @Override public boolean canContinueToUse() { return false; }
-
-        @Override public void start() {
-            mob.setTarget(foundEnemy);
-            super.start();
         }
     }
 }

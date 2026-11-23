@@ -22,4 +22,10 @@ public class BaseGolemRenderState extends ArmedEntityRenderState {
     public int alchemistPotionAction;
     public final net.minecraft.client.renderer.item.ItemStackRenderState alchemistPotionItemState =
             new net.minecraft.client.renderer.item.ItemStackRenderState();
+    public net.minecraft.world.phys.Vec3 laserOriginPosition;
+    public net.minecraft.world.phys.Vec3 laserTargetPosition;
+    public float laserAttackTime;
+    public float laserAttackScale;
+    public boolean isSwimming;
+    public float swimAmount;
 }

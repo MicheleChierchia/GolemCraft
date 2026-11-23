@@ -336,11 +336,13 @@ public class BaseGolemModel extends EntityModel<BaseGolemRenderState> implements
         
         float time = state.ageInTicks;
         // Animazione testa stile Copper Golem: la testa fa un giro completo di 360 gradi ogni tanto
-        if (time % 160 < 20) {
-            float spinProgress = (time % 160) / 20.0F; // 0.0 to 1.0
-            this.head.yRot += spinProgress * ((float)Math.PI * 2F);
-        } else {
-            this.head.zRot = Mth.sin(time * 0.1F) * 0.05F;
+        if (state.swimAmount <= 0.1F) {
+            if (time % 160 < 20) {
+                float spinProgress = (time % 160) / 20.0F; // 0.0 to 1.0
+                this.head.yRot += spinProgress * ((float)Math.PI * 2F);
+            } else {
+                this.head.zRot = Mth.sin(time * 0.1F) * 0.05F;
+            }
         }
 
         // Camminata esagerata e goffa
@@ -421,6 +423,24 @@ public class BaseGolemModel extends EntityModel<BaseGolemRenderState> implements
                 this.rightArm.xRot = -((float)Math.PI / 2F) + this.head.xRot;
                 this.leftArm.xRot = -((float)Math.PI / 2F) + this.head.xRot;
             }
+        }
+
+        if (state.swimAmount > 0.0F) {
+            float kickSpeed = 0.25F + state.walkAnimationSpeed * 0.35F;
+            float kickAmp = 0.35F + state.walkAnimationSpeed * 0.45F;
+            this.rightLeg.xRot = Mth.lerp(state.swimAmount, this.rightLeg.xRot, Mth.sin(time * kickSpeed) * kickAmp);
+            this.leftLeg.xRot = Mth.lerp(state.swimAmount, this.leftLeg.xRot, Mth.sin(time * kickSpeed + (float) Math.PI) * kickAmp);
+
+            if (state.attackAnimProgress <= 0.0F) {
+                float strokePhase = (time * 0.18F) % ((float) Math.PI * 2F);
+                float swimArmZ = 0.35F + Mth.sin(strokePhase) * 0.45F;
+                this.rightArm.xRot = Mth.lerp(state.swimAmount, this.rightArm.xRot, -2.0F + Mth.cos(strokePhase) * 0.85F);
+                this.leftArm.xRot = Mth.lerp(state.swimAmount, this.leftArm.xRot, -2.0F + Mth.cos(strokePhase + (float) Math.PI) * 0.85F);
+                this.rightArm.zRot = Mth.lerp(state.swimAmount, this.rightArm.zRot, swimArmZ);
+                this.leftArm.zRot = Mth.lerp(state.swimAmount, this.leftArm.zRot, -swimArmZ);
+            }
+
+            this.head.xRot = Mth.lerp(state.swimAmount, this.head.xRot, -0.9F + state.xRot * ((float) Math.PI / 180F));
         }
     }
 
