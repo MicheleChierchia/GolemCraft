@@ -210,6 +210,34 @@ public class MarineGolemEntity extends CompanionGolemEntity {
         return this.clientSideAttackTime;
     }
 
+    public static Vec3 getSeaLanternWorldOffset(float bodyRotDeg, float xRotDeg, float swimAmount, boolean isSwimming) {
+        if (swimAmount <= 0.0F) {
+            return new Vec3(0.0D, SEA_LANTERN_Y_OFFSET, 0.0D);
+        }
+
+        // Match BaseGolemModel head pivot (0.6875) + lantern offset (0.6875) with swim head tilt (-0.9 rad)
+        double headTilt = swimAmount * -0.9D;
+        double localY = 0.6875D + 0.6875D * Math.cos(headTilt);
+        double localZ = -0.6875D * Math.sin(headTilt);
+
+        if (isSwimming) {
+            localY -= 0.5D * swimAmount;
+            localZ += 0.25D * swimAmount;
+        }
+
+        double pitchRad = swimAmount * (-90.0D - xRotDeg) * Mth.DEG_TO_RAD;
+        double cosP = Math.cos(pitchRad);
+        double sinP = Math.sin(pitchRad);
+        double rotY = localY * cosP - localZ * sinP;
+        double rotZ = localY * sinP + localZ * cosP;
+
+        // Local -Z is entity forward along bodyRot
+        double yawRad = bodyRotDeg * Mth.DEG_TO_RAD;
+        double forwardX = -Math.sin(yawRad);
+        double forwardZ = Math.cos(yawRad);
+        return new Vec3(-rotZ * forwardX, rotY, -rotZ * forwardZ);
+    }
+
     @Override
     public void tick() {
         super.tick();
@@ -243,9 +271,15 @@ public class MarineGolemEntity extends CompanionGolemEntity {
                 this.getLookControl().tick();
 
                 double scale = this.getLaserAttackScale(0.0F);
-                double ox = this.getX();
-                double oy = this.getY() + SEA_LANTERN_Y_OFFSET;
-                double oz = this.getZ();
+                Vec3 originOffset = getSeaLanternWorldOffset(
+                        this.yBodyRot,
+                        this.getXRot(),
+                        this.getSwimAmount(1.0F),
+                        this.isInWater() && this.getOxidationLevel() < 3
+                );
+                double ox = this.getX() + originOffset.x;
+                double oy = this.getY() + originOffset.y;
+                double oz = this.getZ() + originOffset.z;
                 double dx = target.getX() - ox;
                 double dy = target.getY(0.5D) - oy;
                 double dz = target.getZ() - oz;

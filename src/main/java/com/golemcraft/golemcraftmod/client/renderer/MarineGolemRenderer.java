@@ -54,7 +54,12 @@ public class MarineGolemRenderer extends BaseGolemRenderer {
             LivingEntity target = marine.getActiveLaserTarget();
             if (target != null) {
                 Vec3 targetPos = getEntityPos(target, target.getBbHeight() * 0.5D, 1.0F);
-                Vec3 startPos = getEntityPos(marine, MarineGolemEntity.SEA_LANTERN_Y_OFFSET, 1.0F);
+                Vec3 startPos = getEntityPos(marine, 0.0D, 1.0F).add(MarineGolemEntity.getSeaLanternWorldOffset(
+                        marine.yBodyRot,
+                        marine.getXRot(),
+                        marine.getSwimAmount(1.0F),
+                        marine.isInWater() && marine.getOxidationLevel() < 3
+                ));
                 return culler.isVisible(new AABB(startPos.x, startPos.y, startPos.z, targetPos.x, targetPos.y, targetPos.z));
             }
         }
@@ -70,7 +75,13 @@ public class MarineGolemRenderer extends BaseGolemRenderer {
             state.swimAmount = marine.getSwimAmount(partialTick);
             LivingEntity target = marine.getActiveLaserTarget();
             if (target != null) {
-                state.laserOriginPosition = getEntityPos(marine, MarineGolemEntity.SEA_LANTERN_Y_OFFSET, partialTick);
+                Vec3 lanternOffset = MarineGolemEntity.getSeaLanternWorldOffset(
+                        state.bodyRot,
+                        state.xRot,
+                        state.swimAmount,
+                        state.isSwimming
+                );
+                state.laserOriginPosition = getEntityPos(marine, 0.0D, partialTick).add(lanternOffset);
                 state.laserTargetPosition = getEntityPos(target, target.getBbHeight() * 0.5D, partialTick);
                 state.laserAttackScale = marine.getLaserAttackScale(partialTick);
                 state.laserAttackTime = marine.getClientSideAttackTime() + partialTick;
@@ -98,8 +109,14 @@ public class MarineGolemRenderer extends BaseGolemRenderer {
         super.submit(state, poseStack, submitNodeCollector, camera);
         if (state.laserTargetPosition != null && state.laserOriginPosition != null) {
             float texVOff = state.laserAttackTime * 0.5F % 1.0F;
+            Vec3 lanternOffset = MarineGolemEntity.getSeaLanternWorldOffset(
+                    state.bodyRot,
+                    state.xRot,
+                    state.swimAmount,
+                    state.isSwimming
+            );
             poseStack.pushPose();
-            poseStack.translate(0.0F, (float) MarineGolemEntity.SEA_LANTERN_Y_OFFSET, 0.0F);
+            poseStack.translate((float) lanternOffset.x, (float) lanternOffset.y, (float) lanternOffset.z);
             renderBeam(
                     poseStack,
                     submitNodeCollector,
@@ -121,7 +138,7 @@ public class MarineGolemRenderer extends BaseGolemRenderer {
 
     private static void renderBeam(PoseStack poseStack, SubmitNodeCollector submitNodeCollector, Vec3 beamVector,
                                    float timeInTicks, float scale, float texVOff) {
-        float length = (float) (beamVector.length() + 1.0D);
+        float length = Math.max(0.1F, (float) beamVector.length());
         beamVector = beamVector.normalize();
         float xRot = (float) Math.acos(beamVector.y);
         float yRot = (float) (Math.PI / 2.0D) - (float) Math.atan2(beamVector.z, beamVector.x);
